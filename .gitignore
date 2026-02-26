@@ -2,7 +2,7 @@
 .**/data/**/*.json
 
 
-contenedor/data/
+data/
 
 venv/
 .venv/
