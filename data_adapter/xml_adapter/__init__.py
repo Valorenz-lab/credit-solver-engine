@@ -1,13 +1,10 @@
 
 
-# API pública del módulo — lo único que importan las capas superiores
-from .parser import DatacreditoParser
-from .serializers import serialize_informe_basico
+from .report_builders.basic_data_report_builder import BasicDataReportBuilder
 from .exceptions import XmlAdapterError, XmlParseError, XmlNodeNotFoundError
 
 __all__ = [
-    "DatacreditoParser",
-    "serialize_informe_basico",
+    "BasicDataReportBuilder",
     "XmlAdapterError",
     "XmlParseError",
     "XmlNodeNotFoundError",
