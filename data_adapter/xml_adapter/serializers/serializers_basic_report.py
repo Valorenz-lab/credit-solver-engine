@@ -5,6 +5,7 @@ If you use DRF, you can replace this with a DRF Serializer.
 """
 
 
+from data_adapter.transformers.basic_info_transformer import transform_gender, transform_id_type, transform_id_validity
 from data_adapter.xml_adapter.models import Age, BasicDataPerson, BasicReport, CustomerIdentification, QueryMetadata
 from data_adapter.xml_adapter.types import SerializedAge, SerializedCustomerIdentification, SerializedMetadata, SerializedPerson, SerializedReport
 
@@ -23,19 +24,20 @@ def _serialize_metadata(m: QueryMetadata) -> SerializedMetadata:
         "query_date": m.query_date,
         "answer": m.answer,
         "cod_security": m.cod_security,
-        "type_id_entered": m.type_id_entered,
+        "type_id_entered": transform_id_type(m.type_id_entered),
         "id_typed": m.id_typed,
         "last_name_typed": m.last_name_typed,
     }
 
 
 def _serialize_persona(p: BasicDataPerson) -> SerializedPerson:
+
     return {
        "names": p.names,
         "first_name": p.first_name,
         "last_name": p.last_name,
         "full_name": p.full_name,
-        "gender": p.gender,
+        "gender": transform_gender(p.gender),
         "validated": p.validated,
         "rut": p.rut,
         "customer_identification": _serialize_identification(p.customer_identification),
@@ -47,11 +49,11 @@ def _serialize_identification(i: CustomerIdentification ) -> SerializedCustomerI
     issue_date = i.issue_date.isoformat() if i.issue_date else None
     return {
         "number": i.number,
-        "state": i.state,
+        "state": transform_id_validity(i.state),
         "issue_date": issue_date,
         "city": i.city,
         "department": i.department,
-        "gender": i.gender
+        "gender": transform_gender(i.gender)
     }
 
 

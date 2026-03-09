@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 def basic_report(request: HttpRequest) -> JsonResponse:
     parser = BasicDataReportBuilder()
-    informe = parser.parse_file(str(BASE_DIR / "data" / "1030613409.xml"))
-    data = serialize_basic_report(informe)
+    inform = parser.parse_file(str(BASE_DIR / "data" / "73102905.xml"))
+    data = serialize_basic_report(inform)
     return JsonResponse(data)
 
