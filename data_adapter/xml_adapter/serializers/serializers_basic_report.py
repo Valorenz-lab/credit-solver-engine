@@ -6,7 +6,7 @@ If you use DRF, you can replace this with a DRF Serializer.
 
 
 from data_adapter.transformers.basic_info_transformer import transform_gender, transform_id_type, transform_id_validity
-from data_adapter.xml_adapter.models import Age, BasicDataPerson, BasicReport, CustomerIdentification, QueryMetadata
+from data_adapter.xml_adapter.models.basic_data_models import Age, BasicDataPerson, BasicReport, CustomerIdentification, QueryMetadata
 from data_adapter.xml_adapter.types import SerializedAge, SerializedCustomerIdentification, SerializedMetadata, SerializedPerson, SerializedReport
 
 

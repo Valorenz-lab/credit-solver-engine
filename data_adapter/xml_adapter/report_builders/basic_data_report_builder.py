@@ -8,7 +8,7 @@ import os
 from xml.etree import ElementTree as ET
 
 from data_adapter.xml_adapter.exceptions import XmlParseError
-from data_adapter.xml_adapter.models import Age, BasicDataPerson, BasicReport, CustomerIdentification, CustomerIdentification, QueryMetadata
+from data_adapter.xml_adapter.models.basic_data_models import Age, BasicDataPerson, BasicReport, CustomerIdentification, CustomerIdentification, QueryMetadata
 from data_adapter.xml_adapter.xml_extractors.xml_extractor import XmlExtractor
 
 

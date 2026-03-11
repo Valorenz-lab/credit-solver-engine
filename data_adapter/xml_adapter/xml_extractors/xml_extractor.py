@@ -20,14 +20,16 @@ class XmlExtractor:
         base = parent if parent is not None else self.root
         node = base.find(path)
         if node is None:
-            logger.warning(f"Node not found in XML: {path}")
+            parent_str = ET.tostring(base, encoding='unicode').strip()[:200] 
+            logger.warning(f"Node not found {path}.\n Parent: {parent_str}...")
+
         return node
     
     def require_node(self, path: str, parent: Optional[ET.Element] = None) -> ET.Element:
         """Find a node or raise XmlNodeNotFoundError."""
         node = self.find_node(path, parent)
         if node is None:
-            raise XmlNodeNotFoundError(path)
+            raise XmlNodeNotFoundError(f"Node not found: path:{path}\nparent:{str(parent)}")
         return node
     
     @overload
@@ -63,15 +65,21 @@ class XmlExtractor:
         raise XmlInvalidValueError(attr, raw, "true/false expected")
     
     def get_int(self, node: Optional[ET.Element], attr: str) -> Optional[int]:
-        """Parse int attribute (optional)."""
         raw = self.get_attr(node, attr)
-        if raw is None:
-            return None
+        if raw is None: return None
         try:
-            return int(raw)
+            return int(float(raw))
         except ValueError:
             raise XmlInvalidValueError(attr, raw, "integer expected")
     
+    def get_float(self, node: Optional[ET.Element], attr: str) -> Optional[float]:
+        raw = self.get_attr(node, attr)
+        if raw is None: return None
+        try:
+            return float(raw)
+        except ValueError:
+            raise XmlInvalidValueError(attr, raw, "float expected")
+
     def get_date(self, node: Optional[ET.Element], attr: str) -> Optional[date]:
         """Parse date attribute (optional)."""
         raw = self.get_attr(node, attr)
