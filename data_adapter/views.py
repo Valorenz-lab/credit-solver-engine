@@ -1,9 +1,11 @@
 from django.http import HttpRequest, JsonResponse
 from data_adapter.xml_adapter.report_builders.basic_data_report_builder import BasicDataReportBuilder
 from data_adapter.xml_adapter.report_builders.global_report_builder import GlobalReportBuilder
+
+from pathlib import Path
+
 from data_adapter.xml_adapter.serializers.serializer_global_report import serialize_global_report
 from data_adapter.xml_adapter.serializers.serializers_basic_report import serialize_basic_report
-from pathlib import Path
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent

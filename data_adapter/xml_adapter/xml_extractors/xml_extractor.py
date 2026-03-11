@@ -20,9 +20,9 @@ class XmlExtractor:
         base = parent if parent is not None else self.root
         node = base.find(path)
         if node is None:
-            parent_str = ET.tostring(base, encoding='unicode').strip()[:200] 
-            logger.warning(f"Node not found {path}.\n Parent: {parent_str}...")
-
+            #parent_str = ET.tostring(base, encoding='unicode').strip()[:200] 
+            #logger.warning(f"Node not found {path}.\n Parent: {parent_str}...")
+            ...
         return node
     
     def require_node(self, path: str, parent: Optional[ET.Element] = None) -> ET.Element:

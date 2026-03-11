@@ -2,7 +2,10 @@
 
 from typing import Optional
 
-from data_adapter.enums.basic_info_enums import ID_VALIDITY, Gender, TypesID
+from data_adapter.enums.basic_info.gender import Gender
+from data_adapter.enums.basic_info.id_validity import ID_VALIDITY
+from data_adapter.enums.basic_info.types_id import TypesID
+
 
 
 def transform_gender(value: Optional[str]) -> Gender:

@@ -2,8 +2,9 @@
 """
 
 
+from data_adapter.transformers.global_report_transformer import transform_account_type, transform_debtor_quality, transform_payment_frequency
 from data_adapter.xml_adapter.models.global_report_models import AccountStatus, GlobalReport, PortfolioAccount, PortfolioCharacteristics, PortfolioValues
-from data_adapter.xml_adapter.types import SerializedGlobalReport, serializedAccountStatus, serializedPortfolioAccount, serializedPortfolioCharacteristics, serializedPortfolioValues
+from data_adapter.xml_adapter.types import SerializedAccountStatus, SerializedGlobalReport, SerializedPortfolioAccount, SerializedPortfolioCharacteristics, SerializedPortfolioValues
 
 
 def serialize_global_report(report: GlobalReport) -> SerializedGlobalReport:
@@ -11,7 +12,7 @@ def serialize_global_report(report: GlobalReport) -> SerializedGlobalReport:
         "portfolio_accounts": [_serialize_account(c) for c in report.portfolio_account],
     }
 
-def _serialize_account(c: PortfolioAccount) -> serializedPortfolioAccount:
+def _serialize_account(c: PortfolioAccount) -> SerializedPortfolioAccount:
     return {
         "lender": c.lender,
         "account_number": c.account_number,
@@ -32,17 +33,17 @@ def _serialize_account(c: PortfolioAccount) -> serializedPortfolioAccount:
     }
 
 
-def _serialize_characteristics(c: PortfolioCharacteristics) -> serializedPortfolioCharacteristics:
+def _serialize_characteristics(c: PortfolioCharacteristics) -> SerializedPortfolioCharacteristics:
     return {
-        "account_type": c.account_type,           # ej: "LBZ", "EDU", "SFI"
+        "account_type": transform_account_type(c.account_type).value,           # ej: "LBZ", "EDU", "SFI"
         "obligation_type": c.obligation_type,
         "contract_type": c.contract_type,
         "contract_execution": c.contract_execution,
-        "debtor_quality": c.debtor_quality,     # "00"=Principal, "01"=Codeudor
+        "debtor_quality": transform_debtor_quality(c.debtor_quality),     # "00"=Principal, "01"=Codeudor
         "guarantee": c.guarantee,
     }
 
-def _serialize_value(v: PortfolioValues) -> serializedPortfolioValues:
+def _serialize_value(v: PortfolioValues) -> SerializedPortfolioValues:
     return {
         "date": v.date,
         "currency": v.credit_rating,
@@ -57,12 +58,12 @@ def _serialize_value(v: PortfolioValues) -> serializedPortfolioValues:
         "installments_paid": v.installments_paid,
         "principal_amount": v.principal_amount,
         "due_date": v.due_date,
-        "payment_frequency": v.payment_frequency,
+        "payment_frequency": transform_payment_frequency(v.payment_frequency),
         "last_payment_date": v.last_payment_date,
     }
 
 
-def _serialize_account_status(e: AccountStatus) -> serializedAccountStatus:
+def _serialize_account_status(e: AccountStatus) -> SerializedAccountStatus:
     return {
        
         "account_statement_code": e.account_statement_code,

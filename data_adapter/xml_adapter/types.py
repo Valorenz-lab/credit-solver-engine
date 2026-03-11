@@ -1,5 +1,8 @@
 from typing import Optional, TypedDict
 
+from data_adapter.enums.financial_info.debtor_quality_portfolio import DebtorQualityPortfolio
+from data_adapter.enums.financial_info.payment_frequency import PaymentFrequency
+
 
 class SerializedMetadata(TypedDict):
     query_date: str          
@@ -46,7 +49,7 @@ class SerializedReport(TypedDict):
 #   Types for the internal representation of the XML report, used within the engine.
 ##
 
-class serializedPortfolioValues(TypedDict):
+class SerializedPortfolioValues(TypedDict):
     date: Optional[str]
     currency: Optional[str]
     credit_rating: Optional[str]
@@ -60,10 +63,10 @@ class serializedPortfolioValues(TypedDict):
     installments_paid: Optional[int]      
     principal_amount: Optional[float]     
     due_date: Optional[str]               
-    payment_frequency: Optional[str]      
+    payment_frequency: Optional[PaymentFrequency]      
     last_payment_date: Optional[str]       
 
-class serializedAccountStatus(TypedDict):
+class SerializedAccountStatus(TypedDict):
     account_statement_code: Optional[str]
     account_statement_date: Optional[str]
 
@@ -73,18 +76,19 @@ class serializedAccountStatus(TypedDict):
     payment_status_code: Optional[str]   
     payment_status_months: Optional[str]
     payment_status_date: Optional[str]
+    
 
 
-class serializedPortfolioCharacteristics(TypedDict):
+class SerializedPortfolioCharacteristics(TypedDict):
     account_type: Optional[str]           
     obligation_type: Optional[str]       
     contract_type: Optional[str]
     contract_execution: Optional[str]
-    debtor_quality: Optional[str]        
+    debtor_quality: Optional[DebtorQualityPortfolio]     
     guarantee: Optional[str]
 
 
-class serializedPortfolioAccount(TypedDict):
+class SerializedPortfolioAccount(TypedDict):
     lender: Optional[str]
     account_number: Optional[str]
     opening_date: Optional[str]
@@ -99,13 +103,13 @@ class serializedPortfolioAccount(TypedDict):
     industry_sector: Optional[str]
     default_probability: Optional[float]
 
-    characteristics: Optional[serializedPortfolioCharacteristics]
-    values: Optional[serializedPortfolioValues]
-    account_status: Optional[serializedAccountStatus]
+    characteristics: Optional[SerializedPortfolioCharacteristics]
+    values: Optional[SerializedPortfolioValues]
+    account_status: Optional[SerializedAccountStatus]
 
 
 class SerializedGlobalReport(TypedDict):
     """
     Internal representation of the global report, with the data already extracted and organized.
     """
-    portfolio_accounts: list[serializedPortfolioAccount]
+    portfolio_accounts: list[SerializedPortfolioAccount]
