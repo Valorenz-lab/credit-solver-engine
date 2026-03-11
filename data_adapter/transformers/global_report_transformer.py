@@ -2,12 +2,11 @@
 
 from typing import Optional
 
+from data_adapter.enums.financial_info.account_status import AccountStatus
 from data_adapter.enums.financial_info.account_type import AccountType
 from data_adapter.enums.financial_info.debtor_quality_portfolio import DebtorQualityPortfolio
+from data_adapter.enums.financial_info.obligation_type import ObligationType
 from data_adapter.enums.financial_info.payment_frequency import PaymentFrequency
-
-
-
 
 def transform_account_type(value: Optional[str])->AccountType:
     if not value or value.strip() == "":
@@ -65,3 +64,53 @@ def transform_payment_frequency(value: Optional[str])->PaymentFrequency:
         return PaymentFrequency.UNKNOWN
     except ValueError:
         return PaymentFrequency.UNKNOWN
+
+
+def transform_obligation_type(value: Optional[str]) -> ObligationType:
+    if not value or value.strip() == "":
+        return ObligationType.UNKNOWN
+    try:
+        number_value = int(value)
+        mapping = {
+            0: ObligationType.NO_INFORMATION,
+            1: ObligationType.COMMERCIAL,
+            2: ObligationType.CONSUMPTION,
+            3: ObligationType.MORTGAGE,
+            4: ObligationType.OTHER,
+            5: ObligationType.MICRO_CREDIT,
+            6: ObligationType.PAYROLL_LOAN,
+            7: ObligationType.INSURANCE,
+            8: ObligationType.PUBLIC
+        }
+        if number_value in mapping:
+            return mapping[number_value]
+        return ObligationType.UNKNOWN
+    except ValueError:
+        return ObligationType.UNKNOWN
+    
+
+
+def transform_status_account(value: Optional[str]) -> AccountStatus:
+    if not value or value.strip() == "":
+        return AccountStatus.UNKNOWN
+    try:
+        number_value = int(value)
+        mapping = {
+            0: AccountStatus.ENTITY_NO_REPORT,
+            1: AccountStatus.ON_TIME,
+            2: AccountStatus.OVERDUE_DEBT,
+            3: AccountStatus.FULL_PAYMENT,
+            4: AccountStatus.JUDICIAL_PAYMENT,
+            5: AccountStatus.DOUBTFUL_COLLECTION,
+            6: AccountStatus.WRITTEN_OFF,
+            7: AccountStatus.DATION_IN_PAYMENT,
+            8: AccountStatus.VOLUNTARY_CANCELLED,
+            9: AccountStatus.CANCELLED_DUE_TO_MISMANAGEMENT,
+            10: AccountStatus.CANCELLED_DUE_TO_STATUTE_OF_LIMITATIONS,
+            11: AccountStatus.CANCELLED_BY_INSTITUTION,
+        }
+        if number_value in mapping:
+            return mapping[number_value]
+        return AccountStatus.UNKNOWN
+    except ValueError:
+        return AccountStatus.UNKNOWN

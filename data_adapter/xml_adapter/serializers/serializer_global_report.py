@@ -2,7 +2,7 @@
 """
 
 
-from data_adapter.transformers.global_report_transformer import transform_account_type, transform_debtor_quality, transform_payment_frequency
+from data_adapter.transformers.global_report_transformer import transform_account_type, transform_debtor_quality, transform_obligation_type, transform_payment_frequency, transform_status_account
 from data_adapter.xml_adapter.models.global_report_models import AccountStatus, GlobalReport, PortfolioAccount, PortfolioCharacteristics, PortfolioValues
 from data_adapter.xml_adapter.types import SerializedAccountStatus, SerializedGlobalReport, SerializedPortfolioAccount, SerializedPortfolioCharacteristics, SerializedPortfolioValues
 
@@ -36,7 +36,7 @@ def _serialize_account(c: PortfolioAccount) -> SerializedPortfolioAccount:
 def _serialize_characteristics(c: PortfolioCharacteristics) -> SerializedPortfolioCharacteristics:
     return {
         "account_type": transform_account_type(c.account_type).value,           # ej: "LBZ", "EDU", "SFI"
-        "obligation_type": c.obligation_type,
+        "obligation_type": transform_obligation_type(c.obligation_type),
         "contract_type": c.contract_type,
         "contract_execution": c.contract_execution,
         "debtor_quality": transform_debtor_quality(c.debtor_quality),     # "00"=Principal, "01"=Codeudor
@@ -66,7 +66,7 @@ def _serialize_value(v: PortfolioValues) -> SerializedPortfolioValues:
 def _serialize_account_status(e: AccountStatus) -> SerializedAccountStatus:
     return {
        
-        "account_statement_code": e.account_statement_code,
+        "account_statement_code": transform_status_account(e.account_statement_code),
         "account_statement_date": e.account_statement_date,
 
         "origin_state_code": e.origin_state_code,

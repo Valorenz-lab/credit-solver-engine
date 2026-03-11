@@ -1,7 +1,9 @@
 from typing import Optional, TypedDict
 
 from data_adapter.enums.financial_info.debtor_quality_portfolio import DebtorQualityPortfolio
+from data_adapter.enums.financial_info.obligation_type import ObligationType
 from data_adapter.enums.financial_info.payment_frequency import PaymentFrequency
+from data_adapter.xml_adapter.models.global_report_models import AccountStatus
 
 
 class SerializedMetadata(TypedDict):
@@ -67,7 +69,7 @@ class SerializedPortfolioValues(TypedDict):
     last_payment_date: Optional[str]       
 
 class SerializedAccountStatus(TypedDict):
-    account_statement_code: Optional[str]
+    account_statement_code: Optional[AccountStatus]
     account_statement_date: Optional[str]
 
     origin_state_code: Optional[str]
@@ -81,7 +83,7 @@ class SerializedAccountStatus(TypedDict):
 
 class SerializedPortfolioCharacteristics(TypedDict):
     account_type: Optional[str]           
-    obligation_type: Optional[str]       
+    obligation_type: Optional[ObligationType]       
     contract_type: Optional[str]
     contract_execution: Optional[str]
     debtor_quality: Optional[DebtorQualityPortfolio]     
