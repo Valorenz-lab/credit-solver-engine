@@ -4,9 +4,6 @@ Single responsibility: receive XML as string/bytes/Path and return dataclasses.
 Does not transform codes — returns raw values from the XML.
 """
 
-from asyncio.log import logger
-from email.mime import base
-from importlib.resources import path
 import os
 
 from data_adapter.xml_adapter.exceptions import XmlParseError
