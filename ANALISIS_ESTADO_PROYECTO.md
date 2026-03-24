@@ -1,177 +1,277 @@
 # Análisis de estado — Credit Solver Engine
-> Generado: 2026-03-24
+> Actualizado: 2026-03-24 | Basado en análisis de 5 XMLs reales de Datacredito
 
 ---
 
-## 1. Rutas activas y qué devuelven
+## 1. Rutas activas
 
-### `GET /api/data-adapter/basic-report/<document_id>/`
-
-Retorna dos bloques:
-
-```json
-{
-  "basic_report": { ... },   // persona, metadata, identificación
-  "global_report": [ ... ]   // array de CuentaCartera (todas, sin filtrar abiertas/cerradas)
-}
-```
-
-**Estado:** Funcional pero parcialmente redundante. Todo lo que devuelve está contenido (con más detalle y mejor estructura) en `/full-report/`.
-
----
-
-### `GET /api/data-adapter/full-report/<document_id>/`
-
-Retorna 11 secciones:
-
-| Sección | Contenido |
+| Ruta | Devuelve |
 |---|---|
-| `basic_info` | Persona, metadata de consulta, identificación |
-| `general_profile` | `InfoAgregada`: resumen numérico, saldos por sector, historial mensual de comportamiento |
-| `global_summary` | CuentaCartera **abiertas** (código `01` y familia) |
-| `open_bank_accounts` | CuentaAhorro con estado `01`, `06`, `07` |
-| `closed_bank_accounts` | CuentaAhorro con otros estados |
-| `active_obligations` | CuentaCartera abiertas + TarjetaCredito abiertas (mezcladas) |
-| `payment_habits_open` | CuentaCartera + TDC abiertas, agrupadas por sector |
-| `payment_habits_closed` | CuentaCartera + TDC cerradas, agrupadas por sector |
-| `query_history` | Historial de consultas (`Consulta`) |
-| `global_debt_records` | Endeudamiento global por entidad (`EndeudamientoGlobal`) |
-| `debt_evolution` | Evolución trimestral general (`EvolucionDeuda/Trimestre`) |
+| `GET /api/data-adapter/basic-report/<id>/` | `basic_report` (persona + metadata) + `global_report` (todas las CuentaCartera) |
+| `GET /api/data-adapter/full-report/<id>/` | 12 secciones con toda la info disponible actualmente |
 
-**Manejo de errores:** Ninguno. Cualquier XML inválido o documento no encontrado (salvo 404 ya implementado) retorna un 500 sin mensaje útil.
+`basic-report` es **parcialmente redundante** con `full-report`. Todo lo que devuelve está contenido en él con más detalle.
+
+`full-report` actualmente retorna:
+`basic_info`, `general_profile`, `global_summary`, `open_bank_accounts`, `closed_bank_accounts`, `checking_accounts` *(nuevo)*, `active_obligations`, `payment_habits_open`, `payment_habits_closed`, `query_history`, `global_debt_records`, `debt_evolution`
 
 ---
 
-## 2. Qué falta para "igualar" el PDF de Datacredito
+## 2. Nodos XML que AÚN NO se parsean al full-report
 
-### 2.1 `CuentaCorriente` — Cuentas corrientes (NO extraídas)
+Ordenados por relevancia para un motor de decisión crediticia.
 
-El XML tiene nodos `<CuentaCorriente>` completamente distintos a `<CuentaAhorro>`. El builder actual **no los parsea**. En el PDF aparecen en la misma sección de "Cuentas bancarias".
+### 2.1 `PerfilGeneral` — Conteo de créditos por sector ⚠️ ALTA RELEVANCIA
 
-Estructura XML:
-```xml
-<CuentaCorriente bloqueada="false" entidad="..." numero="..."
-    fechaApertura="..." situacionTitular="0" codSuscriptor="010025" sector="1">
-  <Caracteristicas clase="0" />
-  <Valores />
-  <Estado codigo="05" fecha="2008-09-30" />
-  <Sobregiro valor="0.0" dias="0" fecha="2008-09-30" />
-  <Llave>...</Llave>
-</CuentaCorriente>
-```
-
-Diferencia clave vs `CuentaAhorro`: tiene `<Sobregiro>` (cupo/días en sobregiro) y `codSuscriptor`.
-
----
-
-### 2.2 `HistoricoSaldos` — Saldos históricos por tipo de cuenta (NO extraído)
-
-Dentro de `<InfoAgregada>` existe un nodo `<HistoricoSaldos>` con evolución trimestral de saldo **por tipo de cuenta** (`CAC`, `CAB`, `CEL`, `COC`, etc.). El PDF lo muestra como gráfico de barras apiladas.
+Dentro de `InfoAgregada`. Desglosa créditos por los 4 sectores (financiero, cooperativo, real, telcos).
 
 ```xml
-<HistoricoSaldos>
-  <TipoCuenta tipo="CAC">
-    <Trimestre fecha="2024-03-01" totalCuentas="2" cuentasConsideradas="1" saldo="8089000" />
-    ...
-  </TipoCuenta>
-  <TipoCuenta tipo="CEL">
-    ...
-  </TipoCuenta>
-</HistoricoSaldos>
+<PerfilGeneral>
+  <CreditosVigentes      sectorFinanciero="0" sectorCooperativo="1" sectorReal="9" sectorTelcos="1" totalComoPrincipal="11" totalComoCodeudorYOtros="0" />
+  <CreditosCerrados      sectorFinanciero="7" sectorCooperativo="3" sectorReal="11" sectorTelcos="5" totalComoPrincipal="24" totalComoCodeudorYOtros="2" />
+  <CreditosReestructurados sectorFinanciero="0" sectorCooperativo="0" sectorReal="0" sectorTelcos="0" totalComoPrincipal="0" totalComoCodeudorYOtros="0" />
+  <CreditosRefinanciados sectorFinanciero="0" sectorCooperativo="0" sectorReal="1" sectorTelcos="0" totalComoPrincipal="1" totalComoCodeudorYOtros="0" />
+  <ConsultaUlt6Meses     sectorFinanciero="2" sectorCooperativo="0" sectorReal="5" sectorTelcos="0" totalComoPrincipal="0" totalComoCodeudorYOtros="0" />
+  <Desacuerdos           sectorFinanciero="0" sectorCooperativo="0" sectorReal="0" sectorTelcos="0" totalComoPrincipal="0" totalComoCodeudorYOtros="0" />
+  <AntiguedadDesde       sectorCooperativo="2014-12-14" sectorFinanciero="1996-07-01" sectorReal="2009-05-13" sectorTelcos="2005-10-18" />
+</PerfilGeneral>
 ```
 
-**Actualmente el builder lo ignora completamente.** Es la pieza más relevante que falta para replicar el PDF.
+**Campos sin parsear:**
+- Créditos reestructurados y refinanciados por sector
+- Antigüedad de la primera cuenta **por sector** (más preciso que el campo global `antiguedadDesde`)
+- Consultas últimos 6 meses por sector
+- Desacuerdos por sector
 
 ---
 
-### 2.3 `AnalisisPromedio` dentro de `EvolucionDeuda` (NO extraído)
+### 2.2 `VectorSaldosYMoras` — Serie mensual de saldos y moras por sector ⚠️ ALTA RELEVANCIA
 
-Dentro de `<EvolucionDeuda>` hay un nodo `<AnalisisPromedio>` con variaciones porcentuales respecto a trimestres anteriores:
+Dentro de `InfoAgregada`. Serie temporal de 13 meses con mora máxima por sector.
 
 ```xml
-<AnalisisPromedio cuota="-12.0" cupoTotal="-17.7" saldo="-23.5"
-    porcentajeUso="-7.47" score="0.0" calificacion="0"
-    aperturaCuentas="0.0" cierreCuentas="0.0"
-    totalAbiertas="-6.25" totalCerradas="7.14" moraMaxima="0" />
+<VectorSaldosYMoras poseeSectorCooperativo="true" poseeSectorFinanciero="false" poseeSectorReal="true" poseeSectorTelcos="true">
+  <SaldosYMoras fecha="2024-03-31"
+    totalCuentasMora="1"
+    saldoDeudaTotalMora="60221.0"
+    saldoDeudaTotal="57105.0"
+    morasMaxSectorReal="4"
+    morasMaxSectorCooperativo="N"
+    morasMaxSectorTelcos="C"
+    morasMaximas="4"
+    numCreditos30="0"
+    numCreditosMayorIgual60="1" />
+  <!-- ~13 registros mensuales -->
+</VectorSaldosYMoras>
 ```
 
-El PDF lo muestra como "variación vs periodo anterior". No está en ningún modelo ni serializer.
+**Campos sin parsear:**
+- Presencia en cada sector (`poseeSectorX`)
+- Mora máxima **por sector** en cada mes (puede ser número, "N"=normal, "C"=castigada)
+- Número de créditos en mora 30 días / ≥60 días mensual
 
 ---
 
-### 2.4 `score` en `EvolucionDeuda/Trimestre` (campo ignorado)
+### 2.3 `EndeudamientoActual` — Deuda vigente detallada por sector/tipo/usuario ⚠️ ALTA RELEVANCIA
 
-Cada `<Trimestre>` en `EvolucionDeuda` tiene un atributo `score="0.0"`. El modelo `DebtEvolutionQuarter` no lo incluye. Potencialmente relevante como puntaje crediticio histórico.
+Dentro de `InfoAgregada`. Estructura jerárquica: Sector → TipoCuenta → Usuario → Cuenta.
 
----
-
-### 2.5 `<Cheques>` — Historial de cheques devueltos (NO extraído)
-
-Dentro de `<InfoAgregada>` existe el nodo `<Cheques />`. En este XML está vacío, pero en otros perfiles puede contener historial de cheques sin fondos — dato que el PDF muestra en una sección propia.
-
----
-
-### 2.6 Sección de obligaciones cerradas sin lista dedicada
-
-El full-report actual no tiene un campo `closed_obligations` (obligaciones cerradas). Las CuentaCartera y TarjetaCredito cerradas solo aparecen agrupadas en `payment_habits_closed` por sector. Para replicar el PDF (que lista todas las obligaciones históricas) haría falta exponer ese listado.
-
----
-
-### 2.7 `comportamiento` como string crudo (no decodificado)
-
-El campo `comportamiento` en CuentaCartera y TarjetaCredito llega como string de 47 caracteres:
+```xml
+<EndeudamientoActual>
+  <Sector codSector="3">
+    <TipoCuenta tipoCuenta="CAC">
+      <Usuario tipoUsuario="Principal">
+        <Cuenta estadoActual="Al día"
+                calificacion="D"
+                valorInicial="55000.0"
+                saldoActual="75680.0"
+                saldoMora="0.0"
+                cuotaMes="880.0"
+                comportamientoNegativo="false"
+                totalDeudaCarteras="326476.0" />
+      </Usuario>
+    </TipoCuenta>
+  </Sector>
+</EndeudamientoActual>
 ```
-"NNNNNNNNNNNNNNNNNNNNNNNN--NN-------------------"
-```
-Cada posición representa un mes: `N` = al día, `1`–`6` = meses en mora, `-` = sin dato.
 
-El PDF lo muestra como tabla mes a mes con colores. Actualmente se expone el string raw sin parsear. Para igualar el PDF habría que convertirlo en un array de `{mes, estado}`.
+**Útil para:** cruce directo de deuda activa por tipo sin tener que reconstruirla desde las cuentas individuales.
 
 ---
 
-## 3. Información en el XML que el PDF ignora (valor potencial)
+### 2.4 `ResumenEndeudamiento` — Resumen trimestral por sector y tipo de cartera
 
-Estos campos están en el XML pero **no aparecen en los PDFs de Datacredito**, y podrían ser útiles para el motor de decisión:
+Dentro de `InfoAgregada`. 3 trimestres × 4 sectores × 5 tipos de cartera + garantías.
 
-| Campo XML | Nodo | Descripción | Relevancia para motor |
+```xml
+<ResumenEndeudamiento>
+  <Trimestre fecha="2023-12-01">
+    <Sector sector="Financiero" codigoSector="1" garantiaAdmisible="0" garantiaOtro="0">
+      <Cartera tipo="Comercial"          numeroCuentas="0" valor="0.0" />
+      <Cartera tipo="Hipotecario"        numeroCuentas="0" valor="0.0" />
+      <Cartera tipo="Consumo"            numeroCuentas="1" valor="10856.0" />
+      <Cartera tipo="Tarjeta de Crédito" numeroCuentas="0" valor="0.0" />
+      <Cartera tipo="Microcrédito"       numeroCuentas="0" valor="0.0" />
+    </Sector>
+    <!-- Cooperativo, Real, Telcos -->
+  </Trimestre>
+</ResumenEndeudamiento>
+```
+
+---
+
+### 2.5 `AnalisisVectores` — Historial por cuenta con comportamiento mensual
+
+Dentro de `InfoAgregada`. Organiza cuentas vigentes por sector con 24 meses de `CaracterFecha`.
+
+```xml
+<AnalisisVectores>
+  <Sector nombreSector="Sector Real">
+    <Cuenta entidad="FOCREDISOCIAL" numeroCuenta="000003932" tipoCuenta="CAC"
+            estado="Al día" contieneDatos="true">
+      <CaracterFecha fecha="2024-03-31" />
+      <CaracterFecha fecha="2024-02-29" saldoDeudaTotalMora="6" />
+      <!-- 24 registros mensuales -->
+    </Cuenta>
+    <MorasMaximas>
+      <CaracterFecha fecha="2024-03-31" saldoDeudaTotalMora="4" />
+    </MorasMaximas>
+  </Sector>
+</AnalisisVectores>
+```
+
+**Campos sin parsear:** `estado` por cuenta ("Al día", "Esta en mora 120", "Cart. castigada"), mora mensual detallada por cuenta.
+
+---
+
+### 2.6 `InfoDemografica` — Actividad económica e identificaciones adicionales
+
+Actualmente modelada como vacía. En algunos XMLs contiene datos de entidades reportantes.
+
+```xml
+<InfoDemografica>
+  <ActividadEconomica idRegistro="1" tipo="06" CIIU="0000" estado="" fecha="2011-11-30"
+    nitReporta="00804015582" razonSocial="COOPERATIVA DE CREDITO..." />
+  <OperacionesInternacionales idRegistro="4" operaInt="false" fecha="2019-03-31"
+    nitReporta="00900479582" razonSocial="-" />
+  <Identificacion idRegistro="3" fechaExpedicion="1982-01-01" lugarExpedicion="15001000"
+    nitReporta="00890212341" razonSocial="FUNDACION DELAMUJER..." />
+</InfoDemografica>
+```
+
+**Nota:** `tipo` en `ActividadEconomica` es un código (02=empleado, 06=independiente, etc.). `CIIU` siempre "0000" en la muestra.
+
+---
+
+### 2.7 `InfoAgregadaMicrocredito` — Sección paralela para microcrédito
+
+Mismo esquema que `InfoAgregada` pero filtrado solo para créditos de microcrédito. Presente en algunos XMLs. Incluye adicionalmente:
+
+```xml
+<ImagenTendenciaEndeudamiento>
+  <Series serie="Cartera bancaria">
+    <Valores>
+      <Valor valor="87.3" fecha="2024-03-31" />
+      <!-- 12 meses -->
+    </Valores>
+  </Series>
+</ImagenTendenciaEndeudamiento>
+```
+
+---
+
+### 2.8 `Garantia` en `EndeudamientoGlobal` — Garantías por obligación global
+
+El modelo `GlobalDebtRecord` parsea la entidad pero omite el nodo `<Garantia>`:
+
+```xml
+<EndeudamientoGlobal calificacion="..." fuente="..." saldoPendiente="..." ...>
+  <Entidad nombre="..." nit="..." sector="..." />
+  <Garantia tipo="9" valor="-1" />   ← NO EXTRAÍDO
+</EndeudamientoGlobal>
+```
+
+Códigos de `tipo`: 0, 9. Valor puede ser número o -1.
+
+---
+
+### 2.9 `Adjetivo` — Marcador de comportamiento en CuentaCartera
+
+Nodo hijo directo de algunas `CuentaCartera`. Presente en 3 de 5 XMLs.
+
+```xml
+<Adjetivo codigo="7" fecha="2021-08-31" />
+```
+
+Aparece en cuentas específicas como un flag de estado adicional. Código "7" es el único valor observado.
+
+---
+
+### 2.10 `EndeudamientoGlobal.independiente` — Atributo no parseado
+
+El nodo `<EndeudamientoGlobal>` tiene un atributo `independiente` que no está en el modelo `GlobalDebtRecord`:
+
+```xml
+<EndeudamientoGlobal calificacion="A" fuente="1" saldoPendiente="45605.0"
+  tipoCredito="CMR" moneda="1" numeroCreditos="1"
+  independiente="true"   ← NO EXTRAÍDO
+  fechaReporte="2024-03-31">
+```
+
+---
+
+## 3. Campos sin enum o transformer
+
+Extraídos como string crudo sin traducción:
+
+| Campo | Nodo | Valores observados | Impacto |
 |---|---|---|---|
-| `tipoIdentificacion` + `identificacion` | Todos los nodos de cuenta | NIT / tipo de ID de la entidad acreedora | Trazabilidad de entidades |
-| `codSuscriptor` | `CuentaCartera`, `CuentaCorriente` | Código interno del suscriptor Datacredito | Identificación única de reportante |
-| `codigoDaneCiudad` | Todos los nodos de cuenta | Código DANE del municipio | Geolocalización precisa |
-| `calificacionHD` | `CuentaCartera`, `TarjetaCredito` | Flag booleano de "calificación HD" | Calidad del dato |
-| `mesesPermanencia` | `CuentaCartera/Caracteristicas` | Meses que lleva la cuenta activa | Antigüedad por producto |
-| `probabilidadIncumplimiento` | `CuentaCartera`, `TarjetaCredito` | Probabilidad de default (float, 0.0–1.0) | Modelo de riesgo directo |
-| `score` en `Trimestre` | `EvolucionDeuda` | Score crediticio trimestral | Señal de tendencia |
-| `<Llave>` | Todos los nodos de cuenta | Clave compuesta interna de Datacredito | Deduplicación / matching |
-| `AnalisisPromedio` | `EvolucionDeuda` | Variación % vs trimestres anteriores | Tendencias de comportamiento |
-| `HistoricoSaldos` | `InfoAgregada` | Saldo histórico por tipo de producto | Feature engineering para ML |
-| `<InfoDemografica>` | `NaturalNacional` | Datos demográficos adicionales (vacío en algunos XMLs) | Enriquecimiento de perfil |
-| `<Cheques>` | `InfoAgregada` | Historial de cheques devueltos | Señal de riesgo directa |
-| `Sobregiro` | `CuentaCorriente` | Cupo y días en sobregiro | Liquidez / riesgo |
+| `garantia` | `CuentaCartera/Caracteristicas`, `TarjetaCredito/Caracteristicas` | "0", "1", "2" | Medio — indica tipo de garantía |
+| `ejecucionContrato` | `CuentaCartera/Caracteristicas` | "0", "1", "2", "6" | Bajo |
+| `formaPago` | `CuentaCartera`, `TarjetaCredito` | "0", "1" | Bajo — ya existe `PaymentMethod` enum pero no se aplica aquí |
+| `Consulta.razon` | `Consulta` | texto libre / código | Bajo |
+| `EndeudamientoGlobal.fuente` | `EndeudamientoGlobal` | "1", "2", etc. | Bajo |
+| `account_class` (clase) | `CuentaAhorro/Caracteristicas` | "0", "2", "4" | Bajo — "4"=digital (Nequi/Daviplata) |
+| `VectorSaldosYMoras.morasMaximas` | `SaldosYMoras` | número, "N", "C", "-" | **Alto** — indicador directo de mora |
+| `EndeudamientoActual/Cuenta.estadoActual` | `Cuenta` | "Al día", "Esta en mora 120", "Cart. castigada", "Dudoso recaudo", "Pago Vol" | Alto — texto, no código |
+| `Adjetivo.codigo` | `Adjetivo` | "7" | Desconocido |
+| `ActividadEconomica.tipo` | `InfoDemografica` | "02", "06" | Bajo (02=empleado, 06=independiente aprox.) |
 
 ---
 
-## 4. Observaciones arquitecturales
+## 4. Campos ya parseados que podrían tener enum
 
-- **`basic-report` es redundante:** Todo lo que devuelve está en `full-report`. Si el objetivo es tener un endpoint "liviano", debería acotarse a solo `basic_info` (sin global_report).
-
-- **`closed_portfolio_accounts` no tiene sección propia:** Las CuentaCartera cerradas quedan "escondidas" en `payment_habits_closed`. Podría añadirse `closed_obligations` análogo a `active_obligations`.
-
-- **`payment_habits` usa sector como string raw** (`"1"`, `"2"`, etc.) como clave del dict, en lugar del label del enum (`"FINANCIAL"`, `"COOPERATIVE"`). Menor inconsistencia respecto al resto de la API.
-
-- **0 errores mypy** en 63 archivos — base sólida para agregar los campos faltantes con tipos seguros.
+| Campo | Transformer actual | Observación |
+|---|---|---|
+| `payment_status_code` (EstadoPago.codigo) | Ninguno | Valores "01", "05", "06", "08", "45" — reutilizar `AccountStatus` enum o crear uno propio |
+| `account_statement_code` (EstadoCuenta.codigo) | `transform_status_account` ✓ | Ya funciona |
+| `origin_state_code` (EstadoOrigen.codigo) | `transform_origin_state` ✓ | Ya funciona |
+| `codSector` en `EndeudamientoActual` | `transform_sector` (pendiente aplicar) | "1", "2", "3", "4" |
 
 ---
 
-## 5. Resumen de prioridades (por impacto)
+## 5. Observaciones de arquitectura
 
-| # | Gap | Esfuerzo | Impacto para replica PDF |
+- **Parseo múltiple del mismo XML**: `FullReportBuilder` instancia `BasicDataReportBuilder` y `GlobalReportBuilder` internamente, cada uno re-parsea el XML. Técnicamente funciona pero es ineficiente. Refactor pendiente.
+- **`payment_habits_open/closed`** usa el sector como clave raw del dict ("1", "2"), no el label del enum. Inconsistente con el resto de la API.
+- **`closed_portfolio_accounts`** no tiene sección propia en el full-report. Las CuentaCartera cerradas quedan dentro de `payment_habits_closed`, sin lista plana accesible.
+- **`comportamiento`** (string de 47 chars tipo `"NNNNN--NNN..."`) está expuesto crudo. Cada posición = 1 mes. Parseable a array de `{mes, estado}` si se necesita.
+- **0 errores mypy** (antes de los cambios recientes) — base sólida.
+
+---
+
+## 6. Resumen de prioridades de parseo
+
+| # | Qué | Esfuerzo | Relevancia motor |
 |---|---|---|---|
-| 1 | `HistoricoSaldos` en InfoAgregada | Medio | Alto |
-| 2 | `CuentaCorriente` (checking accounts) | Medio | Alto |
-| 3 | `closed_obligations` lista dedicada | Bajo | Medio |
-| 4 | Parseo de `comportamiento` a array | Bajo | Medio |
-| 5 | `AnalisisPromedio` en EvolucionDeuda | Bajo | Medio |
-| 6 | `score` en Trimestre | Bajo | Bajo |
-| 7 | `<Cheques>` | Bajo (si hay datos) | Bajo-medio |
-| 8 | Manejo de errores en views (500 → respuestas útiles) | Bajo | — |
+| 1 | `PerfilGeneral` (créditos/antigüedad por sector) | Bajo | **Alta** |
+| 2 | `VectorSaldosYMoras` (mora mensual por sector) | Medio | **Alta** |
+| 3 | `EndeudamientoActual` (deuda vigente estructurada) | Medio | **Alta** |
+| 4 | `ResumenEndeudamiento` (trimestral por cartera) | Medio | Media |
+| 5 | `Garantia` en `EndeudamientoGlobal` | Bajo | Media |
+| 6 | `EndeudamientoGlobal.independiente` | Mínimo | Media |
+| 7 | `AnalisisVectores` (historial por cuenta) | Alto | Media |
+| 8 | `InfoDemografica` (actividad económica) | Bajo | Baja-media |
+| 9 | `Adjetivo` en `CuentaCartera` | Mínimo | Desconocida |
+| 10 | `InfoAgregadaMicrocredito` | Alto | Baja (subset de InfoAgregada) |
+| 11 | `ImagenTendenciaEndeudamiento` | Medio | Baja |
