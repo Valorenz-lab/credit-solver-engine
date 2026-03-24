@@ -93,10 +93,38 @@ api/                    ← Stub vacío
 ### Funcional
 - Extracción de reporte básico (persona, metadata, identificación)
 - Extracción de reporte global (cuentas de cartera con estructuras anidadas)
-- Todos los enums (~70 valores en 6 grupos)
-- Todos los transformers (gender, ID type, ID validity, características de cuenta, estado de cuenta)
-- Serializers (TypedDict-based)
-- Endpoint: `GET /api/data-adapter/basic-report/`
+- Extracción de reporte completo (`FullReport`) con todos los nodos del XML:
+  - `CuentaAhorro` → `BankAccount` (cuentas bancarias abiertas y cerradas)
+  - `TarjetaCredito` → `CreditCard` (tarjetas activas e inactivas)
+  - `Consulta` → `QueryRecord` (historial de consultas)
+  - `EndeudamientoGlobal` → `GlobalDebtRecord` (deuda global por entidad)
+  - `InfoAgregada` → `AggregatedInfo` (perfil general, resumen, evolución de deuda)
+- Todos los enums (~85 valores en múltiples grupos):
+  - `basic_info/`: gender, id_validity, types_id
+  - `financial_info/`: account_status, account_type, debtor_quality, obligation_type, payment_frequency, card_holder, sector, credit_rating, account_state_savings, ownership_situation, origin_state, payment_method, currency, global_debt_credit_type, credit_card_franchise, credit_card_class, contract_type, plastic_state
+- Todos los transformers: gender, ID type, ID validity, características de cuenta, estado de cuenta, sector, credit_rating, account_state_savings, ownership_situation, origin_state, payment_method, currency, franchise, credit_card_class, plastic_state, global_debt_credit_type
+- Serializers completos para todos los modelos (TypedDict-based)
+- Endpoints:
+  - `GET /api/data-adapter/basic-report/<document_id>/`
+  - `GET /api/data-adapter/full-report/<document_id>/`
+- `0 errores mypy` en 63 archivos fuente
+
+### Estructura del full-report (replica estructura del PDF Datacredito)
+```json
+{
+  "basic_info": { ... },           // persona + metadata
+  "general_profile": { ... },      // InfoAgregada: resumen, balances, comportamiento
+  "global_summary": [ ... ],       // CuentaCartera abiertas (con estado vigente)
+  "open_bank_accounts": [ ... ],   // CuentaAhorro abiertas (códigos 01, 06, 07)
+  "closed_bank_accounts": [ ... ], // CuentaAhorro cerradas
+  "active_obligations": [ ... ],   // CuentaCartera + TarjetaCredito abiertas
+  "payment_habits_open": { ... },  // Hábitos de pago abiertos, agrupados por sector
+  "payment_habits_closed": { ... },// Hábitos de pago cerrados, agrupados por sector
+  "query_history": [ ... ],        // Consultas (Consulta)
+  "global_debt_records": [ ... ],  // EndeudamientoGlobal
+  "debt_evolution": [ ... ]        // Evolución trimestral de deuda (InfoAgregada)
+}
+```
 
 ### Pendiente / Stubs vacíos
 - `engines/` — motor de decisión (sin implementar)
@@ -105,10 +133,12 @@ api/                    ← Stub vacío
 - Tests (archivos placeholder, sin cobertura real)
 - Manejo de errores en views (actualmente los errores rompen con 500)
 
-### Bugs conocidos
-- `serializer_global_report.py` línea ~49: `"currency": v.credit_rating` debe ser `v.currency_code`
-- `global_report_builder.py`: tiene imports no utilizados
-- `views.py`: ruta del XML hardcodeada
+### Bugs corregidos (ya no aplican)
+- ~~`serializer_global_report.py`: `"currency": v.credit_rating` → `v.currency_code`~~
+- ~~`global_report_builder.py`: imports no utilizados~~
+- ~~`views.py`: ruta del XML hardcodeada~~
+- ~~`types.py` + serializers: tipos `dict` y `list[dict]` sin parámetros (mypy `type-arg`)~~
+- ~~`serializer_global_report.py`: colisión de nombres entre `AccountStatus` enum y `AccountStatus` dataclass model~~
 
 ---
 
