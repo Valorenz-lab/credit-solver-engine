@@ -14,6 +14,9 @@ from data_adapter.xml_adapter.models.aggregated_info_models import (
     AggregatedInfo,
     AggregatedPrincipals,
     AggregatedSummary,
+    BalanceHistoryByType,
+    BalanceHistoryQuarter,
+    DebtEvolutionAnalysis,
     DebtEvolutionQuarter,
     GrandTotal,
     MonthlyBalance,
@@ -25,10 +28,12 @@ from data_adapter.xml_adapter.models.aggregated_info_models import (
 from data_adapter.xml_adapter.models.basic_data_models import BasicReport
 from data_adapter.xml_adapter.models.full_report_models import FullReport
 from data_adapter.xml_adapter.models.global_debt_models import GlobalDebtEntity, GlobalDebtRecord
+from data_adapter.xml_adapter.models.checking_account_models import CheckingAccount
 from data_adapter.xml_adapter.models.global_report_models import PortfolioAccount
 from data_adapter.xml_adapter.models.query_models import QueryRecord
 from data_adapter.xml_adapter.report_builders.bank_account_builder import BankAccountBuilder
 from data_adapter.xml_adapter.report_builders.basic_data_report_builder import BasicDataReportBuilder
+from data_adapter.xml_adapter.report_builders.checking_account_builder import CheckingAccountBuilder
 from data_adapter.xml_adapter.report_builders.credit_card_builder import CreditCardBuilder
 from data_adapter.xml_adapter.report_builders.global_report_builder import GlobalReportBuilder
 from data_adapter.xml_adapter.xml_extractors.xml_extractor import XmlExtractor
@@ -73,6 +78,9 @@ class FullReportBuilder:
         bank_builder = BankAccountBuilder()
         bank_accounts = bank_builder.parse_accounts(ex, report_node)
 
+        checking_builder = CheckingAccountBuilder()
+        checking_accounts = checking_builder.parse_accounts(ex, report_node)
+
         card_builder = CreditCardBuilder()
         credit_cards = card_builder.parse_cards(ex, report_node)
 
@@ -84,6 +92,7 @@ class FullReportBuilder:
             basic_data=basic_data,
             portfolio_accounts=global_report.portfolio_account,
             bank_accounts=bank_accounts,
+            checking_accounts=checking_accounts,
             credit_cards=credit_cards,
             query_records=query_records,
             global_debt_records=global_debt_records,
@@ -157,6 +166,8 @@ class FullReportBuilder:
         grand_totals = self._parse_grand_totals(ex, totales_node)
         portfolio_composition = self._parse_portfolio_composition(ex, composition_node)
         debt_evolution = self._parse_debt_evolution(ex, evolution_node)
+        debt_evolution_analysis = self._parse_debt_evolution_analysis(ex, evolution_node)
+        balance_history_by_type = self._parse_balance_history_by_type(ex, info_node)
 
         return AggregatedInfo(
             summary=summary,
@@ -164,6 +175,8 @@ class FullReportBuilder:
             grand_totals=grand_totals,
             portfolio_composition=portfolio_composition,
             debt_evolution=debt_evolution,
+            debt_evolution_analysis=debt_evolution_analysis,
+            balance_history_by_type=balance_history_by_type,
         )
 
     def _parse_aggregated_summary(
@@ -354,6 +367,7 @@ class FullReportBuilder:
             total_credit_limit=ex.get_int(node, "cupoTotal"),
             balance=ex.get_int(node, "saldo"),
             usage_percentage=ex.get_float(node, "porcentajeUso"),
+            score=ex.get_float(node, "score"),
             rating=ex.get_attr(node, "calificacion"),
             new_accounts=ex.get_int(node, "aperturaCuentas"),
             closed_accounts=ex.get_int(node, "cierreCuentas"),
@@ -361,4 +375,59 @@ class FullReportBuilder:
             total_closed=ex.get_int(node, "totalCerradas"),
             max_delinquency=ex.get_attr(node, "moraMaxima"),
             max_delinquency_months=ex.get_int(node, "mesesMoraMaxima"),
+        )
+
+    def _parse_debt_evolution_analysis(
+        self,
+        ex: XmlExtractor,
+        evolution_node: Optional[ET.Element],
+    ) -> Optional[DebtEvolutionAnalysis]:
+        if evolution_node is None:
+            return None
+        node = ex.find_node("AnalisisPromedio", parent=evolution_node)
+        if node is None:
+            return None
+        return DebtEvolutionAnalysis(
+            installment_pct=ex.get_float(node, "cuota"),
+            total_credit_limit_pct=ex.get_float(node, "cupoTotal"),
+            balance_pct=ex.get_float(node, "saldo"),
+            usage_percentage_pct=ex.get_float(node, "porcentajeUso"),
+            score=ex.get_float(node, "score"),
+            rating=ex.get_attr(node, "calificacion"),
+            new_accounts_pct=ex.get_float(node, "aperturaCuentas"),
+            closed_accounts_pct=ex.get_float(node, "cierreCuentas"),
+            total_open_pct=ex.get_float(node, "totalAbiertas"),
+            total_closed_pct=ex.get_float(node, "totalCerradas"),
+            max_delinquency=ex.get_attr(node, "moraMaxima"),
+        )
+
+    def _parse_balance_history_by_type(
+        self,
+        ex: XmlExtractor,
+        info_node: ET.Element,
+    ) -> tuple[BalanceHistoryByType, ...]:
+        historico_node = ex.find_node("HistoricoSaldos", parent=info_node)
+        if historico_node is None:
+            return ()
+        type_nodes = historico_node.findall("TipoCuenta")
+        return tuple(self._parse_balance_history_type(ex, n) for n in type_nodes)
+
+    def _parse_balance_history_type(
+        self,
+        ex: XmlExtractor,
+        node: ET.Element,
+    ) -> BalanceHistoryByType:
+        quarter_nodes = node.findall("Trimestre")
+        quarters = tuple(
+            BalanceHistoryQuarter(
+                date=ex.get_attr_required(q, "fecha"),
+                total_accounts=ex.get_int(q, "totalCuentas"),
+                accounts_considered=ex.get_int(q, "cuentasConsideradas"),
+                balance=ex.get_int(q, "saldo"),
+            )
+            for q in quarter_nodes
+        )
+        return BalanceHistoryByType(
+            account_type=ex.get_attr(node, "tipo") or "",
+            quarters=quarters,
         )

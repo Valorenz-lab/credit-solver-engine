@@ -1,9 +1,14 @@
+from typing import Optional
+
 from data_adapter.xml_adapter.models.aggregated_info_models import (
     AccountTypeTotals,
     AggregatedBalances,
     AggregatedInfo,
     AggregatedPrincipals,
     AggregatedSummary,
+    BalanceHistoryByType,
+    BalanceHistoryQuarter,
+    DebtEvolutionAnalysis,
     DebtEvolutionQuarter,
     GrandTotal,
     MonthlyBalance,
@@ -18,6 +23,9 @@ from data_adapter.xml_adapter.types import (
     SerializedAggregatedPrincipals,
     SerializedAggregatedSummary,
     SerializedAggregatedSummaryInner,
+    SerializedBalanceHistoryByType,
+    SerializedBalanceHistoryQuarter,
+    SerializedDebtEvolutionAnalysis,
     SerializedDebtEvolutionQuarter,
     SerializedGrandTotal,
     SerializedMonthlyBalance,
@@ -35,6 +43,14 @@ def serialize_aggregated_info(info: AggregatedInfo) -> SerializedAggregatedSumma
         "grand_totals": [_serialize_grand_total(g) for g in info.grand_totals],
         "portfolio_composition": [_serialize_composition_item(c) for c in info.portfolio_composition],
         "debt_evolution": [_serialize_debt_evolution_quarter(q) for q in info.debt_evolution],
+        "debt_evolution_analysis": (
+            _serialize_debt_evolution_analysis(info.debt_evolution_analysis)
+            if info.debt_evolution_analysis is not None
+            else None
+        ),
+        "balance_history_by_type": [
+            _serialize_balance_history_by_type(b) for b in info.balance_history_by_type
+        ],
     }
 
 
@@ -146,6 +162,7 @@ def _serialize_debt_evolution_quarter(q: DebtEvolutionQuarter) -> SerializedDebt
         "total_credit_limit": q.total_credit_limit,
         "balance": q.balance,
         "usage_percentage": q.usage_percentage,
+        "score": q.score,
         "rating": q.rating,
         "new_accounts": q.new_accounts,
         "closed_accounts": q.closed_accounts,
@@ -153,4 +170,36 @@ def _serialize_debt_evolution_quarter(q: DebtEvolutionQuarter) -> SerializedDebt
         "total_closed": q.total_closed,
         "max_delinquency": q.max_delinquency,
         "max_delinquency_months": q.max_delinquency_months,
+    }
+
+
+def _serialize_debt_evolution_analysis(a: DebtEvolutionAnalysis) -> SerializedDebtEvolutionAnalysis:
+    return {
+        "installment_pct": a.installment_pct,
+        "total_credit_limit_pct": a.total_credit_limit_pct,
+        "balance_pct": a.balance_pct,
+        "usage_percentage_pct": a.usage_percentage_pct,
+        "score": a.score,
+        "rating": a.rating,
+        "new_accounts_pct": a.new_accounts_pct,
+        "closed_accounts_pct": a.closed_accounts_pct,
+        "total_open_pct": a.total_open_pct,
+        "total_closed_pct": a.total_closed_pct,
+        "max_delinquency": a.max_delinquency,
+    }
+
+
+def _serialize_balance_history_quarter(q: BalanceHistoryQuarter) -> SerializedBalanceHistoryQuarter:
+    return {
+        "date": q.date,
+        "total_accounts": q.total_accounts,
+        "accounts_considered": q.accounts_considered,
+        "balance": q.balance,
+    }
+
+
+def _serialize_balance_history_by_type(b: BalanceHistoryByType) -> SerializedBalanceHistoryByType:
+    return {
+        "account_type": b.account_type,
+        "quarters": [_serialize_balance_history_quarter(q) for q in b.quarters],
     }

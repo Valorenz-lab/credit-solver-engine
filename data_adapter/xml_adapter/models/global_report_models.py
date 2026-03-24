@@ -54,6 +54,7 @@ class PortfolioCharacteristics:
     contract_execution: Optional[str]
     debtor_quality: Optional[str]        # "00"=Principal, "01"=Codeudor
     guarantee: Optional[str]
+    permanence_months: Optional[int]     # mesesPermanencia
 
 
 @dataclass(frozen=True)
@@ -74,8 +75,13 @@ class PortfolioAccount:
     ownership_status: Optional[str]      # Situación del titular (Principal, Joint, etc.)
     is_blocked: bool                     # Indica si la cuenta está bloqueada
     city: Optional[str]
+    dane_city_code: Optional[str]        # codigoDaneCiudad — DANE municipal code
     industry_sector: Optional[str]       # "1"=Financial, "3"=Real Sector
     default_probability: Optional[float] # PD (Probability of Default)
+    subscriber_code: Optional[str]       # codSuscriptor — Datacredito internal subscriber code
+    entity_id_type: Optional[str]        # tipoIdentificacion of the lending entity
+    entity_id: Optional[str]             # identificacion (NIT) of the lending entity
+    hd_rating: Optional[bool]            # calificacionHD flag
 
     # Relationships with other nodes
     characteristics: PortfolioCharacteristics

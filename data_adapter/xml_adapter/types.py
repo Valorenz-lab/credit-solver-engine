@@ -82,12 +82,13 @@ class SerializedAccountStatus(TypedDict):
 
 
 class SerializedPortfolioCharacteristics(TypedDict):
-    account_type: Optional[str]           
-    obligation_type: Optional[ObligationType]       
+    account_type: Optional[str]
+    obligation_type: Optional[ObligationType]
     contract_type: Optional[str]
     contract_execution: Optional[str]
-    debtor_quality: Optional[DebtorQualityPortfolio]     
+    debtor_quality: Optional[DebtorQualityPortfolio]
     guarantee: Optional[str]
+    permanence_months: Optional[int]
 
 
 class SerializedPortfolioAccount(TypedDict):
@@ -97,13 +98,18 @@ class SerializedPortfolioAccount(TypedDict):
     maturity_date: Optional[str]
 
     payment_history: Optional[str]
-    
+
     credit_rating: Optional[str]
     ownership_status: Optional[str]
     is_blocked: Optional[bool]
     city: Optional[str]
+    dane_city_code: Optional[str]
     industry_sector: Optional[str]
     default_probability: Optional[float]
+    subscriber_code: Optional[str]
+    entity_id_type: Optional[str]
+    entity_id: Optional[str]
+    hd_rating: Optional[bool]
 
     characteristics: Optional[SerializedPortfolioCharacteristics]
     values: Optional[SerializedPortfolioValues]
@@ -143,10 +149,40 @@ class SerializedBankAccount(TypedDict):
     is_blocked: bool
     office: Optional[str]
     city: Optional[str]
+    dane_city_code: Optional[str]
     sector: Optional[str]
     sector_label: Optional[str]
+    entity_id_type: Optional[str]
+    entity_id: Optional[str]
     value: Optional[SerializedBankAccountValue]
     state: Optional[SerializedBankAccountState]
+
+
+class SerializedCheckingAccountOverdraft(TypedDict):
+    value: Optional[float]
+    days: Optional[int]
+    date: Optional[str]
+
+
+class SerializedCheckingAccount(TypedDict):
+    lender: str
+    account_number: str
+    account_class: Optional[str]
+    opened_date: Optional[str]
+    ownership_situation: Optional[str]
+    ownership_situation_label: Optional[str]
+    is_blocked: bool
+    office: Optional[str]
+    city: Optional[str]
+    dane_city_code: Optional[str]
+    sector: Optional[str]
+    sector_label: Optional[str]
+    subscriber_code: Optional[str]
+    entity_id_type: Optional[str]
+    entity_id: Optional[str]
+    value: Optional[SerializedBankAccountValue]
+    state: Optional[SerializedBankAccountState]
+    overdraft: Optional[SerializedCheckingAccountOverdraft]
 
 
 class SerializedCreditCardCharacteristics(TypedDict):
@@ -208,8 +244,12 @@ class SerializedCreditCard(TypedDict):
     is_blocked: bool
     office: Optional[str]
     city: Optional[str]
+    dane_city_code: Optional[str]
     sector: Optional[str]
     sector_label: Optional[str]
+    entity_id_type: Optional[str]
+    entity_id: Optional[str]
+    hd_rating: Optional[bool]
     characteristics: SerializedCreditCardCharacteristics
     values: Optional[SerializedCreditCardValues]
     states: SerializedCreditCardStates
@@ -334,6 +374,7 @@ class SerializedDebtEvolutionQuarter(TypedDict):
     total_credit_limit: Optional[int]
     balance: Optional[int]
     usage_percentage: Optional[float]
+    score: Optional[float]
     rating: Optional[str]
     new_accounts: Optional[int]
     closed_accounts: Optional[int]
@@ -343,12 +384,40 @@ class SerializedDebtEvolutionQuarter(TypedDict):
     max_delinquency_months: Optional[int]
 
 
+class SerializedDebtEvolutionAnalysis(TypedDict):
+    installment_pct: Optional[float]
+    total_credit_limit_pct: Optional[float]
+    balance_pct: Optional[float]
+    usage_percentage_pct: Optional[float]
+    score: Optional[float]
+    rating: Optional[str]
+    new_accounts_pct: Optional[float]
+    closed_accounts_pct: Optional[float]
+    total_open_pct: Optional[float]
+    total_closed_pct: Optional[float]
+    max_delinquency: Optional[str]
+
+
+class SerializedBalanceHistoryQuarter(TypedDict):
+    date: str
+    total_accounts: Optional[int]
+    accounts_considered: Optional[int]
+    balance: Optional[int]
+
+
+class SerializedBalanceHistoryByType(TypedDict):
+    account_type: str
+    quarters: list[SerializedBalanceHistoryQuarter]
+
+
 class SerializedAggregatedSummary(TypedDict):
     summary: SerializedAggregatedSummaryInner
     account_totals: list[SerializedAccountTypeTotals]
     grand_totals: list[SerializedGrandTotal]
     portfolio_composition: list[SerializedPortfolioCompositionItem]
     debt_evolution: list[SerializedDebtEvolutionQuarter]
+    debt_evolution_analysis: Optional[SerializedDebtEvolutionAnalysis]
+    balance_history_by_type: list[SerializedBalanceHistoryByType]
 
 
 class SerializedFullReport(TypedDict):
@@ -357,6 +426,7 @@ class SerializedFullReport(TypedDict):
     global_summary: list[SerializedPortfolioAccount]
     open_bank_accounts: list[SerializedBankAccount]
     closed_bank_accounts: list[SerializedBankAccount]
+    checking_accounts: list[SerializedCheckingAccount]
     active_obligations: list[dict[str, Any]]
     payment_habits_open: dict[str, Any]
     payment_habits_closed: dict[str, Any]

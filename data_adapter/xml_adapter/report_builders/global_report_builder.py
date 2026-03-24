@@ -57,6 +57,7 @@ class GlobalReportBuilder:
         return tuple(self._parse_account_wallet(ex, n) for n in nodos)
 
     def _parse_account_wallet(self, ex: XmlExtractor, node: ET.Element) -> PortfolioAccount:
+        raw_hd = ex.get_attr(node, "calificacionHD")
         return PortfolioAccount(
             lender=ex.get_attr_required(node, "entidad"),
             account_number=ex.get_attr_required(node, "numero"),
@@ -67,8 +68,13 @@ class GlobalReportBuilder:
             ownership_status=ex.get_attr(node, "situacionTitular"),
             is_blocked=ex.get_bool(node, "bloqueada"),
             city=ex.get_attr(node, "ciudad"),
+            dane_city_code=ex.get_attr(node, "codigoDaneCiudad"),
             industry_sector=ex.get_attr(node, "sector"),
             default_probability=ex.get_float(node, "probabilidadIncumplimiento"),
+            subscriber_code=ex.get_attr(node, "codSuscriptor"),
+            entity_id_type=ex.get_attr(node, "tipoIdentificacion"),
+            entity_id=ex.get_attr(node, "identificacion"),
+            hd_rating=raw_hd is not None and raw_hd.lower() in ("true", "1"),
             characteristics=self._parse_characteristics(ex, node),
             values=self._parse_value_portfolio(ex, node),
             account_status=self._parse_states(ex, node),
@@ -84,6 +90,7 @@ class GlobalReportBuilder:
             contract_execution=ex.get_attr(node, "ejecucionContrato"),
             debtor_quality=ex.get_attr(node, "calidadDeudor"),
             guarantee=ex.get_attr(node, "garantia"),
+            permanence_months=ex.get_int(node, "mesesPermanencia"),
         )
 
     def _parse_value_portfolio(self, ex: XmlExtractor, parent: ET.Element) -> PortfolioValues:

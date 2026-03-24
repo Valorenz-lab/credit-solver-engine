@@ -100,6 +100,7 @@ class DebtEvolutionQuarter:
     total_credit_limit: Optional[int]
     balance: Optional[int]
     usage_percentage: Optional[float]
+    score: Optional[float]
     rating: Optional[str]
     new_accounts: Optional[int]
     closed_accounts: Optional[int]
@@ -110,9 +111,43 @@ class DebtEvolutionQuarter:
 
 
 @dataclass(frozen=True)
+class DebtEvolutionAnalysis:
+    """Percentage variation vs previous quarters. Reflects <AnalisisPromedio>."""
+    installment_pct: Optional[float]
+    total_credit_limit_pct: Optional[float]
+    balance_pct: Optional[float]
+    usage_percentage_pct: Optional[float]
+    score: Optional[float]
+    rating: Optional[str]
+    new_accounts_pct: Optional[float]
+    closed_accounts_pct: Optional[float]
+    total_open_pct: Optional[float]
+    total_closed_pct: Optional[float]
+    max_delinquency: Optional[str]
+
+
+@dataclass(frozen=True)
+class BalanceHistoryQuarter:
+    """Quarterly balance snapshot for a specific account type. <HistoricoSaldos/TipoCuenta/Trimestre>."""
+    date: str
+    total_accounts: Optional[int]
+    accounts_considered: Optional[int]
+    balance: Optional[int]
+
+
+@dataclass(frozen=True)
+class BalanceHistoryByType:
+    """Balance evolution per account type. <HistoricoSaldos/TipoCuenta>."""
+    account_type: str
+    quarters: tuple[BalanceHistoryQuarter, ...]
+
+
+@dataclass(frozen=True)
 class AggregatedInfo:
     summary: AggregatedSummary
     account_totals: tuple[AccountTypeTotals, ...]
     grand_totals: tuple[GrandTotal, ...]
     portfolio_composition: tuple[PortfolioCompositionItem, ...]
     debt_evolution: tuple[DebtEvolutionQuarter, ...]
+    debt_evolution_analysis: Optional[DebtEvolutionAnalysis]
+    balance_history_by_type: tuple[BalanceHistoryByType, ...]

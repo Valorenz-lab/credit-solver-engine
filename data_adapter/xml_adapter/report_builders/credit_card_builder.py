@@ -18,6 +18,7 @@ class CreditCardBuilder:
         return tuple(self._parse_card(ex, node) for node in nodes)
 
     def _parse_card(self, ex: XmlExtractor, node: ET.Element) -> CreditCard:
+        raw_hd = ex.get_attr(node, "calificacionHD")
         return CreditCard(
             lender=ex.get_attr_required(node, "entidad"),
             account_number=ex.get_attr_required(node, "numero"),
@@ -31,7 +32,11 @@ class CreditCardBuilder:
             is_blocked=self._parse_blocked(ex, node),
             office=ex.get_attr(node, "oficina"),
             city=ex.get_attr(node, "ciudad"),
+            dane_city_code=ex.get_attr(node, "codigoDaneCiudad"),
             sector=ex.get_attr(node, "sector"),
+            entity_id_type=ex.get_attr(node, "tipoIdentificacion"),
+            entity_id=ex.get_attr(node, "identificacion"),
+            hd_rating=raw_hd is not None and raw_hd.lower() in ("true", "1"),
             characteristics=self._parse_characteristics(ex, node),
             values=self._parse_values(ex, node),
             states=self._parse_states(ex, node),

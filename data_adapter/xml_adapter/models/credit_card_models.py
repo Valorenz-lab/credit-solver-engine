@@ -55,7 +55,11 @@ class CreditCard:
     is_blocked: bool
     office: Optional[str]
     city: Optional[str]
+    dane_city_code: Optional[str]        # codigoDaneCiudad
     sector: Optional[str]
+    entity_id_type: Optional[str]        # tipoIdentificacion of the lending entity
+    entity_id: Optional[str]             # identificacion (NIT) of the lending entity
+    hd_rating: Optional[bool]            # calificacionHD flag
     characteristics: CreditCardCharacteristics
     values: Optional[CreditCardValues]
     states: CreditCardStates

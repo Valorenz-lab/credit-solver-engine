@@ -1,34 +1,33 @@
 from dataclasses import dataclass
 from typing import Optional
 
-
-@dataclass(frozen=True)
-class BankAccountValue:
-    currency_code: Optional[str]
-    date: Optional[str]
-    rating: Optional[str]
+from data_adapter.xml_adapter.models.bank_account_models import BankAccountState, BankAccountValue
 
 
 @dataclass(frozen=True)
-class BankAccountState:
-    code: Optional[str]
-    date: Optional[str]
+class CheckingAccountOverdraft:
+    """<Sobregiro> node — overdraft status."""
+    value: Optional[float]   # valor
+    days: Optional[int]      # dias
+    date: Optional[str]      # fecha
 
 
 @dataclass(frozen=True)
-class BankAccount:
+class CheckingAccount:
+    """Represents a checking account <CuentaCorriente>."""
     lender: str
     account_number: str
     account_class: Optional[str]
     opened_date: Optional[str]
-    rating: Optional[str]
     ownership_situation: Optional[str]
     is_blocked: bool
     office: Optional[str]
     city: Optional[str]
-    dane_city_code: Optional[str]        # codigoDaneCiudad
+    dane_city_code: Optional[str]
     sector: Optional[str]
+    subscriber_code: Optional[str]       # codSuscriptor
     entity_id_type: Optional[str]        # tipoIdentificacion of the lending entity
     entity_id: Optional[str]             # identificacion (NIT) of the lending entity
     value: Optional[BankAccountValue]
     state: Optional[BankAccountState]
+    overdraft: Optional[CheckingAccountOverdraft]

@@ -13,6 +13,7 @@ from data_adapter.xml_adapter.serializers.serializer_aggregated_info import (
     serialize_aggregated_info,
 )
 from data_adapter.xml_adapter.serializers.serializer_bank_account import serialize_bank_account
+from data_adapter.xml_adapter.serializers.serializer_checking_account import serialize_checking_account
 from data_adapter.xml_adapter.serializers.serializer_credit_card import serialize_credit_card
 from data_adapter.xml_adapter.serializers.serializer_global_debt import serialize_global_debt_record
 from data_adapter.xml_adapter.serializers.serializer_global_report import _serialize_account
@@ -63,6 +64,8 @@ def serialize_full_report(report: FullReport) -> SerializedFullReport:
         if not _is_bank_account_open(acc)
     ]
 
+    checking_accounts = [serialize_checking_account(acc) for acc in report.checking_accounts]
+
     # Active obligations: open portfolio accounts + open credit cards
     active_portfolio = [_serialize_account(acc) for acc in report.portfolio_accounts if _is_portfolio_account_open(acc)]
     active_cards = [serialize_credit_card(c) for c in report.credit_cards if _is_credit_card_open(c)]
@@ -87,6 +90,7 @@ def serialize_full_report(report: FullReport) -> SerializedFullReport:
         "global_summary": global_summary,
         "open_bank_accounts": open_bank_accounts,
         "closed_bank_accounts": closed_bank_accounts,
+        "checking_accounts": checking_accounts,
         "active_obligations": active_obligations,
         "payment_habits_open": payment_habits_open,
         "payment_habits_closed": payment_habits_closed,

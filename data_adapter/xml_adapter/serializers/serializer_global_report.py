@@ -19,14 +19,19 @@ def _serialize_account(c: PortfolioAccount) -> SerializedPortfolioAccount:
         "opening_date": c.opened_date,
         "maturity_date": c.maturity_date,
         "payment_history": c.payment_history,
-        
+
         "credit_rating": c.credit_rating,
         "ownership_status": c.ownership_status,
         "is_blocked": c.is_blocked,
         "city": c.city,
+        "dane_city_code": c.dane_city_code,
         "industry_sector": c.industry_sector,
         "default_probability": c.default_probability,
-    
+        "subscriber_code": c.subscriber_code,
+        "entity_id_type": c.entity_id_type,
+        "entity_id": c.entity_id,
+        "hd_rating": c.hd_rating,
+
         "characteristics": _serialize_characteristics(c.characteristics) if c.characteristics else None,
         "values": _serialize_value(c.values) if c.values else None,
         "account_status": _serialize_account_status(c.account_status) if c.account_status else None,
@@ -35,12 +40,13 @@ def _serialize_account(c: PortfolioAccount) -> SerializedPortfolioAccount:
 
 def _serialize_characteristics(c: PortfolioCharacteristics) -> SerializedPortfolioCharacteristics:
     return {
-        "account_type": transform_account_type(c.account_type).value,           # ej: "LBZ", "EDU", "SFI"
+        "account_type": transform_account_type(c.account_type).value,
         "obligation_type": transform_obligation_type(c.obligation_type),
         "contract_type": c.contract_type,
         "contract_execution": c.contract_execution,
-        "debtor_quality": transform_debtor_quality(c.debtor_quality),     # "00"=Principal, "01"=Codeudor
+        "debtor_quality": transform_debtor_quality(c.debtor_quality),
         "guarantee": c.guarantee,
+        "permanence_months": c.permanence_months,
     }
 
 def _serialize_value(v: PortfolioValues) -> SerializedPortfolioValues:
