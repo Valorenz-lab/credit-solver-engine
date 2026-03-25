@@ -49,6 +49,7 @@ from data_adapter.xml_adapter.models.global_debt_models import GlobalDebtEntity,
 from data_adapter.xml_adapter.models.checking_account_models import CheckingAccount
 from data_adapter.xml_adapter.models.global_report_models import PortfolioAccount
 from data_adapter.xml_adapter.models.query_models import QueryRecord
+from data_adapter.xml_adapter.models.score_alert_models import AlertRecord, AlertSource, ScoreReason, ScoreRecord
 from data_adapter.xml_adapter.report_builders.bank_account_builder import BankAccountBuilder
 from data_adapter.xml_adapter.report_builders.basic_data_report_builder import BasicDataReportBuilder
 from data_adapter.xml_adapter.report_builders.checking_account_builder import CheckingAccountBuilder
@@ -106,6 +107,8 @@ class FullReportBuilder:
         global_debt_records = self._parse_global_debt_records(ex, report_node)
         aggregated_info = self._parse_aggregated_info(ex, report_node)
         micro_credit_info = self._parse_micro_credit_info(ex, report_node)
+        score_records = self._parse_score_records(ex, report_node)
+        alert_records = self._parse_alert_records(ex, report_node)
 
         return FullReport(
             basic_data=basic_data,
@@ -117,6 +120,8 @@ class FullReportBuilder:
             global_debt_records=global_debt_records,
             aggregated_info=aggregated_info,
             micro_credit_info=micro_credit_info,
+            score_records=score_records,
+            alert_records=alert_records,
         )
 
     # ── Consulta ──────────────────────────────────────────────────────────────
@@ -748,6 +753,57 @@ class FullReportBuilder:
             contains_data=contains_data,
             monthly_chars=monthly,
             max_delinquency_chars=max_delinquency,
+        )
+
+    # ── Score ─────────────────────────────────────────────────────────────────
+
+    def _parse_score_records(
+        self,
+        ex: XmlExtractor,
+        report_node: ET.Element,
+    ) -> tuple[ScoreRecord, ...]:
+        nodes = report_node.findall("Score")
+        return tuple(self._parse_score_record(ex, n) for n in nodes)
+
+    def _parse_score_record(self, ex: XmlExtractor, node: ET.Element) -> ScoreRecord:
+        reasons = tuple(
+            ScoreReason(code=ex.get_attr_required(r, "codigo"))
+            for r in node.findall("Razon")
+        )
+        return ScoreRecord(
+            score_type=ex.get_attr_required(node, "tipo"),
+            score_value=ex.get_float(node, "puntaje") or 0.0,
+            classification=ex.get_attr(node, "clasificacion"),
+            population_pct=ex.get_int(node, "poblacion"),
+            date=ex.get_attr_required(node, "fecha"),
+            reasons=reasons,
+        )
+
+    # ── Alerta ────────────────────────────────────────────────────────────────
+
+    def _parse_alert_records(
+        self,
+        ex: XmlExtractor,
+        report_node: ET.Element,
+    ) -> tuple[AlertRecord, ...]:
+        nodes = report_node.findall("Alerta")
+        return tuple(self._parse_alert_record(ex, n) for n in nodes)
+
+    def _parse_alert_record(self, ex: XmlExtractor, node: ET.Element) -> AlertRecord:
+        source: Optional[AlertSource] = None
+        source_node = ex.find_node("Fuente", parent=node)
+        if source_node is not None:
+            source = AlertSource(
+                code=ex.get_attr_required(source_node, "codigo"),
+                name=ex.get_attr(source_node, "nombre"),
+            )
+        return AlertRecord(
+            placed_date=ex.get_attr_required(node, "colocacion"),
+            expiry_date=ex.get_attr_required(node, "vencimiento"),
+            cancelled_date=ex.get_attr(node, "modificacion"),
+            code=ex.get_attr_required(node, "codigo"),
+            text=ex.get_attr(node, "texto"),
+            source=source,
         )
 
     def _parse_trend_series(
