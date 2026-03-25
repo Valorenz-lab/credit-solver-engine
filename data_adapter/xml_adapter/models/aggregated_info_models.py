@@ -151,3 +151,189 @@ class AggregatedInfo:
     debt_evolution: tuple[DebtEvolutionQuarter, ...]
     debt_evolution_analysis: Optional[DebtEvolutionAnalysis]
     balance_history_by_type: tuple[BalanceHistoryByType, ...]
+    quarterly_debt_summary: tuple["QuarterlyDebtSummary", ...]
+
+
+# ── ResumenEndeudamiento ──────────────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class QuarterlyDebtCartera:
+    """<Cartera> node within <ResumenEndeudamiento/Trimestre/Sector>."""
+    portfolio_type: str        # tipo — "Comercial", "Hipotecario", "Consumo", etc.
+    account_count: int         # numeroCuentas
+    value: float               # valor
+
+
+@dataclass(frozen=True)
+class QuarterlyDebtSector:
+    """<Sector> node within <ResumenEndeudamiento/Trimestre>."""
+    sector_name: str           # sector — "Financiero", "Cooperativo", etc.
+    sector_code: Optional[str] # codigoSector
+    admissible_guarantee: float
+    other_guarantee: float
+    portfolios: tuple[QuarterlyDebtCartera, ...]
+
+
+@dataclass(frozen=True)
+class QuarterlyDebtSummary:
+    """<Trimestre> node within <ResumenEndeudamiento>."""
+    date: str
+    sectors: tuple[QuarterlyDebtSector, ...]
+
+
+# ── SaldosYMoras ──────────────────────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class MonthlySaldosYMoras:
+    """<SaldosYMoras> node within <VectorSaldosYMoras>."""
+    date: str
+    total_accounts_past_due: int
+    past_due_balance: float
+    total_balance: float
+    max_delinquency_financial: Optional[str]
+    max_delinquency_cooperative: Optional[str]
+    max_delinquency_real: Optional[str]
+    max_delinquency_telecom: Optional[str]
+    max_delinquency_overall: Optional[str]
+    accounts_past_due_30: Optional[int]
+    accounts_past_due_60_plus: Optional[int]
+
+
+@dataclass(frozen=True)
+class VectorSaldosYMoras:
+    """<VectorSaldosYMoras> within <InfoAgregadaMicrocredito/Resumen>."""
+    has_financial: bool
+    has_cooperative: bool
+    has_real: bool
+    has_telecom: bool
+    monthly_data: tuple[MonthlySaldosYMoras, ...]
+
+
+# ── PerfilGeneral ─────────────────────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class SectorCreditCount:
+    """A row in PerfilGeneral (CreditosVigentes, CreditosCerrados, etc.)."""
+    financial: int
+    cooperative: int
+    real: int
+    telecom: int
+    total_as_principal: int
+    total_as_cosigner: int
+
+
+@dataclass(frozen=True)
+class SectorAntiguedad:
+    """<AntiguedadDesde> node — oldest account date per sector."""
+    financial: Optional[str]
+    cooperative: Optional[str]
+    real: Optional[str]
+    telecom: Optional[str]
+
+
+@dataclass(frozen=True)
+class PerfilGeneral:
+    """<PerfilGeneral> within <InfoAgregadaMicrocredito/Resumen>."""
+    active_credits: SectorCreditCount
+    closed_credits: SectorCreditCount
+    restructured_credits: SectorCreditCount
+    refinanced_credits: SectorCreditCount
+    queries_last_6m: SectorCreditCount
+    disputes: SectorCreditCount
+    oldest_account: SectorAntiguedad
+
+
+# ── EndeudamientoActual ───────────────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class CurrentDebtAccount:
+    """<Cuenta> within <EndeudamientoActual/Sector/TipoCuenta/Usuario>."""
+    current_state: Optional[str]
+    rating: Optional[str]
+    initial_value: Optional[float]
+    current_balance: Optional[float]
+    past_due_balance: Optional[float]
+    monthly_installment: Optional[float]
+    has_negative_behavior: Optional[bool]
+    total_portfolio_debt: Optional[float]
+
+
+@dataclass(frozen=True)
+class CurrentDebtByUser:
+    """<Usuario> within <EndeudamientoActual/Sector/TipoCuenta>."""
+    user_type: str             # tipoUsuario — "Principal", "Codeudor", etc.
+    accounts: tuple[CurrentDebtAccount, ...]
+
+
+@dataclass(frozen=True)
+class CurrentDebtByType:
+    """<TipoCuenta> within <EndeudamientoActual/Sector>."""
+    account_type: str
+    by_user: tuple[CurrentDebtByUser, ...]
+
+
+@dataclass(frozen=True)
+class CurrentDebtBySector:
+    """<Sector> within <EndeudamientoActual>."""
+    sector_code: str
+    by_type: tuple[CurrentDebtByType, ...]
+
+
+# ── AnalisisVectores ──────────────────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class BehaviorMonthlyChar:
+    """<CaracterFecha> node — monthly behavior for a specific account."""
+    date: str
+    behavior: Optional[str]   # saldoDeudaTotalMora — "N", "1-6", "C", etc.
+
+
+@dataclass(frozen=True)
+class AccountBehaviorVector:
+    """<Cuenta> within <AnalisisVectores/Sector>."""
+    entity: str
+    account_number: str
+    account_type: str
+    state: Optional[str]
+    contains_data: bool
+    monthly_chars: tuple[BehaviorMonthlyChar, ...]
+    max_delinquency_chars: tuple[BehaviorMonthlyChar, ...]
+
+
+@dataclass(frozen=True)
+class SectorBehaviorVector:
+    """<Sector> within <AnalisisVectores>."""
+    sector_name: str
+    accounts: tuple[AccountBehaviorVector, ...]
+
+
+# ── ImagenTendenciaEndeudamiento ─────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class TrendDataPoint:
+    value: float
+    date: str
+
+
+@dataclass(frozen=True)
+class TrendSeries:
+    """<Series> within <ImagenTendenciaEndeudamiento>."""
+    series_name: str
+    data_points: tuple[TrendDataPoint, ...]
+
+
+# ── InfoAgregadaMicrocredito ──────────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class MicroCreditAggregatedInfo:
+    """
+    <InfoAgregadaMicrocredito> — Sección paralela a InfoAgregada específica para microcrédito.
+    Contiene PerfilGeneral, VectorSaldosYMoras, EndeudamientoActual, AnalisisVectores.
+    """
+    general_profile: Optional[PerfilGeneral]
+    vector_saldos_moras: Optional[VectorSaldosYMoras]
+    current_debt_by_sector: tuple[CurrentDebtBySector, ...]
+    sector_behavior_vectors: tuple[SectorBehaviorVector, ...]
+    trend_series: tuple[TrendSeries, ...]
+    debt_evolution: tuple[DebtEvolutionQuarter, ...]
+    debt_evolution_analysis: Optional[DebtEvolutionAnalysis]

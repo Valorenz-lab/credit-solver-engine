@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from data_adapter.xml_adapter.models.aggregated_info_models import AggregatedInfo
+from data_adapter.xml_adapter.models.aggregated_info_models import AggregatedInfo, MicroCreditAggregatedInfo
 from data_adapter.xml_adapter.models.bank_account_models import BankAccount
 from data_adapter.xml_adapter.models.basic_data_models import BasicReport
 from data_adapter.xml_adapter.models.checking_account_models import CheckingAccount
@@ -21,3 +21,4 @@ class FullReport:
     query_records: tuple[QueryRecord, ...]
     global_debt_records: tuple[GlobalDebtRecord, ...]
     aggregated_info: Optional[AggregatedInfo]
+    micro_credit_info: Optional[MicroCreditAggregatedInfo]
