@@ -9,6 +9,7 @@ from xml.etree import ElementTree as ET
 
 from data_adapter.xml_adapter.exceptions import XmlParseError
 from data_adapter.xml_adapter.models.aggregated_info_models import (
+    AccountBehaviorVector,
     AccountTypeTotals,
     AggregatedBalances,
     AggregatedInfo,
@@ -16,18 +17,35 @@ from data_adapter.xml_adapter.models.aggregated_info_models import (
     AggregatedSummary,
     BalanceHistoryByType,
     BalanceHistoryQuarter,
+    BehaviorMonthlyChar,
+    CurrentDebtAccount,
+    CurrentDebtBySector,
+    CurrentDebtByType,
+    CurrentDebtByUser,
     DebtEvolutionAnalysis,
     DebtEvolutionQuarter,
     GrandTotal,
+    MicroCreditAggregatedInfo,
+    MonthlySaldosYMoras,
     MonthlyBalance,
     MonthlyBehavior,
+    PerfilGeneral,
     PortfolioCompositionItem,
     PortfolioStateCount,
+    QuarterlyDebtCartera,
+    QuarterlyDebtSector,
+    QuarterlyDebtSummary,
+    SectorAntiguedad,
     SectorBalance,
+    SectorBehaviorVector,
+    SectorCreditCount,
+    TrendDataPoint,
+    TrendSeries,
+    VectorSaldosYMoras,
 )
 from data_adapter.xml_adapter.models.basic_data_models import BasicReport
 from data_adapter.xml_adapter.models.full_report_models import FullReport
-from data_adapter.xml_adapter.models.global_debt_models import GlobalDebtEntity, GlobalDebtRecord
+from data_adapter.xml_adapter.models.global_debt_models import GlobalDebtEntity, GlobalDebtGuarantee, GlobalDebtRecord
 from data_adapter.xml_adapter.models.checking_account_models import CheckingAccount
 from data_adapter.xml_adapter.models.global_report_models import PortfolioAccount
 from data_adapter.xml_adapter.models.query_models import QueryRecord
@@ -87,6 +105,7 @@ class FullReportBuilder:
         query_records = self._parse_query_records(ex, report_node)
         global_debt_records = self._parse_global_debt_records(ex, report_node)
         aggregated_info = self._parse_aggregated_info(ex, report_node)
+        micro_credit_info = self._parse_micro_credit_info(ex, report_node)
 
         return FullReport(
             basic_data=basic_data,
@@ -97,7 +116,10 @@ class FullReportBuilder:
             query_records=query_records,
             global_debt_records=global_debt_records,
             aggregated_info=aggregated_info,
+            micro_credit_info=micro_credit_info,
         )
+
+    # ── Consulta ──────────────────────────────────────────────────────────────
 
     def _parse_query_records(
         self,
@@ -120,6 +142,8 @@ class FullReportBuilder:
             sector=ex.get_attr(node, "sector"),
         )
 
+    # ── EndeudamientoGlobal ───────────────────────────────────────────────────
+
     def _parse_global_debt_records(
         self,
         ex: XmlExtractor,
@@ -136,6 +160,7 @@ class FullReportBuilder:
             nit=ex.get_attr(entity_node, "nit"),
             sector=ex.get_attr(entity_node, "sector"),
         )
+        guarantee = self._parse_global_debt_guarantee(ex, node)
         return GlobalDebtRecord(
             rating=ex.get_attr(node, "calificacion"),
             source=ex.get_attr(node, "fuente"),
@@ -144,8 +169,26 @@ class FullReportBuilder:
             currency=ex.get_attr(node, "moneda"),
             credit_count=ex.get_int(node, "numeroCreditos"),
             report_date=ex.get_attr(node, "fechaReporte"),
+            independent=ex.get_attr(node, "independiente"),
             entity=entity,
+            guarantee=guarantee,
         )
+
+    def _parse_global_debt_guarantee(
+        self,
+        ex: XmlExtractor,
+        node: ET.Element,
+    ) -> Optional[GlobalDebtGuarantee]:
+        guarantee_node = ex.find_node("Garantia", parent=node)
+        if guarantee_node is None:
+            return None
+        return GlobalDebtGuarantee(
+            guarantee_type=ex.get_attr(guarantee_node, "tipo"),
+            value=ex.get_float(guarantee_node, "valor"),
+            date=ex.get_attr(guarantee_node, "fecha"),
+        )
+
+    # ── InfoAgregada ──────────────────────────────────────────────────────────
 
     def _parse_aggregated_info(
         self,
@@ -160,6 +203,7 @@ class FullReportBuilder:
         totales_node = ex.find_node("Totales", parent=info_node)
         composition_node = ex.find_node("ComposicionPortafolio", parent=info_node)
         evolution_node = ex.find_node("EvolucionDeuda", parent=info_node)
+        quarterly_debt_node = ex.find_node("ResumenEndeudamiento", parent=info_node)
 
         summary = self._parse_aggregated_summary(ex, resumen_node)
         account_totals = self._parse_account_type_totals(ex, totales_node)
@@ -168,6 +212,7 @@ class FullReportBuilder:
         debt_evolution = self._parse_debt_evolution(ex, evolution_node)
         debt_evolution_analysis = self._parse_debt_evolution_analysis(ex, evolution_node)
         balance_history_by_type = self._parse_balance_history_by_type(ex, info_node)
+        quarterly_debt_summary = self._parse_quarterly_debt_summary(ex, quarterly_debt_node)
 
         return AggregatedInfo(
             summary=summary,
@@ -177,6 +222,7 @@ class FullReportBuilder:
             debt_evolution=debt_evolution,
             debt_evolution_analysis=debt_evolution_analysis,
             balance_history_by_type=balance_history_by_type,
+            quarterly_debt_summary=quarterly_debt_summary,
         )
 
     def _parse_aggregated_summary(
@@ -431,3 +477,298 @@ class FullReportBuilder:
             account_type=ex.get_attr(node, "tipo") or "",
             quarters=quarters,
         )
+
+    def _parse_quarterly_debt_summary(
+        self,
+        ex: XmlExtractor,
+        node: Optional[ET.Element],
+    ) -> tuple[QuarterlyDebtSummary, ...]:
+        if node is None:
+            return ()
+        return tuple(self._parse_quarterly_debt_trimestre(ex, t) for t in node.findall("Trimestre"))
+
+    def _parse_quarterly_debt_trimestre(
+        self,
+        ex: XmlExtractor,
+        node: ET.Element,
+    ) -> QuarterlyDebtSummary:
+        sectors = tuple(self._parse_quarterly_debt_sector(ex, s) for s in node.findall("Sector"))
+        return QuarterlyDebtSummary(
+            date=ex.get_attr_required(node, "fecha"),
+            sectors=sectors,
+        )
+
+    def _parse_quarterly_debt_sector(
+        self,
+        ex: XmlExtractor,
+        node: ET.Element,
+    ) -> QuarterlyDebtSector:
+        portfolios = tuple(
+            QuarterlyDebtCartera(
+                portfolio_type=ex.get_attr(c, "tipo") or "",
+                account_count=ex.get_int(c, "numeroCuentas") or 0,
+                value=ex.get_float(c, "valor") or 0.0,
+            )
+            for c in node.findall("Cartera")
+        )
+        return QuarterlyDebtSector(
+            sector_name=ex.get_attr(node, "sector") or "",
+            sector_code=ex.get_attr(node, "codigoSector"),
+            admissible_guarantee=ex.get_float(node, "garantiaAdmisible") or 0.0,
+            other_guarantee=ex.get_float(node, "garantiaOtro") or 0.0,
+            portfolios=portfolios,
+        )
+
+    # ── InfoAgregadaMicrocredito ──────────────────────────────────────────────
+
+    def _parse_micro_credit_info(
+        self,
+        ex: XmlExtractor,
+        report_node: ET.Element,
+    ) -> Optional[MicroCreditAggregatedInfo]:
+        micro_node = ex.find_node("InfoAgregadaMicrocredito", parent=report_node)
+        if micro_node is None:
+            return None
+
+        resumen_node = ex.find_node("Resumen", parent=micro_node)
+        general_profile = self._parse_perfil_general(ex, resumen_node)
+        vector_saldos = self._parse_vector_saldos_moras(ex, resumen_node)
+        current_debt = self._parse_endeudamiento_actual(ex, resumen_node)
+
+        analisis_node = ex.find_node("AnalisisVectores", parent=micro_node)
+        sector_vectors = self._parse_analisis_vectores(ex, analisis_node)
+
+        imagen_node = ex.find_node("ImagenTendenciaEndeudamiento", parent=resumen_node) if resumen_node is not None else None
+        trend_series = self._parse_trend_series(ex, imagen_node)
+
+        evolucion_node = ex.find_node("EvolucionDeuda", parent=micro_node)
+        debt_evolution = self._parse_debt_evolution(ex, evolucion_node)
+        debt_evolution_analysis = self._parse_debt_evolution_analysis(ex, evolucion_node)
+
+        return MicroCreditAggregatedInfo(
+            general_profile=general_profile,
+            vector_saldos_moras=vector_saldos,
+            current_debt_by_sector=current_debt,
+            sector_behavior_vectors=sector_vectors,
+            trend_series=trend_series,
+            debt_evolution=debt_evolution,
+            debt_evolution_analysis=debt_evolution_analysis,
+        )
+
+    def _parse_perfil_general(
+        self,
+        ex: XmlExtractor,
+        resumen_node: Optional[ET.Element],
+    ) -> Optional[PerfilGeneral]:
+        if resumen_node is None:
+            return None
+        node = ex.find_node("PerfilGeneral", parent=resumen_node)
+        if node is None:
+            return None
+
+        def _sector_count(tag: str) -> SectorCreditCount:
+            child = ex.find_node(tag, parent=node)
+            return SectorCreditCount(
+                financial=ex.get_int(child, "sectorFinanciero") or 0,
+                cooperative=ex.get_int(child, "sectorCooperativo") or 0,
+                real=ex.get_int(child, "sectorReal") or 0,
+                telecom=ex.get_int(child, "sectorTelcos") or 0,
+                total_as_principal=ex.get_int(child, "totalComoPrincipal") or 0,
+                total_as_cosigner=ex.get_int(child, "totalComoCodeudorYOtros") or 0,
+            )
+
+        antiguedad_node = ex.find_node("AntiguedadDesde", parent=node)
+        oldest = SectorAntiguedad(
+            financial=ex.get_attr(antiguedad_node, "sectorFinanciero"),
+            cooperative=ex.get_attr(antiguedad_node, "sectorCooperativo"),
+            real=ex.get_attr(antiguedad_node, "sectorReal"),
+            telecom=ex.get_attr(antiguedad_node, "sectorTelcos"),
+        )
+
+        return PerfilGeneral(
+            active_credits=_sector_count("CreditosVigentes"),
+            closed_credits=_sector_count("CreditosCerrados"),
+            restructured_credits=_sector_count("CreditosReestructurados"),
+            refinanced_credits=_sector_count("CreditosRefinanciados"),
+            queries_last_6m=_sector_count("ConsultaUlt6Meses"),
+            disputes=_sector_count("Desacuerdos"),
+            oldest_account=oldest,
+        )
+
+    def _parse_vector_saldos_moras(
+        self,
+        ex: XmlExtractor,
+        resumen_node: Optional[ET.Element],
+    ) -> Optional[VectorSaldosYMoras]:
+        if resumen_node is None:
+            return None
+        node = ex.find_node("VectorSaldosYMoras", parent=resumen_node)
+        if node is None:
+            return None
+
+        def _bool_attr(attr: str) -> bool:
+            val = ex.get_attr(node, attr)
+            return val is not None and val.lower() == "true"
+
+        monthly: list[MonthlySaldosYMoras] = []
+        for sm in node.findall("SaldosYMoras"):
+            monthly.append(MonthlySaldosYMoras(
+                date=ex.get_attr_required(sm, "fecha"),
+                total_accounts_past_due=ex.get_int(sm, "totalCuentasMora") or 0,
+                past_due_balance=ex.get_float(sm, "saldoDeudaTotalMora") or 0.0,
+                total_balance=ex.get_float(sm, "saldoDeudaTotal") or 0.0,
+                max_delinquency_financial=ex.get_attr(sm, "morasMaxSectorFinanciero"),
+                max_delinquency_cooperative=ex.get_attr(sm, "morasMaxSectorCooperativo"),
+                max_delinquency_real=ex.get_attr(sm, "morasMaxSectorReal"),
+                max_delinquency_telecom=ex.get_attr(sm, "morasMaxSectorTelcos"),
+                max_delinquency_overall=ex.get_attr(sm, "morasMaximas"),
+                accounts_past_due_30=ex.get_int(sm, "numCreditos30"),
+                accounts_past_due_60_plus=ex.get_int(sm, "numCreditosMayorIgual60"),
+            ))
+
+        return VectorSaldosYMoras(
+            has_financial=_bool_attr("poseeSectorFinanciero"),
+            has_cooperative=_bool_attr("poseeSectorCooperativo"),
+            has_real=_bool_attr("poseeSectorReal"),
+            has_telecom=_bool_attr("poseeSectorTelcos"),
+            monthly_data=tuple(monthly),
+        )
+
+    def _parse_endeudamiento_actual(
+        self,
+        ex: XmlExtractor,
+        resumen_node: Optional[ET.Element],
+    ) -> tuple[CurrentDebtBySector, ...]:
+        if resumen_node is None:
+            return ()
+        actual_node = ex.find_node("EndeudamientoActual", parent=resumen_node)
+        if actual_node is None:
+            return ()
+        return tuple(self._parse_current_debt_sector(ex, s) for s in actual_node.findall("Sector"))
+
+    def _parse_current_debt_sector(
+        self,
+        ex: XmlExtractor,
+        node: ET.Element,
+    ) -> CurrentDebtBySector:
+        by_type = tuple(self._parse_current_debt_type(ex, t) for t in node.findall("TipoCuenta"))
+        return CurrentDebtBySector(
+            sector_code=ex.get_attr(node, "codSector") or "",
+            by_type=by_type,
+        )
+
+    def _parse_current_debt_type(
+        self,
+        ex: XmlExtractor,
+        node: ET.Element,
+    ) -> CurrentDebtByType:
+        by_user = tuple(self._parse_current_debt_user(ex, u) for u in node.findall("Usuario"))
+        return CurrentDebtByType(
+            account_type=ex.get_attr(node, "tipoCuenta") or "",
+            by_user=by_user,
+        )
+
+    def _parse_current_debt_user(
+        self,
+        ex: XmlExtractor,
+        node: ET.Element,
+    ) -> CurrentDebtByUser:
+        def _bool_str(val: Optional[str]) -> Optional[bool]:
+            if val is None:
+                return None
+            return val.lower() == "true"
+
+        accounts = tuple(
+            CurrentDebtAccount(
+                current_state=ex.get_attr(c, "estadoActual"),
+                rating=ex.get_attr(c, "calificacion"),
+                initial_value=ex.get_float(c, "valorInicial"),
+                current_balance=ex.get_float(c, "saldoActual"),
+                past_due_balance=ex.get_float(c, "saldoMora"),
+                monthly_installment=ex.get_float(c, "cuotaMes"),
+                has_negative_behavior=_bool_str(ex.get_attr(c, "comportamientoNegativo")),
+                total_portfolio_debt=ex.get_float(c, "totalDeudaCarteras"),
+            )
+            for c in node.findall("Cuenta")
+        )
+        return CurrentDebtByUser(
+            user_type=ex.get_attr(node, "tipoUsuario") or "",
+            accounts=accounts,
+        )
+
+    def _parse_analisis_vectores(
+        self,
+        ex: XmlExtractor,
+        analisis_node: Optional[ET.Element],
+    ) -> tuple[SectorBehaviorVector, ...]:
+        if analisis_node is None:
+            return ()
+        return tuple(self._parse_sector_behavior(ex, s) for s in analisis_node.findall("Sector"))
+
+    def _parse_sector_behavior(
+        self,
+        ex: XmlExtractor,
+        node: ET.Element,
+    ) -> SectorBehaviorVector:
+        accounts = tuple(self._parse_account_behavior(ex, c) for c in node.findall("Cuenta"))
+        return SectorBehaviorVector(
+            sector_name=ex.get_attr(node, "nombreSector") or "",
+            accounts=accounts,
+        )
+
+    def _parse_account_behavior(
+        self,
+        ex: XmlExtractor,
+        node: ET.Element,
+    ) -> AccountBehaviorVector:
+        contains_raw = ex.get_attr(node, "contieneDatos")
+        contains_data = contains_raw is not None and contains_raw.lower() == "true"
+
+        monthly = tuple(
+            BehaviorMonthlyChar(
+                date=ex.get_attr_required(c, "fecha"),
+                behavior=ex.get_attr(c, "saldoDeudaTotalMora"),
+            )
+            for c in node.findall("CaracterFecha")
+        )
+        moras_node = ex.find_node("MorasMaximas", parent=node)
+        max_delinquency = tuple(
+            BehaviorMonthlyChar(
+                date=ex.get_attr_required(c, "fecha"),
+                behavior=ex.get_attr(c, "saldoDeudaTotalMora"),
+            )
+            for c in (moras_node.findall("CaracterFecha") if moras_node is not None else [])
+        )
+
+        return AccountBehaviorVector(
+            entity=ex.get_attr(node, "entidad") or "",
+            account_number=ex.get_attr(node, "numeroCuenta") or "",
+            account_type=ex.get_attr(node, "tipoCuenta") or "",
+            state=ex.get_attr(node, "estado"),
+            contains_data=contains_data,
+            monthly_chars=monthly,
+            max_delinquency_chars=max_delinquency,
+        )
+
+    def _parse_trend_series(
+        self,
+        ex: XmlExtractor,
+        imagen_node: Optional[ET.Element],
+    ) -> tuple[TrendSeries, ...]:
+        if imagen_node is None:
+            return ()
+        result: list[TrendSeries] = []
+        for series_node in imagen_node.findall("Series"):
+            valores_node = ex.find_node("Valores", parent=series_node)
+            data_points = tuple(
+                TrendDataPoint(
+                    value=ex.get_float(v, "valor") or 0.0,
+                    date=ex.get_attr_required(v, "fecha"),
+                )
+                for v in (valores_node.findall("Valor") if valores_node is not None else [])
+            )
+            result.append(TrendSeries(
+                series_name=ex.get_attr(series_node, "serie") or "",
+                data_points=data_points,
+            ))
+        return tuple(result)
