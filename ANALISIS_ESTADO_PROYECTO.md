@@ -1,5 +1,5 @@
 # Análisis de estado — Credit Solver Engine
-> Actualizado: 2026-03-25 | Basado en análisis de 26 XMLs reales + XSD v1.6 + Manual Insumos XML v1.6.4 + revisión crítica de arquitectura y convenciones
+> Actualizado: 2026-03-25 (rev 2) | Basado en análisis de 26 XMLs reales + XSD v1.6 + Manual Insumos XML v1.6.4 + revisión crítica de arquitectura y convenciones
 
 ---
 
@@ -105,16 +105,16 @@ Basado en XSD v1.6 + Manual v1.6.4 + 26 XMLs de prueba.
 | `transform_query_reason(value)` | Código razón consulta → QueryReason |
 | `transform_payment_behavior_char(char)` | Carácter individual de comportamiento → PaymentBehavior |
 
-### 4.3 Transformers que FALTAN aplicar
+### 4.3 Transformers aplicados ✅
 
-Estos transformers existen pero **no están siendo aplicados** en los serializers todavía:
+Todos los transformers están siendo aplicados en los serializers:
 
-| Campo | Nodo | Transformer disponible | Prioridad |
-|---|---|---|---|
-| `razon` | `Consulta` | `transform_query_reason` | Media |
-| `garantia` | `CuentaCartera/Caracteristicas` | `transform_guarantee` | Media |
-| `garantia` | `TarjetaCredito/Caracteristicas` | `transform_guarantee` | Media |
-| `comportamiento` (char-by-char) | `CuentaCartera`, `TarjetaCredito` | `transform_payment_behavior_char` | Alta (scoring) |
+| Campo | Nodo | Transformer | Serializer | Campo resultado |
+|---|---|---|---|---|
+| `razon` | `Consulta` | `transform_query_reason` | `serializer_query.py` | `reason_label` |
+| `garantia` | `CuentaCartera/Caracteristicas` | `transform_guarantee` | `serializer_global_report.py` | `guarantee_label` |
+| `garantia` | `TarjetaCredito/Caracteristicas` | `transform_guarantee` | `serializer_credit_card.py` | `guarantee_label` |
+| `comportamiento` (char-by-char) | `CuentaCartera`, `TarjetaCredito` | `transform_payment_behavior_char` | `serializer_global_report.py`, `serializer_credit_card.py` | `payment_history_parsed` |
 
 ---
 
@@ -171,26 +171,18 @@ El manual usa "Ver tabla N" pero **no incluye los valores** en el documento. Las
 
 La excepción permitida es que el string que identifica el **nodo XML** en las llamadas a `find_node("PerfilGeneral", ...)` sea en español. El nombre del **método Python** debe ser en inglés.
 
-#### B. Docstrings en español en archivos de enums
+#### B. ~~Docstrings en español en archivos de enums~~ — ✅ Corregido
 
-| Archivo | Problema |
-|---|---|
-| `guarantee_type.py` | Docstring `"Tabla 11 — Tipo de garantía en hábito de pago obligaciones vigentes."` — en español |
-| `current_debt_state.py` | Docstring con texto explicativo en español |
-| `payment_status.py` | Comentario `"Tabla 4 — Estado de pago acumulado"` — en español |
-| `payment_behavior.py` | Docstring `"Tabla 5 — Comportamiento de pago."` — en español |
-| `query_reason.py` | Docstring `"Tabla 23 — Razón de la consulta"` — en español |
+Todos los enums tienen ahora docstrings en inglés siguiendo el patrón:
+`"""Table 11 — Guarantee type (garantia field in CuentaCartera/Caracteristicas)."""`
 
-El patrón correcto sería: `"""Table 11 — Guarantee type (garantia field in CuentaCartera/Caracteristicas)."""`. La referencia a la tabla y el nombre del campo XML puede quedar en español porque es el nodo real.
+#### C. ~~Enum con valor semánticamente duplicado~~ — ✅ Corregido
 
-#### C. Enum con valor semánticamente duplicado
-
-`QueryReason` tiene dos keys con el mismo valor string:
+`QueryReason` fue corregido: los códigos `01` y `04` tienen labels diferenciados:
 ```python
-SOLICITUD_PRODUCTO   = "Solicitud de producto"   # code "01"
-SOLICITUD_PRODUCTO_B = "Solicitud de producto"   # code "04"
+PRODUCT_REQUEST_01 = "Solicitud de producto (01)"
+PRODUCT_REQUEST_04 = "Solicitud de producto (04)"
 ```
-El sufijo `_B` es una señal de que el nombre no refleja el dominio. Si los códigos `01` y `04` representan conceptos distintos en Datacredito, los labels deberían diferenciarse. Si no se conoce la distinción, el enum key debe reflejar eso: `SOLICITUD_PRODUCTO_01`, `SOLICITUD_PRODUCTO_04`.
 
 #### D. Helpers internos como funciones anidadas en métodos de clase
 
@@ -441,17 +433,19 @@ El serializer de `InfoAgregada` y `InfoAgregadaMicrocredito` juntos produce 425 
 | 4 | Enum `PaymentStatus` + transformer `transform_payment_status` para `payment_status_code` (EstadoPago, Tabla 4) — campo `payment_status_label` | ✅ Implementado | Media |
 | 5 | Modelos `ScoreRecord`/`AlertRecord`, parseo en builder, serializer, TypedDicts en `types.py` — campos `score_records`/`alert_records` en full-report | ✅ Implementado | Media |
 | 6 | Enum `CurrentDebtState` + `transform_current_debt_state` para `current_state` en `EndeudamientoActual` — campo `current_state_label` | ✅ Implementado | **Alta** (scoring) |
-| 7 | Refactor separación de responsabilidades (ver sección 9) | ⏳ Pendiente | Mantenibilidad / Performance |
-| 8 | Manejo de errores en views (actualmente 500 en cualquier excepción) | ⏳ Pendiente | Producción |
-| 9 | Correcciones de convenciones (ver sección 7.1) | ⏳ Pendiente | Consistencia |
+| 7 | Correcciones de convenciones 7.1 B (docstrings) y 7.1 C (QueryReason duplicado) | ✅ Implementado | Consistencia |
+| 8 | Refactor separación de responsabilidades (ver sección 9) | ⏳ Pendiente | Mantenibilidad / Performance |
+| 9 | Manejo de errores en views (actualmente 500 en cualquier excepción) | ⏳ Pendiente | Producción |
+| 10 | Correcciones de convenciones restantes (ver sección 7.1 A, D, E, F, G, H) | ⏳ Pendiente | Consistencia |
 
-### Estado de sesión (2026-03-25) — Pendiente de verificar
+### Estado de sesión (2026-03-25 rev 2) — Implementado, pendiente mypy
 
-Los cambios 1-6 están **escritos en disco** pero **mypy aún no fue ejecutado**. Antes de continuar:
+Prioridades 1-6 implementadas y verificadas en código. Pendiente:
 
-1. Ejecutar `mypy data_adapter/` desde el entorno virtual (`.venv/bin/activate`)
-2. Corregir los errores que aparezcan (si los hay)
-3. Verificar con un XML real que el endpoint `/api/data-adapter/full-report/<id>/` devuelve los nuevos campos
+1. Ejecutar `mypy data_adapter/` desde el entorno virtual (`.venv/bin/activate`) para confirmar 0 errores
+2. Verificar con un XML real que el endpoint `/api/data-adapter/full-report/<id>/` devuelve los nuevos campos
+
+**Bug corregido en esta sesión:** `card_holder.py` — `PRINCIPAL = "Principal",` tenía coma trailing que convertía el valor en tuple; corregido a `PRINCIPAL = "Principal"`.
 
 ### Archivos modificados en prioridades 1-6
 
@@ -459,8 +453,14 @@ Los cambios 1-6 están **escritos en disco** pero **mypy aún no fue ejecutado**
 |---|---|
 | `data_adapter/xml_adapter/types.py` | Nuevos campos en `SerializedPortfolioAccount`, `SerializedCreditCard`, `SerializedPortfolioCharacteristics`, `SerializedCreditCardCharacteristics`, `SerializedAccountStatus`, `SerializedQueryRecord`, `SerializedCurrentDebtAccount`; nuevos TypedDicts `SerializedScoreReason`, `SerializedScoreRecord`, `SerializedAlertSource`, `SerializedAlertRecord`; `SerializedFullReport` con `score_records` y `alert_records` |
 | `data_adapter/xml_adapter/serializers/serializer_global_report.py` | `payment_history_parsed`, `guarantee_label`, `payment_status_label` |
-| `data_adapter/xml_adapter/serializers/serializer_credit_card.py` | `payment_history_parsed`, `guarantee_label`; corregido `payment_status_label` (usaba `transform_payment_method` por error, ahora usa `transform_payment_status`) |
+| `data_adapter/xml_adapter/serializers/serializer_credit_card.py` | `payment_history_parsed`, `guarantee_label`, `payment_status_label` |
 | `data_adapter/xml_adapter/serializers/serializer_query.py` | `reason_label` |
 | `data_adapter/xml_adapter/serializers/serializer_aggregated_info.py` | `current_state_label` en `_serialize_current_debt_account` |
 | `data_adapter/xml_adapter/serializers/serializer_score_alert.py` | **Nuevo** — `serialize_score_record`, `serialize_alert_record` |
 | `data_adapter/xml_adapter/serializers/serializer_full_report.py` | Importa `serializer_score_alert`, añade `score_records` y `alert_records` al return dict |
+| `data_adapter/enums/financial_info/guarantee_type.py` | Docstring corregido a inglés |
+| `data_adapter/enums/financial_info/query_reason.py` | Docstring corregido a inglés; valores duplicados diferenciados con sufijo `_01`/`_04` |
+| `data_adapter/enums/financial_info/payment_behavior.py` | Docstring corregido a inglés |
+| `data_adapter/enums/financial_info/payment_status.py` | Docstring corregido a inglés |
+| `data_adapter/enums/financial_info/current_debt_state.py` | Docstring corregido a inglés |
+| `data_adapter/enums/financial_info/card_holder.py` | Bug: coma trailing en `PRINCIPAL` eliminada |
