@@ -7,7 +7,7 @@ class PaymentMethod(StrEnum):
     EXECUTIVE = "Proceso ejecutivo"
     PAYMENT_ORDER = "Mandamiento de pago"
     RESTRUCTURING = "Reestructuración"
-    DACION = "Dación en pago"
+    DATION_IN_PAYMENT = "Dación en pago"
     CESSION = "Cesión"
     DONATION = "Donación"
     UNKNOWN = "Desconocido"

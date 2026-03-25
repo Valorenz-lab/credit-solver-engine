@@ -12,6 +12,6 @@ class DebtorQualityPortfolio(StrEnum):
     OTHER_GUARANTORS = "Otros Garantes"
     GUARANTOR = "Fiador"
     NOT_APPLICABLE = "No aplica"
-    CO_TITULAR = "Cotitular "
+    CO_HOLDER = "Cotitular "
     COMMUNAL = "Comunal (solo para cuentas de Microcrédito-MCR)"
     UNKNOWN = "Desconocido"

@@ -4,7 +4,7 @@ from enum import StrEnum
 
 
 class CardHolder(StrEnum):
-    PRINCIPAL = "Principal",
+    PRINCIPAL = "Principal"
     AUTHORIZED_USER_CARD = "Amparada"
-    CO_TITULAR = "Cotitular"
+    CO_HOLDER = "Cotitular"
     UNKNOWN = "Desconocido"
