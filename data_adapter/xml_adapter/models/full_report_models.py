@@ -9,6 +9,7 @@ from data_adapter.xml_adapter.models.credit_card_models import CreditCard
 from data_adapter.xml_adapter.models.global_debt_models import GlobalDebtRecord
 from data_adapter.xml_adapter.models.global_report_models import PortfolioAccount
 from data_adapter.xml_adapter.models.query_models import QueryRecord
+from data_adapter.xml_adapter.models.score_alert_models import AlertRecord, ScoreRecord
 
 
 @dataclass(frozen=True)
@@ -22,3 +23,5 @@ class FullReport:
     global_debt_records: tuple[GlobalDebtRecord, ...]
     aggregated_info: Optional[AggregatedInfo]
     micro_credit_info: Optional[MicroCreditAggregatedInfo]
+    score_records: tuple[ScoreRecord, ...]
+    alert_records: tuple[AlertRecord, ...]
