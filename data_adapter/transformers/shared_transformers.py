@@ -65,7 +65,7 @@ def transform_ownership_situation(value: Optional[str]) -> OwnershipSituation:
         return OwnershipSituation.UNKNOWN
     mapping = {
         "0": OwnershipSituation.NORMAL,
-        "1": OwnershipSituation.CONCORDATO,
+        "1": OwnershipSituation.CONCORDAT,
         "2": OwnershipSituation.FORCED_LIQUIDATION,
         "3": OwnershipSituation.VOLUNTARY_LIQUIDATION,
         "4": OwnershipSituation.REORGANIZATION,
@@ -100,7 +100,7 @@ def transform_payment_method(value: Optional[str]) -> PaymentMethod:
         "2": PaymentMethod.EXECUTIVE,
         "3": PaymentMethod.PAYMENT_ORDER,
         "4": PaymentMethod.RESTRUCTURING,
-        "5": PaymentMethod.DACION,
+        "5": PaymentMethod.DATION_IN_PAYMENT,
         "6": PaymentMethod.CESSION,
         "7": PaymentMethod.DONATION,
         "99": PaymentMethod.UNKNOWN,
@@ -124,24 +124,24 @@ def transform_guarantee(value: Optional[str]) -> GuaranteeType:
     if not value or value.strip() == "":
         return GuaranteeType.UNKNOWN
     mapping: dict[str, GuaranteeType] = {
-        "0": GuaranteeType.SIN_GARANTIA,
-        "1": GuaranteeType.ADMISIBLE,
-        "2": GuaranteeType.OTRAS_IDONEAS,
-        "A": GuaranteeType.NO_IDONEA,
-        "B": GuaranteeType.BIENES_RAICES,
-        "C": GuaranteeType.OTRAS_PRENDAS,
-        "D": GuaranteeType.PIGNORACION_RENTAS,
-        "E": GuaranteeType.GARANTIA_SOBERANA,
-        "F": GuaranteeType.CONTRATO_FIDUCIA,
+        "0": GuaranteeType.NO_GUARANTEE,
+        "1": GuaranteeType.ADMISSIBLE,
+        "2": GuaranteeType.OTHER_SUITABLE,
+        "A": GuaranteeType.NOT_SUITABLE,
+        "B": GuaranteeType.REAL_ESTATE,
+        "C": GuaranteeType.OTHER_COLLATERAL,
+        "D": GuaranteeType.REVENUE_PLEDGE,
+        "E": GuaranteeType.SOVEREIGN_GUARANTEE,
+        "F": GuaranteeType.TRUST_CONTRACT,
         "G": GuaranteeType.FNG,
-        "H": GuaranteeType.CARTA_CREDITO,
+        "H": GuaranteeType.LETTER_OF_CREDIT,
         "I": GuaranteeType.FAG,
         "J": GuaranteeType.PERSONAL,
-        "K": GuaranteeType.LEASING_NO_INMOBILIARIO,
-        "L": GuaranteeType.LEASING_INMOBILIARIO,
-        "M": GuaranteeType.PRENDA_TITULO,
-        "N": GuaranteeType.DEPOSITOS,
-        "O": GuaranteeType.SEGURO_CREDITO,
+        "K": GuaranteeType.NON_REAL_ESTATE_LEASING,
+        "L": GuaranteeType.REAL_ESTATE_LEASING,
+        "M": GuaranteeType.SECURITIES_PLEDGE,
+        "N": GuaranteeType.CASH_DEPOSITS,
+        "O": GuaranteeType.CREDIT_INSURANCE,
     }
     return mapping.get(value.strip().upper(), GuaranteeType.UNKNOWN)
 
@@ -151,15 +151,15 @@ def transform_query_reason(value: Optional[str]) -> QueryReason:
     if not value or value.strip() == "":
         return QueryReason.UNKNOWN
     mapping: dict[str, QueryReason] = {
-        "00": QueryReason.RAZON_DESCONOCIDA,
-        "01": QueryReason.SOLICITUD_PRODUCTO,
-        "02": QueryReason.REVISION_PORTAFOLIO_ENTIDAD,
-        "03": QueryReason.REVISION_PORTAFOLIO_CIUDADANO,
-        "04": QueryReason.SOLICITUD_PRODUCTO_B,
-        "05": QueryReason.CONSULTA_INTERNET,
-        "06": QueryReason.CONSULTA_CAS_VIRTUAL,
-        "07": QueryReason.POR_DEFINIR_07,
-        "08": QueryReason.POR_DEFINIR_08,
+        "00": QueryReason.UNKNOWN_REASON,
+        "01": QueryReason.PRODUCT_REQUEST_01,
+        "02": QueryReason.ENTITY_PORTFOLIO_REVIEW,
+        "03": QueryReason.CITIZEN_PORTFOLIO_REVIEW,
+        "04": QueryReason.PRODUCT_REQUEST_04,
+        "05": QueryReason.CITIZEN_INTERNET_QUERY,
+        "06": QueryReason.CITIZEN_CAS_QUERY,
+        "07": QueryReason.UNDEFINED_07,
+        "08": QueryReason.UNDEFINED_08,
     }
     return mapping.get(value.strip(), QueryReason.UNKNOWN)
 
@@ -170,15 +170,15 @@ def transform_payment_status(value: Optional[str]) -> PaymentStatus:
         return PaymentStatus.UNKNOWN
     mapping: dict[str, PaymentStatus] = {
         "01": PaymentStatus.NORMAL,
-        "04": PaymentStatus.MORA_60,
-        "05": PaymentStatus.MORA_90,
-        "06": PaymentStatus.MORA_120_MAS,
-        "08": PaymentStatus.CASTIGADA,
-        "12": PaymentStatus.DUDOSO_RECAUDO,
-        "16": PaymentStatus.ACUERDO_PAGO,
-        "20": PaymentStatus.MORA_30,
-        "45": PaymentStatus.REESTRUCTURADA,
-        "47": PaymentStatus.SALDO_A_FAVOR,
+        "04": PaymentStatus.PAST_DUE_60,
+        "05": PaymentStatus.PAST_DUE_90,
+        "06": PaymentStatus.PAST_DUE_120_PLUS,
+        "08": PaymentStatus.WRITTEN_OFF,
+        "12": PaymentStatus.DOUBTFUL_COLLECTION,
+        "16": PaymentStatus.PAYMENT_AGREEMENT,
+        "20": PaymentStatus.PAST_DUE_30,
+        "45": PaymentStatus.RESTRUCTURED,
+        "47": PaymentStatus.CREDIT_BALANCE,
     }
     return mapping.get(value.strip(), PaymentStatus.UNKNOWN)
 
@@ -189,35 +189,35 @@ def transform_current_debt_state(value: Optional[str]) -> CurrentDebtState:
         return CurrentDebtState.UNKNOWN
     v = value.strip().lower()
     if v == "al día" or v.startswith("al día") and "mora" not in v:
-        return CurrentDebtState.AL_DIA
+        return CurrentDebtState.ON_TIME
     if "castigada" in v or "castig" in v:
-        return CurrentDebtState.CASTIGADA
+        return CurrentDebtState.WRITTEN_OFF
     if "dudoso" in v:
-        return CurrentDebtState.DUDOSO_RECAUDO
+        return CurrentDebtState.DOUBTFUL_COLLECTION
     if "mora 30" in v or "m 30" in v:
-        return CurrentDebtState.MORA_30
+        return CurrentDebtState.PAST_DUE_30
     if "mora 60" in v or "m 60" in v:
-        return CurrentDebtState.MORA_60
+        return CurrentDebtState.PAST_DUE_60
     if "mora 90" in v or "m 90" in v or "rm 90" in v:
-        return CurrentDebtState.MORA_90
+        return CurrentDebtState.PAST_DUE_90
     if "mora 120" in v or "m 120" in v or "rm 120" in v:
-        return CurrentDebtState.MORA_120
+        return CurrentDebtState.PAST_DUE_120
     return CurrentDebtState.UNKNOWN
 
 
 def transform_payment_behavior_char(char: str) -> PaymentBehavior:
     """Transform a single behavior character (Tabla 5) to PaymentBehavior enum."""
     mapping: dict[str, PaymentBehavior] = {
-        "N": PaymentBehavior.AL_DIA,
-        "1": PaymentBehavior.MORA_30,
-        "2": PaymentBehavior.MORA_60,
-        "3": PaymentBehavior.MORA_90,
-        "4": PaymentBehavior.MORA_120,
-        "5": PaymentBehavior.MORA_150,
-        "6": PaymentBehavior.MORA_180,
-        "D": PaymentBehavior.DUDOSO_RECAUDO,
-        "C": PaymentBehavior.CASTIGADA,
-        "-": PaymentBehavior.SIN_INFORMACION,
-        " ": PaymentBehavior.SIN_INFORMACION,
+        "N": PaymentBehavior.ON_TIME,
+        "1": PaymentBehavior.PAST_DUE_30,
+        "2": PaymentBehavior.PAST_DUE_60,
+        "3": PaymentBehavior.PAST_DUE_90,
+        "4": PaymentBehavior.PAST_DUE_120,
+        "5": PaymentBehavior.PAST_DUE_150,
+        "6": PaymentBehavior.PAST_DUE_180,
+        "D": PaymentBehavior.DOUBTFUL_COLLECTION,
+        "C": PaymentBehavior.WRITTEN_OFF,
+        "-": PaymentBehavior.NO_INFORMATION,
+        " ": PaymentBehavior.NO_INFORMATION,
     }
-    return mapping.get(char.upper(), PaymentBehavior.SIN_INFORMACION)
+    return mapping.get(char.upper(), PaymentBehavior.NO_INFORMATION)

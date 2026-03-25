@@ -79,7 +79,7 @@ def serialize_aggregated_info(info: AggregatedInfo) -> SerializedAggregatedSumma
         "account_totals": [_serialize_account_type_totals(t) for t in info.account_totals],
         "grand_totals": [_serialize_grand_total(g) for g in info.grand_totals],
         "portfolio_composition": [_serialize_composition_item(c) for c in info.portfolio_composition],
-        "debt_evolution": [_serialize_debt_evolution_quarter(q) for q in info.debt_evolution],
+        "debt_evolution": [serialize_debt_evolution_quarter(q) for q in info.debt_evolution],
         "debt_evolution_analysis": (
             _serialize_debt_evolution_analysis(info.debt_evolution_analysis)
             if info.debt_evolution_analysis is not None
@@ -101,7 +101,7 @@ def serialize_micro_credit_info(info: MicroCreditAggregatedInfo) -> SerializedMi
         "current_debt_by_sector": [_serialize_current_debt_sector(s) for s in info.current_debt_by_sector],
         "sector_behavior_vectors": [_serialize_sector_behavior_vector(s) for s in info.sector_behavior_vectors],
         "trend_series": [_serialize_trend_series(t) for t in info.trend_series],
-        "debt_evolution": [_serialize_debt_evolution_quarter(q) for q in info.debt_evolution],
+        "debt_evolution": [serialize_debt_evolution_quarter(q) for q in info.debt_evolution],
         "debt_evolution_analysis": (
             _serialize_debt_evolution_analysis(info.debt_evolution_analysis)
             if info.debt_evolution_analysis is not None
@@ -211,7 +211,7 @@ def _serialize_state_count(s: PortfolioStateCount) -> SerializedPortfolioStateCo
     }
 
 
-def _serialize_debt_evolution_quarter(q: DebtEvolutionQuarter) -> SerializedDebtEvolutionQuarter:
+def serialize_debt_evolution_quarter(q: DebtEvolutionQuarter) -> SerializedDebtEvolutionQuarter:
     return {
         "date": q.date,
         "installment": q.installment,

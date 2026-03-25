@@ -33,7 +33,7 @@ def transform_debtor_quality(value: Optional[str])->DebtorQualityPortfolio:
             7: DebtorQualityPortfolio.OTHER_GUARANTORS,
             8: DebtorQualityPortfolio.GUARANTOR,
             9: DebtorQualityPortfolio.NOT_APPLICABLE,
-            96: DebtorQualityPortfolio.CO_TITULAR,
+            96: DebtorQualityPortfolio.CO_HOLDER,
             97: DebtorQualityPortfolio.COMMUNAL,
             99: DebtorQualityPortfolio.NOT_APPLICABLE
         }
