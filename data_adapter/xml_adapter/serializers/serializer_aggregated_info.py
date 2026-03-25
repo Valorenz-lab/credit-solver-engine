@@ -1,6 +1,8 @@
 from typing import Optional
 
+from data_adapter.transformers.shared_transformers import transform_payment_behavior_char
 from data_adapter.xml_adapter.models.aggregated_info_models import (
+    AccountBehaviorVector,
     AccountTypeTotals,
     AggregatedBalances,
     AggregatedInfo,
@@ -8,16 +10,34 @@ from data_adapter.xml_adapter.models.aggregated_info_models import (
     AggregatedSummary,
     BalanceHistoryByType,
     BalanceHistoryQuarter,
+    BehaviorMonthlyChar,
+    CurrentDebtAccount,
+    CurrentDebtBySector,
+    CurrentDebtByType,
+    CurrentDebtByUser,
     DebtEvolutionAnalysis,
     DebtEvolutionQuarter,
     GrandTotal,
+    MicroCreditAggregatedInfo,
+    MonthlySaldosYMoras,
     MonthlyBalance,
     MonthlyBehavior,
+    PerfilGeneral,
     PortfolioCompositionItem,
     PortfolioStateCount,
+    QuarterlyDebtCartera,
+    QuarterlyDebtSector,
+    QuarterlyDebtSummary,
+    SectorAntiguedad,
     SectorBalance,
+    SectorBehaviorVector,
+    SectorCreditCount,
+    TrendDataPoint,
+    TrendSeries,
+    VectorSaldosYMoras,
 )
 from data_adapter.xml_adapter.types import (
+    SerializedAccountBehaviorVector,
     SerializedAccountTypeTotals,
     SerializedAggregatedBalances,
     SerializedAggregatedPrincipals,
@@ -25,14 +45,31 @@ from data_adapter.xml_adapter.types import (
     SerializedAggregatedSummaryInner,
     SerializedBalanceHistoryByType,
     SerializedBalanceHistoryQuarter,
+    SerializedBehaviorMonthlyChar,
+    SerializedCurrentDebtAccount,
+    SerializedCurrentDebtBySector,
+    SerializedCurrentDebtByType,
+    SerializedCurrentDebtByUser,
     SerializedDebtEvolutionAnalysis,
     SerializedDebtEvolutionQuarter,
     SerializedGrandTotal,
+    SerializedMicroCreditAggregatedInfo,
     SerializedMonthlyBalance,
     SerializedMonthlyBehavior,
+    SerializedMonthlySaldosYMoras,
+    SerializedPerfilGeneral,
     SerializedPortfolioCompositionItem,
     SerializedPortfolioStateCount,
+    SerializedQuarterlyDebtCartera,
+    SerializedQuarterlyDebtSector,
+    SerializedQuarterlyDebtSummary,
+    SerializedSectorAntiguedad,
     SerializedSectorBalance,
+    SerializedSectorBehaviorVector,
+    SerializedSectorCreditCount,
+    SerializedTrendDataPoint,
+    SerializedTrendSeries,
+    SerializedVectorSaldosYMoras,
 )
 
 
@@ -51,6 +88,25 @@ def serialize_aggregated_info(info: AggregatedInfo) -> SerializedAggregatedSumma
         "balance_history_by_type": [
             _serialize_balance_history_by_type(b) for b in info.balance_history_by_type
         ],
+        "quarterly_debt_summary": [
+            _serialize_quarterly_debt_summary(q) for q in info.quarterly_debt_summary
+        ],
+    }
+
+
+def serialize_micro_credit_info(info: MicroCreditAggregatedInfo) -> SerializedMicroCreditAggregatedInfo:
+    return {
+        "general_profile": _serialize_perfil_general(info.general_profile) if info.general_profile else None,
+        "vector_saldos_moras": _serialize_vector_saldos_moras(info.vector_saldos_moras) if info.vector_saldos_moras else None,
+        "current_debt_by_sector": [_serialize_current_debt_sector(s) for s in info.current_debt_by_sector],
+        "sector_behavior_vectors": [_serialize_sector_behavior_vector(s) for s in info.sector_behavior_vectors],
+        "trend_series": [_serialize_trend_series(t) for t in info.trend_series],
+        "debt_evolution": [_serialize_debt_evolution_quarter(q) for q in info.debt_evolution],
+        "debt_evolution_analysis": (
+            _serialize_debt_evolution_analysis(info.debt_evolution_analysis)
+            if info.debt_evolution_analysis is not None
+            else None
+        ),
     }
 
 
@@ -202,4 +258,167 @@ def _serialize_balance_history_by_type(b: BalanceHistoryByType) -> SerializedBal
     return {
         "account_type": b.account_type,
         "quarters": [_serialize_balance_history_quarter(q) for q in b.quarters],
+    }
+
+
+def _serialize_quarterly_debt_cartera(c: QuarterlyDebtCartera) -> SerializedQuarterlyDebtCartera:
+    return {
+        "portfolio_type": c.portfolio_type,
+        "account_count": c.account_count,
+        "value": c.value,
+    }
+
+
+def _serialize_quarterly_debt_sector(s: QuarterlyDebtSector) -> SerializedQuarterlyDebtSector:
+    return {
+        "sector_name": s.sector_name,
+        "sector_code": s.sector_code,
+        "admissible_guarantee": s.admissible_guarantee,
+        "other_guarantee": s.other_guarantee,
+        "portfolios": [_serialize_quarterly_debt_cartera(c) for c in s.portfolios],
+    }
+
+
+def _serialize_quarterly_debt_summary(q: QuarterlyDebtSummary) -> SerializedQuarterlyDebtSummary:
+    return {
+        "date": q.date,
+        "sectors": [_serialize_quarterly_debt_sector(s) for s in q.sectors],
+    }
+
+
+# ── MicroCredit serializers ───────────────────────────────────────────────────
+
+def _serialize_sector_credit_count(c: SectorCreditCount) -> SerializedSectorCreditCount:
+    return {
+        "financial": c.financial,
+        "cooperative": c.cooperative,
+        "real": c.real,
+        "telecom": c.telecom,
+        "total_as_principal": c.total_as_principal,
+        "total_as_cosigner": c.total_as_cosigner,
+    }
+
+
+def _serialize_sector_antiguedad(a: SectorAntiguedad) -> SerializedSectorAntiguedad:
+    return {
+        "financial": a.financial,
+        "cooperative": a.cooperative,
+        "real": a.real,
+        "telecom": a.telecom,
+    }
+
+
+def _serialize_perfil_general(p: PerfilGeneral) -> SerializedPerfilGeneral:
+    return {
+        "active_credits": _serialize_sector_credit_count(p.active_credits),
+        "closed_credits": _serialize_sector_credit_count(p.closed_credits),
+        "restructured_credits": _serialize_sector_credit_count(p.restructured_credits),
+        "refinanced_credits": _serialize_sector_credit_count(p.refinanced_credits),
+        "queries_last_6m": _serialize_sector_credit_count(p.queries_last_6m),
+        "disputes": _serialize_sector_credit_count(p.disputes),
+        "oldest_account": _serialize_sector_antiguedad(p.oldest_account),
+    }
+
+
+def _serialize_monthly_saldos_moras(m: MonthlySaldosYMoras) -> SerializedMonthlySaldosYMoras:
+    return {
+        "date": m.date,
+        "total_accounts_past_due": m.total_accounts_past_due,
+        "past_due_balance": m.past_due_balance,
+        "total_balance": m.total_balance,
+        "max_delinquency_financial": m.max_delinquency_financial,
+        "max_delinquency_cooperative": m.max_delinquency_cooperative,
+        "max_delinquency_real": m.max_delinquency_real,
+        "max_delinquency_telecom": m.max_delinquency_telecom,
+        "max_delinquency_overall": m.max_delinquency_overall,
+        "accounts_past_due_30": m.accounts_past_due_30,
+        "accounts_past_due_60_plus": m.accounts_past_due_60_plus,
+    }
+
+
+def _serialize_vector_saldos_moras(v: VectorSaldosYMoras) -> SerializedVectorSaldosYMoras:
+    return {
+        "has_financial": v.has_financial,
+        "has_cooperative": v.has_cooperative,
+        "has_real": v.has_real,
+        "has_telecom": v.has_telecom,
+        "monthly_data": [_serialize_monthly_saldos_moras(m) for m in v.monthly_data],
+    }
+
+
+def _serialize_current_debt_account(a: CurrentDebtAccount) -> SerializedCurrentDebtAccount:
+    return {
+        "current_state": a.current_state,
+        "rating": a.rating,
+        "initial_value": a.initial_value,
+        "current_balance": a.current_balance,
+        "past_due_balance": a.past_due_balance,
+        "monthly_installment": a.monthly_installment,
+        "has_negative_behavior": a.has_negative_behavior,
+        "total_portfolio_debt": a.total_portfolio_debt,
+    }
+
+
+def _serialize_current_debt_user(u: CurrentDebtByUser) -> SerializedCurrentDebtByUser:
+    return {
+        "user_type": u.user_type,
+        "accounts": [_serialize_current_debt_account(a) for a in u.accounts],
+    }
+
+
+def _serialize_current_debt_type(t: CurrentDebtByType) -> SerializedCurrentDebtByType:
+    return {
+        "account_type": t.account_type,
+        "by_user": [_serialize_current_debt_user(u) for u in t.by_user],
+    }
+
+
+def _serialize_current_debt_sector(s: CurrentDebtBySector) -> SerializedCurrentDebtBySector:
+    return {
+        "sector_code": s.sector_code,
+        "by_type": [_serialize_current_debt_type(t) for t in s.by_type],
+    }
+
+
+def _serialize_behavior_monthly_char(c: BehaviorMonthlyChar) -> SerializedBehaviorMonthlyChar:
+    behavior_label: Optional[str] = None
+    if c.behavior is not None and len(c.behavior) == 1:
+        behavior_label = transform_payment_behavior_char(c.behavior).value
+    return {
+        "date": c.date,
+        "behavior": c.behavior,
+        "behavior_label": behavior_label,
+    }
+
+
+def _serialize_account_behavior_vector(a: AccountBehaviorVector) -> SerializedAccountBehaviorVector:
+    return {
+        "entity": a.entity,
+        "account_number": a.account_number,
+        "account_type": a.account_type,
+        "state": a.state,
+        "contains_data": a.contains_data,
+        "monthly_chars": [_serialize_behavior_monthly_char(c) for c in a.monthly_chars],
+        "max_delinquency_chars": [_serialize_behavior_monthly_char(c) for c in a.max_delinquency_chars],
+    }
+
+
+def _serialize_sector_behavior_vector(s: SectorBehaviorVector) -> SerializedSectorBehaviorVector:
+    return {
+        "sector_name": s.sector_name,
+        "accounts": [_serialize_account_behavior_vector(a) for a in s.accounts],
+    }
+
+
+def _serialize_trend_data_point(p: TrendDataPoint) -> SerializedTrendDataPoint:
+    return {
+        "value": p.value,
+        "date": p.date,
+    }
+
+
+def _serialize_trend_series(t: TrendSeries) -> SerializedTrendSeries:
+    return {
+        "series_name": t.series_name,
+        "data_points": [_serialize_trend_data_point(p) for p in t.data_points],
     }

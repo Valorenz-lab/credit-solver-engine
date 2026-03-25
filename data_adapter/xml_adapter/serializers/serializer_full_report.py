@@ -11,6 +11,7 @@ from data_adapter.xml_adapter.models.global_report_models import PortfolioAccoun
 from data_adapter.xml_adapter.serializers.serializer_aggregated_info import (
     _serialize_debt_evolution_quarter,
     serialize_aggregated_info,
+    serialize_micro_credit_info,
 )
 from data_adapter.xml_adapter.serializers.serializer_bank_account import serialize_bank_account
 from data_adapter.xml_adapter.serializers.serializer_checking_account import serialize_checking_account
@@ -23,6 +24,7 @@ from data_adapter.xml_adapter.types import (
     SerializedAggregatedSummary,
     SerializedDebtEvolutionQuarter,
     SerializedFullReport,
+    SerializedMicroCreditAggregatedInfo,
     SerializedPortfolioAccount,
 )
 
@@ -84,6 +86,12 @@ def serialize_full_report(report: FullReport) -> SerializedFullReport:
         else []
     )
 
+    micro_credit: Optional[SerializedMicroCreditAggregatedInfo] = (
+        serialize_micro_credit_info(report.micro_credit_info)
+        if report.micro_credit_info is not None
+        else None
+    )
+
     return {
         "basic_info": basic_info,
         "general_profile": general_profile,
@@ -97,6 +105,7 @@ def serialize_full_report(report: FullReport) -> SerializedFullReport:
         "query_history": query_history,
         "global_debt_records": global_debt_records,
         "debt_evolution": debt_evolution,
+        "micro_credit_info": micro_credit,
     }
 
 
