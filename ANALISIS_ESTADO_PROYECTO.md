@@ -163,13 +163,33 @@ El manual usa "Ver tabla N" pero **no incluye los valores** en el documento. Las
 
 ## 8. Resumen de prioridades restantes
 
-| # | Qué | Esfuerzo | Relevancia motor |
+| # | Qué | Estado | Relevancia motor |
 |---|---|---|---|
-| 1 | Aplicar `transform_payment_behavior_char` en serializer de CuentaCartera/TarjetaCredito | Bajo | **Alta** (scoring) |
-| 2 | Aplicar `transform_query_reason` en serializer de QueryRecord | Mínimo | Media |
-| 3 | Aplicar `transform_guarantee` en serializer de CuentaCartera/TarjetaCredito | Mínimo | Media |
-| 4 | Enum + transformer para `payment_status_code` (EstadoPago, Tabla 4) | Bajo | Media |
-| 5 | Parsear `Score` y `Alerta` si aparecen en futuros XMLs | Bajo | Media |
-| 6 | Enum para `current_state` en `EndeudamientoActual` (texto libre) | Medio | Alta (scoring) |
-| 7 | Refactor: parseo único del XML en `FullReportBuilder` | Medio | Performance |
-| 8 | Manejo de errores en views (actualmente 500 en cualquier excepción) | Bajo | Producción |
+| 1 | Aplicar `transform_payment_behavior_char` en serializer de CuentaCartera/TarjetaCredito — campo `payment_history_parsed` | ✅ Implementado | **Alta** (scoring) |
+| 2 | Aplicar `transform_query_reason` en serializer de QueryRecord — campo `reason_label` | ✅ Implementado | Media |
+| 3 | Aplicar `transform_guarantee` en serializer de CuentaCartera/TarjetaCredito — campo `guarantee_label` | ✅ Implementado | Media |
+| 4 | Enum `PaymentStatus` + transformer `transform_payment_status` para `payment_status_code` (EstadoPago, Tabla 4) — campo `payment_status_label` | ✅ Implementado | Media |
+| 5 | Modelos `ScoreRecord`/`AlertRecord`, parseo en builder, serializer, TypedDicts en `types.py` — campos `score_records`/`alert_records` en full-report | ✅ Implementado | Media |
+| 6 | Enum `CurrentDebtState` + `transform_current_debt_state` para `current_state` en `EndeudamientoActual` — campo `current_state_label` | ✅ Implementado | **Alta** (scoring) |
+| 7 | Refactor: parseo único del XML en `FullReportBuilder` (actualmente re-parsea 2 veces) | ⏳ Pendiente | Performance |
+| 8 | Manejo de errores en views (actualmente 500 en cualquier excepción) | ⏳ Pendiente | Producción |
+
+### Estado de sesión (2026-03-25) — Pendiente de verificar
+
+Los cambios 1-6 están **escritos en disco** pero **mypy aún no fue ejecutado**. Antes de continuar:
+
+1. Ejecutar `mypy data_adapter/` desde el entorno virtual (`.venv/bin/activate`)
+2. Corregir los errores que aparezcan (si los hay)
+3. Verificar con un XML real que el endpoint `/api/data-adapter/full-report/<id>/` devuelve los nuevos campos
+
+### Archivos modificados en prioridades 1-6
+
+| Archivo | Cambios |
+|---|---|
+| `data_adapter/xml_adapter/types.py` | Nuevos campos en `SerializedPortfolioAccount`, `SerializedCreditCard`, `SerializedPortfolioCharacteristics`, `SerializedCreditCardCharacteristics`, `SerializedAccountStatus`, `SerializedQueryRecord`, `SerializedCurrentDebtAccount`; nuevos TypedDicts `SerializedScoreReason`, `SerializedScoreRecord`, `SerializedAlertSource`, `SerializedAlertRecord`; `SerializedFullReport` con `score_records` y `alert_records` |
+| `data_adapter/xml_adapter/serializers/serializer_global_report.py` | `payment_history_parsed`, `guarantee_label`, `payment_status_label` |
+| `data_adapter/xml_adapter/serializers/serializer_credit_card.py` | `payment_history_parsed`, `guarantee_label`; corregido `payment_status_label` (usaba `transform_payment_method` por error, ahora usa `transform_payment_status`) |
+| `data_adapter/xml_adapter/serializers/serializer_query.py` | `reason_label` |
+| `data_adapter/xml_adapter/serializers/serializer_aggregated_info.py` | `current_state_label` en `_serialize_current_debt_account` |
+| `data_adapter/xml_adapter/serializers/serializer_score_alert.py` | **Nuevo** — `serialize_score_record`, `serialize_alert_record` |
+| `data_adapter/xml_adapter/serializers/serializer_full_report.py` | Importa `serializer_score_alert`, añade `score_records` y `alert_records` al return dict |

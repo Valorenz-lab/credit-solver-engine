@@ -75,7 +75,8 @@ class SerializedAccountStatus(TypedDict):
     origin_state_code: Optional[str]
     origin_statement_date: Optional[str]
 
-    payment_status_code: Optional[str]   
+    payment_status_code: Optional[str]
+    payment_status_label: Optional[str]
     payment_status_months: Optional[str]
     payment_status_date: Optional[str]
     
@@ -88,6 +89,7 @@ class SerializedPortfolioCharacteristics(TypedDict):
     contract_execution: Optional[str]
     debtor_quality: Optional[DebtorQualityPortfolio]
     guarantee: Optional[str]
+    guarantee_label: Optional[str]
     permanence_months: Optional[int]
 
 
@@ -98,6 +100,7 @@ class SerializedPortfolioAccount(TypedDict):
     maturity_date: Optional[str]
 
     payment_history: Optional[str]
+    payment_history_parsed: Optional[list[str]]
 
     credit_rating: Optional[str]
     ownership_status: Optional[str]
@@ -194,6 +197,7 @@ class SerializedCreditCardCharacteristics(TypedDict):
     is_covered: bool
     covered_code: Optional[str]
     guarantee: Optional[str]
+    guarantee_label: Optional[str]
 
 
 class SerializedCreditCardValues(TypedDict):
@@ -234,6 +238,7 @@ class SerializedCreditCard(TypedDict):
     opened_date: Optional[str]
     maturity_date: Optional[str]
     payment_history: Optional[str]
+    payment_history_parsed: Optional[list[str]]
     payment_method: Optional[str]
     payment_method_label: Optional[str]
     default_probability: Optional[float]
@@ -262,6 +267,7 @@ class SerializedQueryRecord(TypedDict):
     office: Optional[str]
     city: Optional[str]
     reason: Optional[str]
+    reason_label: Optional[str]
     count: Optional[int]
     subscriber_nit: Optional[str]
     sector: Optional[str]
@@ -501,6 +507,7 @@ class SerializedVectorSaldosYMoras(TypedDict):
 
 class SerializedCurrentDebtAccount(TypedDict):
     current_state: Optional[str]
+    current_state_label: Optional[str]
     rating: Optional[str]
     initial_value: Optional[float]
     current_balance: Optional[float]
@@ -566,6 +573,33 @@ class SerializedMicroCreditAggregatedInfo(TypedDict):
     debt_evolution_analysis: Optional[SerializedDebtEvolutionAnalysis]
 
 
+class SerializedScoreReason(TypedDict):
+    code: str
+
+
+class SerializedScoreRecord(TypedDict):
+    score_type: str
+    score_value: float
+    classification: Optional[str]
+    population_pct: Optional[int]
+    date: str
+    reasons: list[SerializedScoreReason]
+
+
+class SerializedAlertSource(TypedDict):
+    code: str
+    name: Optional[str]
+
+
+class SerializedAlertRecord(TypedDict):
+    placed_date: str
+    expiry_date: str
+    cancelled_date: Optional[str]
+    code: str
+    text: Optional[str]
+    source: Optional[SerializedAlertSource]
+
+
 class SerializedFullReport(TypedDict):
     basic_info: SerializedReport
     general_profile: Optional[SerializedAggregatedSummary]
@@ -580,3 +614,5 @@ class SerializedFullReport(TypedDict):
     global_debt_records: list[SerializedGlobalDebt]
     debt_evolution: list[SerializedDebtEvolutionQuarter]
     micro_credit_info: Optional[SerializedMicroCreditAggregatedInfo]
+    score_records: list[SerializedScoreRecord]
+    alert_records: list[SerializedAlertRecord]
