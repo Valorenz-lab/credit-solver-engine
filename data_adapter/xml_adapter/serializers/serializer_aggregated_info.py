@@ -1,6 +1,6 @@
 from typing import Optional
 
-from data_adapter.transformers.shared_transformers import transform_payment_behavior_char
+from data_adapter.transformers.shared_transformers import transform_current_debt_state, transform_payment_behavior_char
 from data_adapter.xml_adapter.models.aggregated_info_models import (
     AccountBehaviorVector,
     AccountTypeTotals,
@@ -349,6 +349,7 @@ def _serialize_vector_saldos_moras(v: VectorSaldosYMoras) -> SerializedVectorSal
 def _serialize_current_debt_account(a: CurrentDebtAccount) -> SerializedCurrentDebtAccount:
     return {
         "current_state": a.current_state,
+        "current_state_label": transform_current_debt_state(a.current_state).value,
         "rating": a.rating,
         "initial_value": a.initial_value,
         "current_balance": a.current_balance,

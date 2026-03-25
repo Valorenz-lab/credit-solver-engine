@@ -7,9 +7,12 @@ from data_adapter.transformers.credit_card_transformer import (
 )
 from data_adapter.transformers.shared_transformers import (
     transform_credit_rating,
+    transform_guarantee,
     transform_origin_state,
     transform_ownership_situation,
+    transform_payment_behavior_char,
     transform_payment_method,
+    transform_payment_status,
     transform_sector,
 )
 from data_adapter.xml_adapter.models.credit_card_models import (
@@ -33,6 +36,11 @@ def serialize_credit_card(card: CreditCard) -> SerializedCreditCard:
         "opened_date": card.opened_date,
         "maturity_date": card.maturity_date,
         "payment_history": card.payment_history,
+        "payment_history_parsed": (
+            [transform_payment_behavior_char(ch).value for ch in card.payment_history]
+            if card.payment_history is not None
+            else None
+        ),
         "payment_method": card.payment_method,
         "payment_method_label": transform_payment_method(card.payment_method).value,
         "default_probability": card.default_probability,
@@ -65,6 +73,7 @@ def _serialize_characteristics(c: CreditCardCharacteristics) -> SerializedCredit
         "is_covered": c.is_covered,
         "covered_code": c.covered_code,
         "guarantee": c.guarantee,
+        "guarantee_label": transform_guarantee(c.guarantee).value,
     }
 
 
@@ -98,7 +107,7 @@ def _serialize_states(s: CreditCardStates) -> SerializedCreditCardStates:
         "origin_state_label": transform_origin_state(s.origin_state_code).value,
         "origin_state_date": s.origin_state_date,
         "payment_status_code": s.payment_status_code,
-        "payment_status_label": transform_payment_method(s.payment_status_code).value,
+        "payment_status_label": transform_payment_status(s.payment_status_code).value,
         "payment_status_months": s.payment_status_months,
         "payment_status_date": s.payment_status_date,
     }

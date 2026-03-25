@@ -3,6 +3,7 @@
 
 
 from data_adapter.transformers.global_report_transformer import transform_account_type, transform_debtor_quality, transform_obligation_type, transform_payment_frequency, transform_status_account
+from data_adapter.transformers.shared_transformers import transform_guarantee, transform_payment_behavior_char, transform_payment_status
 from data_adapter.xml_adapter.models.global_report_models import AccountStatus as AccountStatusModel, GlobalReport, PortfolioAccount, PortfolioCharacteristics, PortfolioValues
 from data_adapter.xml_adapter.types import SerializedAccountStatus, SerializedGlobalReport, SerializedPortfolioAccount, SerializedPortfolioCharacteristics, SerializedPortfolioValues
 
@@ -19,6 +20,11 @@ def _serialize_account(c: PortfolioAccount) -> SerializedPortfolioAccount:
         "opening_date": c.opened_date,
         "maturity_date": c.maturity_date,
         "payment_history": c.payment_history,
+        "payment_history_parsed": (
+            [transform_payment_behavior_char(ch).value for ch in c.payment_history]
+            if c.payment_history is not None
+            else None
+        ),
 
         "credit_rating": c.credit_rating,
         "ownership_status": c.ownership_status,
@@ -46,6 +52,7 @@ def _serialize_characteristics(c: PortfolioCharacteristics) -> SerializedPortfol
         "contract_execution": c.contract_execution,
         "debtor_quality": transform_debtor_quality(c.debtor_quality),
         "guarantee": c.guarantee,
+        "guarantee_label": transform_guarantee(c.guarantee).value,
         "permanence_months": c.permanence_months,
     }
 
@@ -79,6 +86,7 @@ def _serialize_account_status(e: AccountStatusModel) -> SerializedAccountStatus:
         "origin_statement_date": e.origin_statement_date,
 
         "payment_status_code": e.payment_status_code,
+        "payment_status_label": transform_payment_status(e.payment_status_code).value,
         "payment_status_months": e.payment_status_months,
         "payment_status_date": e.payment_status_date,
     }

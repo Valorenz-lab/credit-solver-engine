@@ -19,6 +19,7 @@ from data_adapter.xml_adapter.serializers.serializer_credit_card import serializ
 from data_adapter.xml_adapter.serializers.serializer_global_debt import serialize_global_debt_record
 from data_adapter.xml_adapter.serializers.serializer_global_report import _serialize_account
 from data_adapter.xml_adapter.serializers.serializer_query import serialize_query_record
+from data_adapter.xml_adapter.serializers.serializer_score_alert import serialize_alert_record, serialize_score_record
 from data_adapter.xml_adapter.serializers.serializers_basic_report import serialize_basic_report
 from data_adapter.xml_adapter.types import (
     SerializedAggregatedSummary,
@@ -92,6 +93,9 @@ def serialize_full_report(report: FullReport) -> SerializedFullReport:
         else None
     )
 
+    score_records = [serialize_score_record(s) for s in report.score_records]
+    alert_records = [serialize_alert_record(a) for a in report.alert_records]
+
     return {
         "basic_info": basic_info,
         "general_profile": general_profile,
@@ -106,6 +110,8 @@ def serialize_full_report(report: FullReport) -> SerializedFullReport:
         "global_debt_records": global_debt_records,
         "debt_evolution": debt_evolution,
         "micro_credit_info": micro_credit,
+        "score_records": score_records,
+        "alert_records": alert_records,
     }
 
 
