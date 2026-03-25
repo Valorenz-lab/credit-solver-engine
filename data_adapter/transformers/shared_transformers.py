@@ -3,11 +3,13 @@ from typing import Optional
 from data_adapter.enums.financial_info.account_state_savings import AccountStateSavings
 from data_adapter.enums.financial_info.credit_rating import CreditRating
 from data_adapter.enums.financial_info.currency import Currency
+from data_adapter.enums.financial_info.current_debt_state import CurrentDebtState
 from data_adapter.enums.financial_info.guarantee_type import GuaranteeType
 from data_adapter.enums.financial_info.origin_state import OriginState
 from data_adapter.enums.financial_info.ownership_situation import OwnershipSituation
 from data_adapter.enums.financial_info.payment_behavior import PaymentBehavior
 from data_adapter.enums.financial_info.payment_method import PaymentMethod
+from data_adapter.enums.financial_info.payment_status import PaymentStatus
 from data_adapter.enums.financial_info.query_reason import QueryReason
 from data_adapter.enums.financial_info.sector import Sector
 
@@ -160,6 +162,47 @@ def transform_query_reason(value: Optional[str]) -> QueryReason:
         "08": QueryReason.POR_DEFINIR_08,
     }
     return mapping.get(value.strip(), QueryReason.UNKNOWN)
+
+
+def transform_payment_status(value: Optional[str]) -> PaymentStatus:
+    """Transform EstadoPago.codigo (Tabla 4) to PaymentStatus enum."""
+    if not value or value.strip() == "":
+        return PaymentStatus.UNKNOWN
+    mapping: dict[str, PaymentStatus] = {
+        "01": PaymentStatus.NORMAL,
+        "04": PaymentStatus.MORA_60,
+        "05": PaymentStatus.MORA_90,
+        "06": PaymentStatus.MORA_120_MAS,
+        "08": PaymentStatus.CASTIGADA,
+        "12": PaymentStatus.DUDOSO_RECAUDO,
+        "16": PaymentStatus.ACUERDO_PAGO,
+        "20": PaymentStatus.MORA_30,
+        "45": PaymentStatus.REESTRUCTURADA,
+        "47": PaymentStatus.SALDO_A_FAVOR,
+    }
+    return mapping.get(value.strip(), PaymentStatus.UNKNOWN)
+
+
+def transform_current_debt_state(value: Optional[str]) -> CurrentDebtState:
+    """Transform free-text current_state from EndeudamientoActual to CurrentDebtState enum."""
+    if not value or value.strip() == "":
+        return CurrentDebtState.UNKNOWN
+    v = value.strip().lower()
+    if v == "al día" or v.startswith("al día") and "mora" not in v:
+        return CurrentDebtState.AL_DIA
+    if "castigada" in v or "castig" in v:
+        return CurrentDebtState.CASTIGADA
+    if "dudoso" in v:
+        return CurrentDebtState.DUDOSO_RECAUDO
+    if "mora 30" in v or "m 30" in v:
+        return CurrentDebtState.MORA_30
+    if "mora 60" in v or "m 60" in v:
+        return CurrentDebtState.MORA_60
+    if "mora 90" in v or "m 90" in v or "rm 90" in v:
+        return CurrentDebtState.MORA_90
+    if "mora 120" in v or "m 120" in v or "rm 120" in v:
+        return CurrentDebtState.MORA_120
+    return CurrentDebtState.UNKNOWN
 
 
 def transform_payment_behavior_char(char: str) -> PaymentBehavior:
