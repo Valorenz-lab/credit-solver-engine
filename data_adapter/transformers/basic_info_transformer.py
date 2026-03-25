@@ -16,7 +16,7 @@ def transform_gender(value: Optional[str]) -> Gender:
         code = int(value)
     except ValueError:
         return Gender.UNKNOWN
-    mapping = {4: Gender.FEMALE, 3: Gender.MALE}
+    mapping = {3: Gender.FEMALE, 4: Gender.MALE}
     return mapping.get(code, Gender.UNKNOWN)
 
 

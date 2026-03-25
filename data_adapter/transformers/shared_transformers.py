@@ -3,9 +3,12 @@ from typing import Optional
 from data_adapter.enums.financial_info.account_state_savings import AccountStateSavings
 from data_adapter.enums.financial_info.credit_rating import CreditRating
 from data_adapter.enums.financial_info.currency import Currency
+from data_adapter.enums.financial_info.guarantee_type import GuaranteeType
 from data_adapter.enums.financial_info.origin_state import OriginState
 from data_adapter.enums.financial_info.ownership_situation import OwnershipSituation
+from data_adapter.enums.financial_info.payment_behavior import PaymentBehavior
 from data_adapter.enums.financial_info.payment_method import PaymentMethod
+from data_adapter.enums.financial_info.query_reason import QueryReason
 from data_adapter.enums.financial_info.sector import Sector
 
 
@@ -112,3 +115,66 @@ def transform_currency(value: Optional[str]) -> Currency:
         "0": Currency.UNKNOWN,
     }
     return mapping.get(value.strip(), Currency.UNKNOWN)
+
+
+def transform_guarantee(value: Optional[str]) -> GuaranteeType:
+    """Transform guarantee code (Tabla 11) to GuaranteeType enum."""
+    if not value or value.strip() == "":
+        return GuaranteeType.UNKNOWN
+    mapping: dict[str, GuaranteeType] = {
+        "0": GuaranteeType.SIN_GARANTIA,
+        "1": GuaranteeType.ADMISIBLE,
+        "2": GuaranteeType.OTRAS_IDONEAS,
+        "A": GuaranteeType.NO_IDONEA,
+        "B": GuaranteeType.BIENES_RAICES,
+        "C": GuaranteeType.OTRAS_PRENDAS,
+        "D": GuaranteeType.PIGNORACION_RENTAS,
+        "E": GuaranteeType.GARANTIA_SOBERANA,
+        "F": GuaranteeType.CONTRATO_FIDUCIA,
+        "G": GuaranteeType.FNG,
+        "H": GuaranteeType.CARTA_CREDITO,
+        "I": GuaranteeType.FAG,
+        "J": GuaranteeType.PERSONAL,
+        "K": GuaranteeType.LEASING_NO_INMOBILIARIO,
+        "L": GuaranteeType.LEASING_INMOBILIARIO,
+        "M": GuaranteeType.PRENDA_TITULO,
+        "N": GuaranteeType.DEPOSITOS,
+        "O": GuaranteeType.SEGURO_CREDITO,
+    }
+    return mapping.get(value.strip().upper(), GuaranteeType.UNKNOWN)
+
+
+def transform_query_reason(value: Optional[str]) -> QueryReason:
+    """Transform query reason code (Tabla 23) to QueryReason enum."""
+    if not value or value.strip() == "":
+        return QueryReason.UNKNOWN
+    mapping: dict[str, QueryReason] = {
+        "00": QueryReason.RAZON_DESCONOCIDA,
+        "01": QueryReason.SOLICITUD_PRODUCTO,
+        "02": QueryReason.REVISION_PORTAFOLIO_ENTIDAD,
+        "03": QueryReason.REVISION_PORTAFOLIO_CIUDADANO,
+        "04": QueryReason.SOLICITUD_PRODUCTO_B,
+        "05": QueryReason.CONSULTA_INTERNET,
+        "06": QueryReason.CONSULTA_CAS_VIRTUAL,
+        "07": QueryReason.POR_DEFINIR_07,
+        "08": QueryReason.POR_DEFINIR_08,
+    }
+    return mapping.get(value.strip(), QueryReason.UNKNOWN)
+
+
+def transform_payment_behavior_char(char: str) -> PaymentBehavior:
+    """Transform a single behavior character (Tabla 5) to PaymentBehavior enum."""
+    mapping: dict[str, PaymentBehavior] = {
+        "N": PaymentBehavior.AL_DIA,
+        "1": PaymentBehavior.MORA_30,
+        "2": PaymentBehavior.MORA_60,
+        "3": PaymentBehavior.MORA_90,
+        "4": PaymentBehavior.MORA_120,
+        "5": PaymentBehavior.MORA_150,
+        "6": PaymentBehavior.MORA_180,
+        "D": PaymentBehavior.DUDOSO_RECAUDO,
+        "C": PaymentBehavior.CASTIGADA,
+        "-": PaymentBehavior.SIN_INFORMACION,
+        " ": PaymentBehavior.SIN_INFORMACION,
+    }
+    return mapping.get(char.upper(), PaymentBehavior.SIN_INFORMACION)
