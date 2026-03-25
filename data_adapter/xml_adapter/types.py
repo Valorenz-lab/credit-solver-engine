@@ -1,4 +1,4 @@
-from typing import Any, Optional, TypedDict
+from typing import Optional, TypedDict, Union
 
 from data_adapter.enums.financial_info.account_status import AccountStatus
 from data_adapter.enums.financial_info.debtor_quality_portfolio import DebtorQualityPortfolio
@@ -607,9 +607,9 @@ class SerializedFullReport(TypedDict):
     open_bank_accounts: list[SerializedBankAccount]
     closed_bank_accounts: list[SerializedBankAccount]
     checking_accounts: list[SerializedCheckingAccount]
-    active_obligations: list[dict[str, Any]]
-    payment_habits_open: dict[str, Any]
-    payment_habits_closed: dict[str, Any]
+    active_obligations: list[Union[SerializedPortfolioAccount, SerializedCreditCard]]
+    payment_habits_open: dict[str, list[Union[SerializedPortfolioAccount, SerializedCreditCard]]]
+    payment_habits_closed: dict[str, list[Union[SerializedPortfolioAccount, SerializedCreditCard]]]
     query_history: list[SerializedQueryRecord]
     global_debt_records: list[SerializedGlobalDebt]
     debt_evolution: list[SerializedDebtEvolutionQuarter]
