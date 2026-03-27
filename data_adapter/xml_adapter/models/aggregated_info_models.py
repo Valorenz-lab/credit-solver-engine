@@ -184,7 +184,7 @@ class QuarterlyDebtSummary:
 # ── SaldosYMoras ──────────────────────────────────────────────────────────────
 
 @dataclass(frozen=True)
-class MonthlySaldosYMoras:
+class MonthlyBalancesAndArrears:
     """<SaldosYMoras> node within <VectorSaldosYMoras>."""
     date: str
     total_accounts_past_due: int
@@ -200,20 +200,20 @@ class MonthlySaldosYMoras:
 
 
 @dataclass(frozen=True)
-class VectorSaldosYMoras:
+class BalanceDelinquencyVector:
     """<VectorSaldosYMoras> within <InfoAgregadaMicrocredito/Resumen>."""
     has_financial: bool
     has_cooperative: bool
     has_real: bool
     has_telecom: bool
-    monthly_data: tuple[MonthlySaldosYMoras, ...]
+    monthly_data: tuple[MonthlyBalancesAndArrears, ...]
 
 
-# ── PerfilGeneral ─────────────────────────────────────────────────────────────
+# ── GeneralProfile ─────────────────────────────────────────────────────────────
 
 @dataclass(frozen=True)
 class SectorCreditCount:
-    """A row in PerfilGeneral (CreditosVigentes, CreditosCerrados, etc.)."""
+    """A row in GeneralProfile (CreditosVigentes, CreditosCerrados, etc.)."""
     financial: int
     cooperative: int
     real: int
@@ -223,7 +223,7 @@ class SectorCreditCount:
 
 
 @dataclass(frozen=True)
-class SectorAntiguedad:
+class SectorSeniority:
     """<AntiguedadDesde> node — oldest account date per sector."""
     financial: Optional[str]
     cooperative: Optional[str]
@@ -232,15 +232,15 @@ class SectorAntiguedad:
 
 
 @dataclass(frozen=True)
-class PerfilGeneral:
-    """<PerfilGeneral> within <InfoAgregadaMicrocredito/Resumen>."""
+class GeneralProfile:
+    """<GeneralProfile> within <InfoAgregadaMicrocredito/Resumen>."""
     active_credits: SectorCreditCount
     closed_credits: SectorCreditCount
     restructured_credits: SectorCreditCount
     refinanced_credits: SectorCreditCount
     queries_last_6m: SectorCreditCount
     disputes: SectorCreditCount
-    oldest_account: SectorAntiguedad
+    oldest_account: SectorSeniority
 
 
 # ── EndeudamientoActual ───────────────────────────────────────────────────────
@@ -328,10 +328,10 @@ class TrendSeries:
 class MicroCreditAggregatedInfo:
     """
     <InfoAgregadaMicrocredito> — Sección paralela a InfoAgregada específica para microcrédito.
-    Contiene PerfilGeneral, VectorSaldosYMoras, EndeudamientoActual, AnalisisVectores.
+    Contains GeneralProfile, BalanceDelinquencyVector, EndeudamientoActual, AnalisisVectores.
     """
-    general_profile: Optional[PerfilGeneral]
-    vector_saldos_moras: Optional[VectorSaldosYMoras]
+    general_profile: Optional[GeneralProfile]
+    balance_delinquency_vector: Optional[BalanceDelinquencyVector]
     current_debt_by_sector: tuple[CurrentDebtBySector, ...]
     sector_behavior_vectors: tuple[SectorBehaviorVector, ...]
     trend_series: tuple[TrendSeries, ...]

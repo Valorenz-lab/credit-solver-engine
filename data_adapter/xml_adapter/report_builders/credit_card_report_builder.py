@@ -10,7 +10,7 @@ from data_adapter.xml_adapter.models.credit_card_models import (
 from data_adapter.xml_adapter.xml_extractors.xml_extractor import XmlExtractor
 
 
-class CreditCardBuilder:
+class CreditCardReportBuilder:
     """Parses TarjetaCredito nodes into CreditCard dataclasses."""
 
     def parse_cards(self, ex: XmlExtractor, report_node: ET.Element) -> tuple[CreditCard, ...]:

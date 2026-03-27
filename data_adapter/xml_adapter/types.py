@@ -466,24 +466,24 @@ class SerializedSectorCreditCount(TypedDict):
     total_as_cosigner: int
 
 
-class SerializedSectorAntiguedad(TypedDict):
+class SerializedSectorSeniority(TypedDict):
     financial: Optional[str]
     cooperative: Optional[str]
     real: Optional[str]
     telecom: Optional[str]
 
 
-class SerializedPerfilGeneral(TypedDict):
+class SerializedGeneralProfile(TypedDict):
     active_credits: SerializedSectorCreditCount
     closed_credits: SerializedSectorCreditCount
     restructured_credits: SerializedSectorCreditCount
     refinanced_credits: SerializedSectorCreditCount
     queries_last_6m: SerializedSectorCreditCount
     disputes: SerializedSectorCreditCount
-    oldest_account: SerializedSectorAntiguedad
+    oldest_account: SerializedSectorSeniority
 
 
-class SerializedMonthlySaldosYMoras(TypedDict):
+class SerializedMonthlyBalancesAndArrears(TypedDict):
     date: str
     total_accounts_past_due: int
     past_due_balance: float
@@ -497,12 +497,12 @@ class SerializedMonthlySaldosYMoras(TypedDict):
     accounts_past_due_60_plus: Optional[int]
 
 
-class SerializedVectorSaldosYMoras(TypedDict):
+class SerializedBalanceDelinquencyVector(TypedDict):
     has_financial: bool
     has_cooperative: bool
     has_real: bool
     has_telecom: bool
-    monthly_data: list[SerializedMonthlySaldosYMoras]
+    monthly_data: list[SerializedMonthlyBalancesAndArrears]
 
 
 class SerializedCurrentDebtAccount(TypedDict):
@@ -564,8 +564,8 @@ class SerializedTrendSeries(TypedDict):
 
 
 class SerializedMicroCreditAggregatedInfo(TypedDict):
-    general_profile: Optional[SerializedPerfilGeneral]
-    vector_saldos_moras: Optional[SerializedVectorSaldosYMoras]
+    general_profile: Optional[SerializedGeneralProfile]
+    balance_delinquency_vector: Optional[SerializedBalanceDelinquencyVector]
     current_debt_by_sector: list[SerializedCurrentDebtBySector]
     sector_behavior_vectors: list[SerializedSectorBehaviorVector]
     trend_series: list[SerializedTrendSeries]

@@ -19,22 +19,22 @@ from data_adapter.xml_adapter.models.aggregated_info_models import (
     DebtEvolutionQuarter,
     GrandTotal,
     MicroCreditAggregatedInfo,
-    MonthlySaldosYMoras,
+    MonthlyBalancesAndArrears,
     MonthlyBalance,
     MonthlyBehavior,
-    PerfilGeneral,
+    GeneralProfile,
     PortfolioCompositionItem,
     PortfolioStateCount,
     QuarterlyDebtCartera,
     QuarterlyDebtSector,
     QuarterlyDebtSummary,
-    SectorAntiguedad,
+    SectorSeniority,
     SectorBalance,
     SectorBehaviorVector,
     SectorCreditCount,
     TrendDataPoint,
     TrendSeries,
-    VectorSaldosYMoras,
+    BalanceDelinquencyVector,
 )
 from data_adapter.xml_adapter.types import (
     SerializedAccountBehaviorVector,
@@ -56,20 +56,20 @@ from data_adapter.xml_adapter.types import (
     SerializedMicroCreditAggregatedInfo,
     SerializedMonthlyBalance,
     SerializedMonthlyBehavior,
-    SerializedMonthlySaldosYMoras,
-    SerializedPerfilGeneral,
+    SerializedMonthlyBalancesAndArrears,
+    SerializedGeneralProfile,
     SerializedPortfolioCompositionItem,
     SerializedPortfolioStateCount,
     SerializedQuarterlyDebtCartera,
     SerializedQuarterlyDebtSector,
     SerializedQuarterlyDebtSummary,
-    SerializedSectorAntiguedad,
+    SerializedSectorSeniority,
     SerializedSectorBalance,
     SerializedSectorBehaviorVector,
     SerializedSectorCreditCount,
     SerializedTrendDataPoint,
     SerializedTrendSeries,
-    SerializedVectorSaldosYMoras,
+    SerializedBalanceDelinquencyVector,
 )
 
 
@@ -96,8 +96,8 @@ def serialize_aggregated_info(info: AggregatedInfo) -> SerializedAggregatedSumma
 
 def serialize_micro_credit_info(info: MicroCreditAggregatedInfo) -> SerializedMicroCreditAggregatedInfo:
     return {
-        "general_profile": _serialize_perfil_general(info.general_profile) if info.general_profile else None,
-        "vector_saldos_moras": _serialize_vector_saldos_moras(info.vector_saldos_moras) if info.vector_saldos_moras else None,
+        "general_profile": _serialize_general_profile(info.general_profile) if info.general_profile else None,
+        "balance_delinquency_vector": _serialize_balance_delinquency_vector(info.balance_delinquency_vector) if info.balance_delinquency_vector else None,
         "current_debt_by_sector": [_serialize_current_debt_sector(s) for s in info.current_debt_by_sector],
         "sector_behavior_vectors": [_serialize_sector_behavior_vector(s) for s in info.sector_behavior_vectors],
         "trend_series": [_serialize_trend_series(t) for t in info.trend_series],
@@ -299,7 +299,7 @@ def _serialize_sector_credit_count(c: SectorCreditCount) -> SerializedSectorCred
     }
 
 
-def _serialize_sector_antiguedad(a: SectorAntiguedad) -> SerializedSectorAntiguedad:
+def _serialize_sector_seniority(a: SectorSeniority) -> SerializedSectorSeniority:
     return {
         "financial": a.financial,
         "cooperative": a.cooperative,
@@ -308,7 +308,7 @@ def _serialize_sector_antiguedad(a: SectorAntiguedad) -> SerializedSectorAntigue
     }
 
 
-def _serialize_perfil_general(p: PerfilGeneral) -> SerializedPerfilGeneral:
+def _serialize_general_profile(p: GeneralProfile) -> SerializedGeneralProfile:
     return {
         "active_credits": _serialize_sector_credit_count(p.active_credits),
         "closed_credits": _serialize_sector_credit_count(p.closed_credits),
@@ -316,11 +316,11 @@ def _serialize_perfil_general(p: PerfilGeneral) -> SerializedPerfilGeneral:
         "refinanced_credits": _serialize_sector_credit_count(p.refinanced_credits),
         "queries_last_6m": _serialize_sector_credit_count(p.queries_last_6m),
         "disputes": _serialize_sector_credit_count(p.disputes),
-        "oldest_account": _serialize_sector_antiguedad(p.oldest_account),
+        "oldest_account": _serialize_sector_seniority(p.oldest_account),
     }
 
 
-def _serialize_monthly_saldos_moras(m: MonthlySaldosYMoras) -> SerializedMonthlySaldosYMoras:
+def _serialize_monthly_balances_and_arrears(m: MonthlyBalancesAndArrears) -> SerializedMonthlyBalancesAndArrears:
     return {
         "date": m.date,
         "total_accounts_past_due": m.total_accounts_past_due,
@@ -336,13 +336,13 @@ def _serialize_monthly_saldos_moras(m: MonthlySaldosYMoras) -> SerializedMonthly
     }
 
 
-def _serialize_vector_saldos_moras(v: VectorSaldosYMoras) -> SerializedVectorSaldosYMoras:
+def _serialize_balance_delinquency_vector(v: BalanceDelinquencyVector) -> SerializedBalanceDelinquencyVector:
     return {
         "has_financial": v.has_financial,
         "has_cooperative": v.has_cooperative,
         "has_real": v.has_real,
         "has_telecom": v.has_telecom,
-        "monthly_data": [_serialize_monthly_saldos_moras(m) for m in v.monthly_data],
+        "monthly_data": [_serialize_monthly_balances_and_arrears(m) for m in v.monthly_data],
     }
 
 

@@ -26,35 +26,33 @@ from data_adapter.xml_adapter.models.aggregated_info_models import (
     DebtEvolutionQuarter,
     GrandTotal,
     MicroCreditAggregatedInfo,
-    MonthlySaldosYMoras,
+    MonthlyBalancesAndArrears,
     MonthlyBalance,
     MonthlyBehavior,
-    PerfilGeneral,
+    GeneralProfile,
     PortfolioCompositionItem,
     PortfolioStateCount,
     QuarterlyDebtCartera,
     QuarterlyDebtSector,
     QuarterlyDebtSummary,
-    SectorAntiguedad,
+    SectorSeniority,
     SectorBalance,
     SectorBehaviorVector,
     SectorCreditCount,
     TrendDataPoint,
     TrendSeries,
-    VectorSaldosYMoras,
+    BalanceDelinquencyVector,
 )
 from data_adapter.xml_adapter.models.basic_data_models import BasicReport
 from data_adapter.xml_adapter.models.full_report_models import FullReport
 from data_adapter.xml_adapter.models.global_debt_models import GlobalDebtEntity, GlobalDebtGuarantee, GlobalDebtRecord
-from data_adapter.xml_adapter.models.checking_account_models import CheckingAccount
-from data_adapter.xml_adapter.models.global_report_models import PortfolioAccount
 from data_adapter.xml_adapter.models.query_models import QueryRecord
 from data_adapter.xml_adapter.models.score_alert_models import AlertRecord, AlertSource, ScoreReason, ScoreRecord
-from data_adapter.xml_adapter.report_builders.bank_account_builder import BankAccountBuilder
+from data_adapter.xml_adapter.report_builders.bank_account_report_builder import BankAccountReportBuilder
 from data_adapter.xml_adapter.report_builders.basic_data_report_builder import BasicDataReportBuilder
-from data_adapter.xml_adapter.report_builders.checking_account_builder import CheckingAccountBuilder
-from data_adapter.xml_adapter.report_builders.credit_card_builder import CreditCardBuilder
-from data_adapter.xml_adapter.report_builders.global_report_builder import GlobalReportBuilder
+from data_adapter.xml_adapter.report_builders.checking_account_report_builder import CheckingAccountReportBuilder
+from data_adapter.xml_adapter.report_builders.credit_card_report_builder import CreditCardReportBuilder
+from data_adapter.xml_adapter.report_builders.global_report_report_builder import GlobalReportBuilder
 from data_adapter.xml_adapter.xml_extractors.xml_extractor import XmlExtractor
 
 
@@ -94,13 +92,13 @@ class FullReportBuilder:
 
         report_node = ex.require_node("Informe", parent=reports_node)
 
-        bank_builder = BankAccountBuilder()
+        bank_builder = BankAccountReportBuilder()
         bank_accounts = bank_builder.parse_accounts(ex, report_node)
 
-        checking_builder = CheckingAccountBuilder()
+        checking_builder = CheckingAccountReportBuilder()
         checking_accounts = checking_builder.parse_accounts(ex, report_node)
 
-        card_builder = CreditCardBuilder()
+        card_builder = CreditCardReportBuilder()
         credit_cards = card_builder.parse_cards(ex, report_node)
 
         query_records = self._parse_query_records(ex, report_node)
@@ -552,7 +550,7 @@ class FullReportBuilder:
 
         return MicroCreditAggregatedInfo(
             general_profile=general_profile,
-            vector_saldos_moras=vector_saldos,
+            balance_delinquency_vector=vector_saldos,
             current_debt_by_sector=current_debt,
             sector_behavior_vectors=sector_vectors,
             trend_series=trend_series,
@@ -564,7 +562,7 @@ class FullReportBuilder:
         self,
         ex: XmlExtractor,
         resumen_node: Optional[ET.Element],
-    ) -> Optional[PerfilGeneral]:
+    ) -> Optional[GeneralProfile]:
         if resumen_node is None:
             return None
         node = ex.find_node("PerfilGeneral", parent=resumen_node)
@@ -572,14 +570,14 @@ class FullReportBuilder:
             return None
 
         antiguedad_node = ex.find_node("AntiguedadDesde", parent=node)
-        oldest = SectorAntiguedad(
+        oldest = SectorSeniority(
             financial=ex.get_attr(antiguedad_node, "sectorFinanciero"),
             cooperative=ex.get_attr(antiguedad_node, "sectorCooperativo"),
             real=ex.get_attr(antiguedad_node, "sectorReal"),
             telecom=ex.get_attr(antiguedad_node, "sectorTelcos"),
         )
 
-        return PerfilGeneral(
+        return GeneralProfile(
             active_credits=self._parse_sector_credit_count(ex, node, "CreditosVigentes"),
             closed_credits=self._parse_sector_credit_count(ex, node, "CreditosCerrados"),
             restructured_credits=self._parse_sector_credit_count(ex, node, "CreditosReestructurados"),
@@ -609,16 +607,16 @@ class FullReportBuilder:
         self,
         ex: XmlExtractor,
         resumen_node: Optional[ET.Element],
-    ) -> Optional[VectorSaldosYMoras]:
+    ) -> Optional[BalanceDelinquencyVector]:
         if resumen_node is None:
             return None
         node = ex.find_node("VectorSaldosYMoras", parent=resumen_node)
         if node is None:
             return None
 
-        monthly: list[MonthlySaldosYMoras] = []
+        monthly: list[MonthlyBalancesAndArrears] = []
         for sm in node.findall("SaldosYMoras"):
-            monthly.append(MonthlySaldosYMoras(
+            monthly.append(MonthlyBalancesAndArrears(
                 date=ex.get_attr_required(sm, "fecha"),
                 total_accounts_past_due=ex.get_int(sm, "totalCuentasMora") or 0,
                 past_due_balance=ex.get_float(sm, "saldoDeudaTotalMora") or 0.0,
@@ -632,7 +630,7 @@ class FullReportBuilder:
                 accounts_past_due_60_plus=ex.get_int(sm, "numCreditosMayorIgual60"),
             ))
 
-        return VectorSaldosYMoras(
+        return BalanceDelinquencyVector(
             has_financial=self._get_bool_attr(ex, node, "poseeSectorFinanciero"),
             has_cooperative=self._get_bool_attr(ex, node, "poseeSectorCooperativo"),
             has_real=self._get_bool_attr(ex, node, "poseeSectorReal"),
