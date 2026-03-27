@@ -34,10 +34,10 @@ class PortfolioValues:
 
 
 @dataclass(frozen=True)
-class AccountStatus:
+class PortfolioStates:
     """
-    Nodos within <Estados>.
-   account_statement_code "06" = charged-off portfolio, "01" = up to date, "02" = delinquent
+    Groups the three state sub-nodes within <Estados> of CuentaCartera:
+    EstadoCuenta, EstadoOrigen, EstadoPago.
     """
     account_statement_code: Optional[str]
     account_statement_date: Optional[str]
@@ -94,12 +94,12 @@ class PortfolioAccount:
     # Relationships with other nodes
     characteristics: PortfolioCharacteristics
     values: PortfolioValues
-    account_status: AccountStatus
+    states: PortfolioStates
 
     @property
     def is_open(self) -> bool:
         """Return True if the account state code indicates an active obligation."""
-        code = self.account_status.account_statement_code
+        code = self.states.account_statement_code
         if code is None:
             return False
         return code in OPEN_ACCOUNT_CODES

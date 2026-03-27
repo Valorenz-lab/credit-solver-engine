@@ -2,10 +2,10 @@
 """
 
 
-from data_adapter.transformers.global_report_transformer import transform_account_type, transform_debtor_quality, transform_obligation_type, transform_payment_frequency, transform_status_account
+from data_adapter.transformers.global_report_transformer import transform_account_condition, transform_account_type, transform_debtor_quality, transform_obligation_type, transform_payment_frequency
 from data_adapter.transformers.shared_transformers import transform_guarantee, transform_payment_behavior_char, transform_payment_status
-from data_adapter.xml_adapter.models.global_report_models import AccountStatus as AccountStatusModel, GlobalReport, PortfolioAccount, PortfolioCharacteristics, PortfolioValues
-from data_adapter.xml_adapter.types import SerializedAccountStatus, SerializedGlobalReport, SerializedPortfolioAccount, SerializedPortfolioCharacteristics, SerializedPortfolioValues
+from data_adapter.xml_adapter.models.global_report_models import GlobalReport, PortfolioAccount, PortfolioCharacteristics, PortfolioStates, PortfolioValues
+from data_adapter.xml_adapter.types import SerializedGlobalReport, SerializedPortfolioAccount, SerializedPortfolioCharacteristics, SerializedPortfolioStates, SerializedPortfolioValues
 
 
 def serialize_global_report(report: GlobalReport) -> SerializedGlobalReport:
@@ -40,7 +40,7 @@ def _serialize_account(c: PortfolioAccount) -> SerializedPortfolioAccount:
 
         "characteristics": _serialize_characteristics(c.characteristics) if c.characteristics else None,
         "values": _serialize_value(c.values) if c.values else None,
-        "account_status": _serialize_account_status(c.account_status) if c.account_status else None,
+        "states": _serialize_portfolio_states(c.states) if c.states else None,
     }
 
 
@@ -76,10 +76,9 @@ def _serialize_value(v: PortfolioValues) -> SerializedPortfolioValues:
     }
 
 
-def _serialize_account_status(e: AccountStatusModel) -> SerializedAccountStatus:
+def _serialize_portfolio_states(e: PortfolioStates) -> SerializedPortfolioStates:
     return {
-       
-        "account_statement_code": transform_status_account(e.account_statement_code),
+        "account_statement_code": transform_account_condition(e.account_statement_code),
         "account_statement_date": e.account_statement_date,
 
         "origin_state_code": e.origin_state_code,

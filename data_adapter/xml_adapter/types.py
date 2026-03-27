@@ -1,6 +1,6 @@
 from typing import Optional, TypedDict, Union
 
-from data_adapter.enums.financial_info.account_status import AccountStatus
+from data_adapter.enums.financial_info.account_condition import AccountCondition
 from data_adapter.enums.financial_info.debtor_quality_portfolio import DebtorQualityPortfolio
 from data_adapter.enums.financial_info.obligation_type import ObligationType
 from data_adapter.enums.financial_info.payment_frequency import PaymentFrequency
@@ -68,8 +68,8 @@ class SerializedPortfolioValues(TypedDict):
     payment_frequency: Optional[PaymentFrequency]      
     last_payment_date: Optional[str]       
 
-class SerializedAccountStatus(TypedDict):
-    account_statement_code: Optional[AccountStatus]
+class SerializedPortfolioStates(TypedDict):
+    account_statement_code: Optional[AccountCondition]
     account_statement_date: Optional[str]
 
     origin_state_code: Optional[str]
@@ -116,7 +116,7 @@ class SerializedPortfolioAccount(TypedDict):
 
     characteristics: Optional[SerializedPortfolioCharacteristics]
     values: Optional[SerializedPortfolioValues]
-    account_status: Optional[SerializedAccountStatus]
+    states: Optional[SerializedPortfolioStates]
 
 
 class SerializedGlobalReport(TypedDict):

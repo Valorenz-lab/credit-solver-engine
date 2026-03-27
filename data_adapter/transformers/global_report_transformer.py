@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from data_adapter.enums.financial_info.account_status import AccountStatus
+from data_adapter.enums.financial_info.account_condition import AccountCondition
 from data_adapter.enums.financial_info.account_type import AccountType
 from data_adapter.enums.financial_info.debtor_quality_portfolio import DebtorQualityPortfolio
 from data_adapter.enums.financial_info.obligation_type import ObligationType
@@ -90,27 +90,27 @@ def transform_obligation_type(value: Optional[str]) -> ObligationType:
     
 
 
-def transform_status_account(value: Optional[str]) -> AccountStatus:
+def transform_account_condition(value: Optional[str]) -> AccountCondition:
     if not value or value.strip() == "":
-        return AccountStatus.UNKNOWN
+        return AccountCondition.UNKNOWN
     try:
         number_value = int(value)
         mapping = {
-            0: AccountStatus.ENTITY_NO_REPORT,
-            1: AccountStatus.ON_TIME,
-            2: AccountStatus.OVERDUE_DEBT,
-            3: AccountStatus.FULL_PAYMENT,
-            4: AccountStatus.JUDICIAL_PAYMENT,
-            5: AccountStatus.DOUBTFUL_COLLECTION,
-            6: AccountStatus.WRITTEN_OFF,
-            7: AccountStatus.DATION_IN_PAYMENT,
-            8: AccountStatus.VOLUNTARY_CANCELLED,
-            9: AccountStatus.CANCELLED_DUE_TO_MISMANAGEMENT,
-            10: AccountStatus.CANCELLED_DUE_TO_STATUTE_OF_LIMITATIONS,
-            11: AccountStatus.CANCELLED_BY_INSTITUTION,
+            0: AccountCondition.ENTITY_NO_REPORT,
+            1: AccountCondition.ON_TIME,
+            2: AccountCondition.OVERDUE_DEBT,
+            3: AccountCondition.FULL_PAYMENT,
+            4: AccountCondition.JUDICIAL_PAYMENT,
+            5: AccountCondition.DOUBTFUL_COLLECTION,
+            6: AccountCondition.WRITTEN_OFF,
+            7: AccountCondition.DATION_IN_PAYMENT,
+            8: AccountCondition.VOLUNTARY_CANCELLED,
+            9: AccountCondition.CANCELLED_DUE_TO_MISMANAGEMENT,
+            10: AccountCondition.CANCELLED_DUE_TO_STATUTE_OF_LIMITATIONS,
+            11: AccountCondition.CANCELLED_BY_INSTITUTION,
         }
         if number_value in mapping:
             return mapping[number_value]
-        return AccountStatus.UNKNOWN
+        return AccountCondition.UNKNOWN
     except ValueError:
-        return AccountStatus.UNKNOWN
+        return AccountCondition.UNKNOWN

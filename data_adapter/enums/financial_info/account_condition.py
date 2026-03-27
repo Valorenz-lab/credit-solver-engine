@@ -4,7 +4,8 @@
 from enum import StrEnum
 
 
-class AccountStatus(StrEnum):
+class AccountCondition(StrEnum):
+    """Table 4 — Current condition of a credit obligation (EstadoCuenta.codigo)."""
     ENTITY_NO_REPORT = "Entidad no reportó"
     ON_TIME = "Al día"
     OVERDUE_DEBT = "En Mora"

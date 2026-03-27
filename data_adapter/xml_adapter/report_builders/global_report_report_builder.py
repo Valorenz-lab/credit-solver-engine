@@ -7,7 +7,7 @@ Does not transform codes — returns raw values from the XML.
 import os
 
 from data_adapter.xml_adapter.exceptions import XmlParseError
-from data_adapter.xml_adapter.models.global_report_models import AccountStatus, GlobalReport, PortfolioAccount, PortfolioCharacteristics, PortfolioValues
+from data_adapter.xml_adapter.models.global_report_models import GlobalReport, PortfolioAccount, PortfolioCharacteristics, PortfolioStates, PortfolioValues
 from data_adapter.xml_adapter.xml_extractors.xml_extractor import XmlExtractor
 from xml.etree import ElementTree as ET
 
@@ -80,7 +80,7 @@ class GlobalReportBuilder:
             hd_rating=raw_hd is not None and raw_hd.lower() in ("true", "1"),
             characteristics=self._parse_characteristics(ex, node),
             values=self._parse_value_portfolio(ex, node),
-            account_status=self._parse_states(ex, node),
+            states=self._parse_states(ex, node),
         )
 
     def _parse_characteristics(self, ex: XmlExtractor, parent: ET.Element) -> PortfolioCharacteristics:
@@ -120,16 +120,16 @@ class GlobalReportBuilder:
             days_past_due=ex.get_int(node, "diasMora")
         )
 
-    def _parse_states(self, ex: XmlExtractor, parent: ET.Element) -> AccountStatus:
+    def _parse_states(self, ex: XmlExtractor, parent: ET.Element) -> PortfolioStates:
         states_node = ex.find_node("Estados", parent=parent)
         if states_node is None:
-            return AccountStatus(None, None, None, None, None, None, None)
+            return PortfolioStates(None, None, None, None, None, None, None)
 
         ec = ex.find_node("EstadoCuenta", parent=states_node)
         eo = ex.find_node("EstadoOrigen", parent=states_node)
         ep = ex.find_node("EstadoPago", parent=states_node)
 
-        return AccountStatus(
+        return PortfolioStates(
             account_statement_code=ex.get_attr(ec, "codigo"),
             account_statement_date=ex.get_attr(ec, "fecha"),
             origin_state_code=ex.get_attr(eo, "codigo"),

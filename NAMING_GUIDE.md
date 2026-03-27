@@ -179,7 +179,7 @@ Mapa completo de nodos del XSD v1.6 a sus dataclasses Python actuales.
 | `CuentaCartera` | `CuentaCarteraType` | `PortfolioAccount` | `global_report_models.py` | ✅ |
 | `CuentaCartera/Caracteristicas` | — | `PortfolioCharacteristics` | `global_report_models.py` | ✅ |
 | `CuentaCartera/Valores/Valor` | — | `PortfolioValues` | `global_report_models.py` | ✅ |
-| `CuentaCartera/Estados` | — | `AccountStatus` ⚠️ | `global_report_models.py` | **Renombrar → `PortfolioStates`** |
+| `CuentaCartera/Estados` | — | `PortfolioStates` | `global_report_models.py` | ✅ |
 | *(colección)* | — | `GlobalReport` | `global_report_models.py` | ✅ |
 | `CuentaAhorro` | `CuentaAhorroType` | `BankAccount` | `bank_account_models.py` | ✅ |
 | `CuentaAhorro/Estado` | — | `BankAccountState` | `bank_account_models.py` | ✅ |
@@ -209,7 +209,7 @@ Mapa completo de tablas de códigos del XSD v1.6 a sus enums Python actuales.
 | Tabla 2 | `Identificacion.estado` | `NaturalNacional` | `IdValidity` | `IdentificationStatus` | `basic_info/id_validity.py` | ⚠️ Renombrar |
 | — | `sexo` | `NaturalNacional` | `Gender` | `Gender` | `basic_info/gender.py` | ✅ |
 | Tabla 3 | `tipoCuenta` | `CuentaCartera/Caracteristicas` | `AccountType` | `AccountType` | `financial_info/account_type.py` | ✅ |
-| Tabla 4 | `EstadoCuenta.codigo` | `CuentaCartera/Estados`, `TarjetaCredito/Estados` | `AccountStatus` ⚠️ | `AccountCondition` | `financial_info/account_status.py` → `account_condition.py` | ⚠️ Renombrar |
+| Tabla 4 | `EstadoCuenta.codigo` | `CuentaCartera/Estados`, `TarjetaCredito/Estados` | `AccountCondition` | `AccountCondition` | `financial_info/account_condition.py` | ✅ |
 | Tabla 4 | `EstadoPago.codigo` | `CuentaCartera/Estados`, `TarjetaCredito/Estados` | `PaymentStatus` | `PaymentStatus` | `financial_info/payment_status.py` | ✅ |
 | Tabla 5 | `comportamiento` (por carácter) | `CuentaCartera`, `TarjetaCredito` | `PaymentBehavior` | `PaymentBehavior` | `financial_info/payment_behavior.py` | ✅ |
 | Tabla 6 | `calidadDeudor` | `CuentaCartera/Caracteristicas` | `DebtorQualityPortfolio` | `DebtorRole` | `financial_info/debtor_quality_portfolio.py` → `debtor_role.py` | ⚠️ Renombrar |
@@ -239,22 +239,15 @@ Mapa completo de tablas de códigos del XSD v1.6 a sus enums Python actuales.
 
 Ordenados por impacto. Los marcados ⚠️ **BLOQUEANTE** deben resolverse antes del refactor de builders.
 
-### 5.1 Colisión crítica — `AccountStatus` (BLOQUEANTE)
+### 5.1 ~~Colisión crítica — `AccountStatus`~~ ✅ Resuelto
 
-Existe un enum **y** un dataclass con el mismo nombre `AccountStatus`. Esto ya causa alias forzados en imports y se agravará cuando los builders importen ambos.
-
-| Construcción | Nombre actual | Nombre correcto | Motivo |
-|---|---|---|---|
-| Enum `StrEnum` en `account_status.py` | `AccountStatus` | `AccountCondition` | Representa la *condición* del estado de cuenta (Tabla 4): al día, castigada, en mora, etc. |
-| Dataclass en `global_report_models.py` | `AccountStatus` | `PortfolioStates` | Agrupa los tres nodos `<Estados>` de `CuentaCartera`: `EstadoCuenta`, `EstadoOrigen`, `EstadoPago`. El nombre debe reflejar que es el contenedor de múltiples estados. |
-
-Archivos impactados por este rename:
-- `financial_info/account_status.py` → renombrar a `account_condition.py`
-- `global_report_models.py`
-- `global_report_report_builder.py`
-- `serializer_global_report.py`
-- `global_report_transformer.py` (función `transform_status_account` → `transform_account_condition`)
-- `types.py` (`SerializedAccountStatus` → `SerializedPortfolioStates`)
+| Construcción | Nombre anterior | Nombre actual |
+|---|---|---|
+| Enum `StrEnum` | `AccountStatus` (`account_status.py`) | `AccountCondition` (`account_condition.py`) |
+| Dataclass | `AccountStatus` en `global_report_models.py` | `PortfolioStates` |
+| Campo en `PortfolioAccount` | `account_status: AccountStatus` | `states: PortfolioStates` |
+| TypedDict | `SerializedAccountStatus` | `SerializedPortfolioStates` |
+| Transformer | `transform_status_account` | `transform_account_condition` |
 
 ---
 
