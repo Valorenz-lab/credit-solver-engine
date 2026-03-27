@@ -21,6 +21,17 @@ class BasicDataReportBuilder:
         extractor = XmlExtractor(root)
         return self._build_report(extractor)
 
+    def build_from_node(self, ex: XmlExtractor, report_node: ET.Element) -> BasicReport:
+        """Build a BasicReport from an already-parsed extractor and Informe node.
+
+        Use this when the caller already holds an XmlExtractor to avoid
+        re-parsing the XML from scratch.
+        """
+        natural_node = ex.require_node("NaturalNacional", report_node)
+        meta = self._parse_metadata(ex, report_node)
+        person = self._parse_persona(ex, natural_node)
+        return BasicReport(metadata=meta, person=person)
+
     def parse_file(self, filepath: str) -> BasicReport:
         """For local development/testing only."""
         if not os.path.exists(filepath):
@@ -40,12 +51,7 @@ class BasicDataReportBuilder:
 
     def _build_report(self, extractor: XmlExtractor) -> BasicReport:
         report_node = extractor.require_node("Informe")
-        natural_node = extractor.require_node("NaturalNacional", report_node)
-        
-        meta = self._parse_metadata(extractor, report_node)
-        person = self._parse_persona(extractor, natural_node)
-        
-        return BasicReport(metadata=meta, person=person)
+        return self.build_from_node(extractor, report_node)
 
     def _parse_metadata(self, extractor: XmlExtractor, node: ET.Element) -> QueryMetadata:
         return QueryMetadata(

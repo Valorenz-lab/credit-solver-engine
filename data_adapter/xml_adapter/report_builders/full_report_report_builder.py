@@ -44,6 +44,7 @@ from data_adapter.xml_adapter.models.aggregated_info_models import (
     BalanceDelinquencyVector,
 )
 from data_adapter.xml_adapter.models.basic_data_models import BasicReport
+from data_adapter.xml_adapter.models.global_report_models import GlobalReport
 from data_adapter.xml_adapter.models.full_report_models import FullReport
 from data_adapter.xml_adapter.models.global_debt_models import GlobalDebtEntity, GlobalDebtGuarantee, GlobalDebtRecord
 from data_adapter.xml_adapter.models.query_models import QueryRecord
@@ -62,7 +63,7 @@ class FullReportBuilder:
     def parse(self, xml_input: str | bytes) -> FullReport:
         root = self._parse_xml(xml_input)
         extractor = XmlExtractor(root)
-        return self._build_full_report(extractor, xml_input)
+        return self._build_full_report(extractor)
 
     def parse_file(self, filepath: str) -> FullReport:
         if not os.path.exists(filepath):
@@ -79,18 +80,15 @@ class FullReportBuilder:
         except ET.ParseError as e:
             raise XmlParseError(f"Malformed XML: {e}") from e
 
-    def _build_full_report(self, ex: XmlExtractor, xml_input: str | bytes) -> FullReport:
-        basic_builder = BasicDataReportBuilder()
-        basic_data: BasicReport = basic_builder.parse(xml_input)
-
-        global_builder = GlobalReportBuilder()
-        global_report = global_builder.parse(xml_input)
-
+    def _build_full_report(self, ex: XmlExtractor) -> FullReport:
         reports_node = ex.root if ex.root.tag == "Informes" else ex.find_node("Informes")
         if reports_node is None:
             raise ValueError("Main node 'Informes' not found.")
 
         report_node = ex.require_node("Informe", parent=reports_node)
+
+        basic_data: BasicReport = BasicDataReportBuilder().build_from_node(ex, report_node)
+        global_report: GlobalReport = GlobalReportBuilder().build_from_node(ex, report_node)
 
         bank_builder = BankAccountReportBuilder()
         bank_accounts = bank_builder.parse_accounts(ex, report_node)

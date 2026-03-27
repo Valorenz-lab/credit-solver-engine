@@ -19,9 +19,18 @@ class GlobalReportBuilder:
 
     def parse(self, xml_input: str | bytes) -> GlobalReport:
         root = self._parse_xml(xml_input)
-        # We initialize the extractor with the root
         extractor = XmlExtractor(root)
         return self._build_report(extractor)
+
+    def build_from_node(self, ex: XmlExtractor, report_node: ET.Element) -> GlobalReport:
+        """Build a GlobalReport from an already-parsed extractor and Informe node.
+
+        Use this when the caller already holds an XmlExtractor to avoid
+        re-parsing the XML from scratch.
+        """
+        return GlobalReport(
+            portfolio_account=self._parse_accounts_portfolio(ex, report_node),
+        )
 
 
     def parse_file(self, filepath: str) -> GlobalReport:
@@ -40,17 +49,11 @@ class GlobalReportBuilder:
             raise XmlParseError(f"Malformed XML: {e}") from e
 
     def _build_report(self, ex: XmlExtractor) -> GlobalReport:
-        # We search for the main node
         reports_node = ex.root if ex.root.tag == "Informes" else ex.find_node("Informes")
-        
         if reports_node is None:
             raise ValueError("The main node 'Informes' was not found.")
-
         report_node = ex.require_node("Informe", parent=reports_node)
-
-        return GlobalReport(
-            portfolio_account=self._parse_accounts_portfolio(ex, report_node),
-        )
+        return self.build_from_node(ex, report_node)
 
     def _parse_accounts_portfolio(self, ex: XmlExtractor, report_node: ET.Element) -> tuple[PortfolioAccount, ...]:
         nodos = report_node.findall(".//CuentaCartera")
