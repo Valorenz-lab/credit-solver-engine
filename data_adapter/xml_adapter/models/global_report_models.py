@@ -1,6 +1,14 @@
 from dataclasses import dataclass
 from typing import Optional
 
+# Account state codes (account_statement_code) that represent an open/active obligation.
+# Source: Datacredito XSD Tabla 4 — vigente codes.
+OPEN_ACCOUNT_CODES: frozenset[str] = frozenset({
+    "01", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23",
+    "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35",
+    "36", "37", "38", "39", "40", "41", "45", "47",
+})
+
 
 @dataclass(frozen=True)
 class PortfolioValues:
@@ -87,6 +95,15 @@ class PortfolioAccount:
     characteristics: PortfolioCharacteristics
     values: PortfolioValues
     account_status: AccountStatus
+
+    @property
+    def is_open(self) -> bool:
+        """Return True if the account state code indicates an active obligation."""
+        code = self.account_status.account_statement_code
+        if code is None:
+            return False
+        return code in OPEN_ACCOUNT_CODES
+
 
 @dataclass(frozen=True)
 class GlobalReport:

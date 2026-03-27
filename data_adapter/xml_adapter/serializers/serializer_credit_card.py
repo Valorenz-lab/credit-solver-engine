@@ -1,4 +1,4 @@
-from typing import Optional
+
 
 from data_adapter.transformers.credit_card_transformer import (
     transform_credit_card_class,

@@ -4,10 +4,7 @@ Serializes a FullReport into SerializedFullReport (JSON-safe TypedDict).
 
 from typing import Optional, Union
 
-from data_adapter.xml_adapter.models.bank_account_models import BankAccount
-from data_adapter.xml_adapter.models.credit_card_models import CreditCard
 from data_adapter.xml_adapter.models.full_report_models import FullReport
-from data_adapter.xml_adapter.models.global_report_models import PortfolioAccount
 from data_adapter.xml_adapter.serializers.serializer_aggregated_info import (
     serialize_debt_evolution_quarter,
     serialize_aggregated_info,
@@ -30,13 +27,6 @@ from data_adapter.xml_adapter.types import (
     SerializedPortfolioAccount,
 )
 
-# Account state codes that indicate an open/active portfolio account (Tabla 4 vigente codes)
-_OPEN_ACCOUNT_CODES = frozenset({
-    "01", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23",
-    "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35",
-    "36", "37", "38", "39", "40", "41", "45", "47",
-})
-
 
 def serialize_full_report(report: FullReport) -> SerializedFullReport:
     basic_info = serialize_basic_report(report.basic_data)
@@ -50,7 +40,7 @@ def serialize_full_report(report: FullReport) -> SerializedFullReport:
     # Global summary: all portfolio accounts (open CuentaCartera)
     open_portfolio = [
         acc for acc in report.portfolio_accounts
-        if _is_portfolio_account_open(acc)
+        if acc.is_open
     ]
     global_summary: list[SerializedPortfolioAccount] = [
         _serialize_account(acc) for acc in open_portfolio
@@ -60,19 +50,19 @@ def serialize_full_report(report: FullReport) -> SerializedFullReport:
     open_bank_accounts = [
         serialize_bank_account(acc)
         for acc in report.bank_accounts
-        if _is_bank_account_open(acc)
+        if acc.is_open
     ]
     closed_bank_accounts = [
         serialize_bank_account(acc)
         for acc in report.bank_accounts
-        if not _is_bank_account_open(acc)
+        if not acc.is_open
     ]
 
     checking_accounts = [serialize_checking_account(acc) for acc in report.checking_accounts]
 
     # Active obligations: open portfolio accounts + open credit cards
-    active_portfolio = [_serialize_account(acc) for acc in report.portfolio_accounts if _is_portfolio_account_open(acc)]
-    active_cards = [serialize_credit_card(c) for c in report.credit_cards if _is_credit_card_open(c)]
+    active_portfolio = [_serialize_account(acc) for acc in report.portfolio_accounts if acc.is_open]
+    active_cards = [serialize_credit_card(c) for c in report.credit_cards if c.is_open]
     active_obligations: list[Union[SerializedPortfolioAccount, SerializedCreditCard]] = [*active_portfolio, *active_cards]
 
     # Payment habits grouped by sector
@@ -116,37 +106,13 @@ def serialize_full_report(report: FullReport) -> SerializedFullReport:
     }
 
 
-def _is_portfolio_account_open(account: PortfolioAccount) -> bool:
-    code = account.account_status.account_statement_code
-    if code is None:
-        return False
-    return code in _OPEN_ACCOUNT_CODES
-
-
-def _is_bank_account_open(account: BankAccount) -> bool:
-    if account.state is None:
-        return False
-    code = account.state.code
-    if code is None:
-        return False
-    # Savings account active codes: "01", "06", "07"
-    return code in ("01", "06", "07")
-
-
-def _is_credit_card_open(card: CreditCard) -> bool:
-    code = card.states.account_state_code
-    if code is None:
-        return False
-    return code in _OPEN_ACCOUNT_CODES
-
-
 def _group_by_sector_open(
     report: FullReport,
 ) -> dict[str, list[Union[SerializedPortfolioAccount, SerializedCreditCard]]]:
     result: dict[str, list[Union[SerializedPortfolioAccount, SerializedCreditCard]]] = {}
 
     for acc in report.portfolio_accounts:
-        if not _is_portfolio_account_open(acc):
+        if not acc.is_open:
             continue
         sector = acc.industry_sector or "unknown"
         if sector not in result:
@@ -154,7 +120,7 @@ def _group_by_sector_open(
         result[sector].append(_serialize_account(acc))
 
     for card in report.credit_cards:
-        if not _is_credit_card_open(card):
+        if not card.is_open:
             continue
         sector = card.sector or "unknown"
         if sector not in result:
@@ -170,7 +136,7 @@ def _group_by_sector_closed(
     result: dict[str, list[Union[SerializedPortfolioAccount, SerializedCreditCard]]] = {}
 
     for acc in report.portfolio_accounts:
-        if _is_portfolio_account_open(acc):
+        if acc.is_open:
             continue
         sector = acc.industry_sector or "unknown"
         if sector not in result:
@@ -178,7 +144,7 @@ def _group_by_sector_closed(
         result[sector].append(_serialize_account(acc))
 
     for card in report.credit_cards:
-        if _is_credit_card_open(card):
+        if card.is_open:
             continue
         sector = card.sector or "unknown"
         if sector not in result:

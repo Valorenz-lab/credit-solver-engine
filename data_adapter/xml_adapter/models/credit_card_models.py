@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional
 
+from data_adapter.xml_adapter.models.global_report_models import OPEN_ACCOUNT_CODES
+
 
 @dataclass(frozen=True)
 class CreditCardCharacteristics:
@@ -63,3 +65,11 @@ class CreditCard:
     characteristics: CreditCardCharacteristics
     values: Optional[CreditCardValues]
     states: CreditCardStates
+
+    @property
+    def is_open(self) -> bool:
+        """Return True if the account state code indicates an active card."""
+        code = self.states.account_state_code
+        if code is None:
+            return False
+        return code in OPEN_ACCOUNT_CODES

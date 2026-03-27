@@ -1,4 +1,4 @@
-from typing import Optional
+
 
 from data_adapter.transformers.shared_transformers import (
     transform_account_state_savings,
