@@ -3,7 +3,7 @@
 from enum import StrEnum
 
 
-class CardHolder(StrEnum):
+class CardholderRole(StrEnum):
     PRINCIPAL = "Principal"
     AUTHORIZED_USER_CARD = "Amparada"
     CO_HOLDER = "Cotitular"

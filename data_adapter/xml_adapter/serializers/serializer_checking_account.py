@@ -1,10 +1,10 @@
 
 
 from data_adapter.transformers.shared_transformers import (
-    transform_account_state_savings,
+    transform_savings_account_status,
     transform_credit_rating,
     transform_ownership_situation,
-    transform_sector,
+    transform_industry_sector,
 )
 from data_adapter.xml_adapter.models.bank_account_models import BankAccountState, BankAccountValue
 from data_adapter.xml_adapter.models.checking_account_models import (
@@ -32,7 +32,7 @@ def serialize_checking_account(account: CheckingAccount) -> SerializedCheckingAc
         "city": account.city,
         "dane_city_code": account.dane_city_code,
         "sector": account.sector,
-        "sector_label": transform_sector(account.sector).value,
+        "sector_label": transform_industry_sector(account.sector).value,
         "subscriber_code": account.subscriber_code,
         "entity_id_type": account.entity_id_type,
         "entity_id": account.entity_id,
@@ -55,7 +55,7 @@ def _serialize_value(v: BankAccountValue) -> SerializedBankAccountValue:
 def _serialize_state(s: BankAccountState) -> SerializedBankAccountState:
     return {
         "code": s.code,
-        "label": transform_account_state_savings(s.code).value,
+        "label": transform_savings_account_status(s.code).value,
         "date": s.date,
     }
 

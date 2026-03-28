@@ -2,7 +2,7 @@ from typing import Optional
 
 from data_adapter.enums.financial_info.credit_card_class import CreditCardClass
 from data_adapter.enums.financial_info.credit_card_franchise import CreditCardFranchise
-from data_adapter.enums.financial_info.plastic_state import PlasticState
+from data_adapter.enums.financial_info.plastic_status import PlasticStatus
 
 
 def transform_franchise(value: Optional[str]) -> CreditCardFranchise:
@@ -32,18 +32,18 @@ def transform_credit_card_class(value: Optional[str]) -> CreditCardClass:
     return mapping.get(value.strip(), CreditCardClass.UNKNOWN)
 
 
-def transform_plastic_state(value: Optional[str]) -> PlasticState:
+def transform_plastic_status(value: Optional[str]) -> PlasticStatus:
     if not value or value.strip() == "":
-        return PlasticState.UNKNOWN
+        return PlasticStatus.UNKNOWN
     mapping = {
-        "1": PlasticState.DELIVERED,
-        "2": PlasticState.RENEWED,
-        "3": PlasticState.NOT_RENEWED,
-        "4": PlasticState.REISSUED,
-        "5": PlasticState.STOLEN,
-        "6": PlasticState.LOST,
-        "7": PlasticState.NOT_DELIVERED,
-        "8": PlasticState.RETURNED,
-        "0": PlasticState.UNKNOWN,
+        "1": PlasticStatus.DELIVERED,
+        "2": PlasticStatus.RENEWED,
+        "3": PlasticStatus.NOT_RENEWED,
+        "4": PlasticStatus.REISSUED,
+        "5": PlasticStatus.STOLEN,
+        "6": PlasticStatus.LOST,
+        "7": PlasticStatus.NOT_DELIVERED,
+        "8": PlasticStatus.RETURNED,
+        "0": PlasticStatus.UNKNOWN,
     }
-    return mapping.get(value.strip(), PlasticState.UNKNOWN)
+    return mapping.get(value.strip(), PlasticStatus.UNKNOWN)

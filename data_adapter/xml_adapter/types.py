@@ -1,7 +1,7 @@
 from typing import Optional, TypedDict, Union
 
 from data_adapter.enums.financial_info.account_condition import AccountCondition
-from data_adapter.enums.financial_info.debtor_quality_portfolio import DebtorQualityPortfolio
+from data_adapter.enums.financial_info.debtor_role import DebtorRole
 from data_adapter.enums.financial_info.obligation_type import ObligationType
 from data_adapter.enums.financial_info.payment_frequency import PaymentFrequency
 
@@ -87,7 +87,7 @@ class SerializedPortfolioCharacteristics(TypedDict):
     obligation_type: Optional[ObligationType]
     contract_type: Optional[str]
     contract_execution: Optional[str]
-    debtor_quality: Optional[DebtorQualityPortfolio]
+    debtor_quality: Optional[DebtorRole]
     guarantee: Optional[str]
     guarantee_label: Optional[str]
     permanence_months: Optional[int]

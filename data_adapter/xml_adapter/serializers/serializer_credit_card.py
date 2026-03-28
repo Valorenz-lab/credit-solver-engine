@@ -3,7 +3,7 @@
 from data_adapter.transformers.credit_card_transformer import (
     transform_credit_card_class,
     transform_franchise,
-    transform_plastic_state,
+    transform_plastic_status,
 )
 from data_adapter.transformers.shared_transformers import (
     transform_credit_rating,
@@ -13,7 +13,7 @@ from data_adapter.transformers.shared_transformers import (
     transform_payment_behavior_char,
     transform_payment_method,
     transform_payment_status,
-    transform_sector,
+    transform_industry_sector,
 )
 from data_adapter.xml_adapter.models.credit_card_models import (
     CreditCard,
@@ -53,7 +53,7 @@ def serialize_credit_card(card: CreditCard) -> SerializedCreditCard:
         "city": card.city,
         "dane_city_code": card.dane_city_code,
         "sector": card.sector,
-        "sector_label": transform_sector(card.sector).value,
+        "sector_label": transform_industry_sector(card.sector).value,
         "entity_id_type": card.entity_id_type,
         "entity_id": card.entity_id,
         "hd_rating": card.hd_rating,
@@ -99,7 +99,7 @@ def _serialize_values(v: CreditCardValues) -> SerializedCreditCardValues:
 def _serialize_states(s: CreditCardStates) -> SerializedCreditCardStates:
     return {
         "plastic_state_code": s.plastic_state_code,
-        "plastic_state_label": transform_plastic_state(s.plastic_state_code).value,
+        "plastic_state_label": transform_plastic_status(s.plastic_state_code).value,
         "plastic_state_date": s.plastic_state_date,
         "account_state_code": s.account_state_code,
         "account_state_date": s.account_state_date,

@@ -1,7 +1,7 @@
 from enum import StrEnum
 
 
-class Sector(StrEnum):
+class IndustrySector(StrEnum):
     FINANCIAL = "Financiero"
     COOPERATIVE = "Cooperativo"
     REAL = "Real"

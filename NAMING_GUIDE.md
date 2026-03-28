@@ -212,13 +212,13 @@ Mapa completo de tablas de códigos del XSD v1.6 a sus enums Python actuales.
 | Tabla 4 | `EstadoCuenta.codigo` | `CuentaCartera/Estados`, `TarjetaCredito/Estados` | `AccountCondition` | `AccountCondition` | `financial_info/account_condition.py` | ✅ |
 | Tabla 4 | `EstadoPago.codigo` | `CuentaCartera/Estados`, `TarjetaCredito/Estados` | `PaymentStatus` | `PaymentStatus` | `financial_info/payment_status.py` | ✅ |
 | Tabla 5 | `comportamiento` (por carácter) | `CuentaCartera`, `TarjetaCredito` | `PaymentBehavior` | `PaymentBehavior` | `financial_info/payment_behavior.py` | ✅ |
-| Tabla 6 | `calidadDeudor` | `CuentaCartera/Caracteristicas` | `DebtorQualityPortfolio` | `DebtorRole` | `financial_info/debtor_quality_portfolio.py` → `debtor_role.py` | ⚠️ Renombrar |
-| Tabla 6 | `amparada` / `codigoAmparada` | `TarjetaCredito/Caracteristicas` | `CardHolder` | `CardholderRole` | `financial_info/card_holder.py` → `cardholder_role.py` | ⚠️ Renombrar |
+| Tabla 6 | `calidadDeudor` | `CuentaCartera/Caracteristicas` | `DebtorRole` | `DebtorRole` | `financial_info/debtor_role.py` | ✅ |
+| Tabla 6 | `amparada` / `codigoAmparada` | `TarjetaCredito/Caracteristicas` | `CardholderRole` | `CardholderRole` | `financial_info/cardholder_role.py` | ✅ |
 | Tabla 9 | `tipoObligacion` | `CuentaCartera/Caracteristicas` | `ObligationType` | `ObligationType` | `financial_info/obligation_type.py` | ✅ |
 | Tabla 10 | `moneda` | múltiples | `Currency` | `Currency` | `financial_info/currency.py` | ✅ |
 | Tabla 11 | `garantia` | `CuentaCartera`, `TarjetaCredito`, `EndeudamientoGlobal` | `GuaranteeType` | `GuaranteeType` | `financial_info/guarantee_type.py` | ✅ |
 | Tabla 14 | `calificacion` | `CuentaCartera`, `TarjetaCredito`, `EndeudamientoGlobal` | `CreditRating` | `CreditRating` | `financial_info/credit_rating.py` | ✅ |
-| Tabla 16 | `Estado.codigo` | `CuentaAhorro`, `CuentaCorriente` | `AccountStateSavings` | `SavingsAccountStatus` | `financial_info/account_state_savings.py` → `savings_account_status.py` | ⚠️ Renombrar |
+| Tabla 16 | `Estado.codigo` | `CuentaAhorro`, `CuentaCorriente` | `SavingsAccountStatus` | `SavingsAccountStatus` | `financial_info/savings_account_status.py` | ✅ |
 | Tabla 18 | `formaPago` | `CuentaCartera`, `TarjetaCredito` | `PaymentMethod` | `PaymentMethod` | `financial_info/payment_method.py` | ✅ |
 | Tabla 23 | `Consulta.razon` | `Consulta` | `QueryReason` | `QueryReason` | `financial_info/query_reason.py` | ✅ |
 | Tabla 29 | `situacionTitular` | `CuentaCartera`, `CuentaAhorro`, `TarjetaCredito` | `OwnershipSituation` | `OwnershipSituation` | `financial_info/ownership_situation.py` | ✅ |
@@ -226,12 +226,12 @@ Mapa completo de tablas de códigos del XSD v1.6 a sus enums Python actuales.
 | Tabla 39 | `franquicia` | `TarjetaCredito/Caracteristicas` | `CreditCardFranchise` | `CreditCardFranchise` | `financial_info/credit_card_franchise.py` | ✅ |
 | Tabla 40 | `clase` (tarjeta) | `TarjetaCredito/Caracteristicas` | `CreditCardClass` | `CreditCardClass` | `financial_info/credit_card_class.py` | ✅ |
 | Tabla 41 | `tipoContrato` | `CuentaCartera/Caracteristicas` | `ContractType` | `ContractType` | `financial_info/contract_type.py` | ✅ |
-| Tabla 42 | `EstadoPlastico.codigo` | `TarjetaCredito/Estados` | `PlasticState` | `PlasticStatus` | `financial_info/plastic_state.py` → `plastic_status.py` | ⚠️ Renombrar |
+| Tabla 42 | `EstadoPlastico.codigo` | `TarjetaCredito/Estados` | `PlasticStatus` | `PlasticStatus` | `financial_info/plastic_status.py` | ✅ |
 | Tabla 44 | `EstadoOrigen.codigo` | `CuentaCartera/Estados`, `TarjetaCredito/Estados` | `OriginState` | `OriginState` | `financial_info/origin_state.py` | ✅ |
 | — | `periodicidad` | `CuentaCartera/Valores/Valor` | `PaymentFrequency` | `PaymentFrequency` | `financial_info/payment_frequency.py` | ✅ |
-| — | `sector` | múltiples | `Sector` | `IndustrySector` | `financial_info/sector.py` → `industry_sector.py` | ⚠️ Renombrar |
+| — | `sector` | múltiples | `IndustrySector` | `IndustrySector` | `financial_info/industry_sector.py` | ✅ |
 | — | `EndeudamientoGlobal.tipoCuenta` | `EndeudamientoGlobal` | `GlobalDebtCreditType` | `GlobalDebtCreditType` | `financial_info/global_debt_credit_type.py` | ✅ (aceptable) |
-| — | `currentState` (texto libre) | `EndeudamientoActual/Cuenta` | `CurrentDebtState` | `CurrentDebtStatus` | `financial_info/current_debt_state.py` → `current_debt_status.py` | ⚠️ Renombrar (menor) |
+| — | `currentState` (texto libre) | `EndeudamientoActual/Cuenta` | `CurrentDebtStatus` | `CurrentDebtStatus` | `financial_info/current_debt_status.py` | ✅ |
 
 ---
 
@@ -251,16 +251,16 @@ Ordenados por impacto. Los marcados ⚠️ **BLOQUEANTE** deben resolverse antes
 
 ---
 
-### 5.2 Enums con nombre incorrecto
+### 5.2 ~~Enums con nombre incorrecto~~ ✅ Resuelto
 
-| Archivo actual | Clase actual | Clase correcta | Archivos impactados |
-|---|---|---|---|
-| `financial_info/debtor_quality_portfolio.py` | `DebtorQualityPortfolio` | `DebtorRole` | `global_report_transformer.py`, `serializer_global_report.py`, `types.py` |
-| `financial_info/card_holder.py` | `CardHolder` | `CardholderRole` | `credit_card_transformer.py`, `serializer_credit_card.py` |
-| `financial_info/account_state_savings.py` | `AccountStateSavings` | `SavingsAccountStatus` | `shared_transformers.py`, `serializer_bank_account.py`, `serializer_checking_account.py` |
-| `financial_info/sector.py` | `Sector` | `IndustrySector` | `shared_transformers.py`, múltiples serializers |
-| `financial_info/plastic_state.py` | `PlasticState` | `PlasticStatus` | `credit_card_transformer.py`, `serializer_credit_card.py` |
-| `financial_info/current_debt_state.py` | `CurrentDebtState` | `CurrentDebtStatus` | `shared_transformers.py` |
+| Enum anterior | Enum actual | Archivo |
+|---|---|---|
+| `DebtorQualityPortfolio` | `DebtorRole` | `financial_info/debtor_role.py` |
+| `CardHolder` | `CardholderRole` | `financial_info/cardholder_role.py` |
+| `AccountStateSavings` | `SavingsAccountStatus` | `financial_info/savings_account_status.py` |
+| `Sector` | `IndustrySector` | `financial_info/industry_sector.py` |
+| `PlasticState` | `PlasticStatus` | `financial_info/plastic_status.py` |
+| `CurrentDebtState` | `CurrentDebtStatus` | `financial_info/current_debt_status.py` |
 
 ---
 
@@ -272,11 +272,9 @@ Ordenados por impacto. Los marcados ⚠️ **BLOQUEANTE** deben resolverse antes
 
 ---
 
-### 5.4 Funciones de transformer con nombre incorrecto
+### 5.4 ~~Funciones de transformer con nombre incorrecto~~ ✅ Resuelto
 
-Cuando se renombren los enums anteriores, renombrar también sus transformers:
-
-| Función actual | Función correcta | Transformer file |
+| Función anterior | Función actual | Archivo |
 |---|---|---|
 | `transform_debtor_quality` | `transform_debtor_role` | `global_report_transformer.py` |
 | `transform_account_state_savings` | `transform_savings_account_status` | `shared_transformers.py` |

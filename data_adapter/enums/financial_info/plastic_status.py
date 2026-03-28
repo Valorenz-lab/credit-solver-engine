@@ -1,7 +1,7 @@
 from enum import StrEnum
 
 
-class PlasticState(StrEnum):
+class PlasticStatus(StrEnum):
     DELIVERED = "Entregado"
     RENEWED = "Renovado"
     NOT_RENEWED = "No renovado"

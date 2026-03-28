@@ -4,7 +4,7 @@ from typing import Optional
 
 from data_adapter.enums.financial_info.account_condition import AccountCondition
 from data_adapter.enums.financial_info.account_type import AccountType
-from data_adapter.enums.financial_info.debtor_quality_portfolio import DebtorQualityPortfolio
+from data_adapter.enums.financial_info.debtor_role import DebtorRole
 from data_adapter.enums.financial_info.obligation_type import ObligationType
 from data_adapter.enums.financial_info.payment_frequency import PaymentFrequency
 
@@ -17,32 +17,32 @@ def transform_account_type(value: Optional[str])->AccountType:
         return AccountType.UNKNOWN
 
 
-def transform_debtor_quality(value: Optional[str])->DebtorQualityPortfolio:
+def transform_debtor_role(value: Optional[str]) -> DebtorRole:
     if not value or value.strip() == "":
-        return DebtorQualityPortfolio.UNKNOWN
+        return DebtorRole.UNKNOWN
     try:
         number_value = int(value)
         mapping = {
-            0: DebtorQualityPortfolio.DEBTOR,
-            1: DebtorQualityPortfolio.CO_DEBTOR,
-            2: DebtorQualityPortfolio.CO_DEBTOR,
-            3: DebtorQualityPortfolio.CO_DEBTOR,
-            4: DebtorQualityPortfolio.CO_SINGER,
-            5: DebtorQualityPortfolio.SOLIDARY_DEBTOR,
-            6: DebtorQualityPortfolio.CO_TENANT,
-            7: DebtorQualityPortfolio.OTHER_GUARANTORS,
-            8: DebtorQualityPortfolio.GUARANTOR,
-            9: DebtorQualityPortfolio.NOT_APPLICABLE,
-            96: DebtorQualityPortfolio.CO_HOLDER,
-            97: DebtorQualityPortfolio.COMMUNAL,
-            99: DebtorQualityPortfolio.NOT_APPLICABLE
+            0: DebtorRole.DEBTOR,
+            1: DebtorRole.CO_DEBTOR,
+            2: DebtorRole.CO_DEBTOR,
+            3: DebtorRole.CO_DEBTOR,
+            4: DebtorRole.CO_SINGER,
+            5: DebtorRole.SOLIDARY_DEBTOR,
+            6: DebtorRole.CO_TENANT,
+            7: DebtorRole.OTHER_GUARANTORS,
+            8: DebtorRole.GUARANTOR,
+            9: DebtorRole.NOT_APPLICABLE,
+            96: DebtorRole.CO_HOLDER,
+            97: DebtorRole.COMMUNAL,
+            99: DebtorRole.NOT_APPLICABLE
         }
 
         if number_value in mapping:
             return mapping[number_value]
-        return DebtorQualityPortfolio.UNKNOWN
+        return DebtorRole.UNKNOWN
     except ValueError:
-        return DebtorQualityPortfolio.UNKNOWN
+        return DebtorRole.UNKNOWN
 
 def transform_payment_frequency(value: Optional[str])->PaymentFrequency:
     if not value or value.strip() == "":

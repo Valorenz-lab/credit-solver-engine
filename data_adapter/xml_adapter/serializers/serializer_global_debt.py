@@ -1,7 +1,7 @@
 from typing import Optional
 
 from data_adapter.transformers.global_debt_transformer import transform_global_debt_credit_type
-from data_adapter.transformers.shared_transformers import transform_guarantee, transform_sector
+from data_adapter.transformers.shared_transformers import transform_guarantee, transform_industry_sector
 from data_adapter.xml_adapter.models.global_debt_models import GlobalDebtEntity, GlobalDebtGuarantee, GlobalDebtRecord
 from data_adapter.xml_adapter.types import (
     SerializedGlobalDebt,
@@ -31,7 +31,7 @@ def _serialize_entity(e: GlobalDebtEntity) -> SerializedGlobalDebtEntity:
         "name": e.name,
         "nit": e.nit,
         "sector": e.sector,
-        "sector_label": transform_sector(e.sector).value,
+        "sector_label": transform_industry_sector(e.sector).value,
     }
 
 

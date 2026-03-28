@@ -1,7 +1,7 @@
 from enum import StrEnum
 
 
-class AccountStateSavings(StrEnum):
+class SavingsAccountStatus(StrEnum):
     ACTIVE = "Activa - Vigente"
     CANCELLED_BAD_USE = "Cancelada Mal manejo - Cerrada"
     PAID_OFF = "Saldada - Cerrada"

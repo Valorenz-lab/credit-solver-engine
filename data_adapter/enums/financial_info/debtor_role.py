@@ -3,7 +3,7 @@
 from enum import StrEnum
 
 
-class DebtorQualityPortfolio(StrEnum):
+class DebtorRole(StrEnum):
     DEBTOR = "Deudor"
     CO_DEBTOR ="Codeudor"
     CO_SINGER = "Avalista"

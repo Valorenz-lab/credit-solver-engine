@@ -1,30 +1,30 @@
 from typing import Optional
 
-from data_adapter.enums.financial_info.account_state_savings import AccountStateSavings
 from data_adapter.enums.financial_info.credit_rating import CreditRating
 from data_adapter.enums.financial_info.currency import Currency
-from data_adapter.enums.financial_info.current_debt_state import CurrentDebtState
+from data_adapter.enums.financial_info.current_debt_status import CurrentDebtStatus
 from data_adapter.enums.financial_info.guarantee_type import GuaranteeType
+from data_adapter.enums.financial_info.industry_sector import IndustrySector
 from data_adapter.enums.financial_info.origin_state import OriginState
 from data_adapter.enums.financial_info.ownership_situation import OwnershipSituation
 from data_adapter.enums.financial_info.payment_behavior import PaymentBehavior
 from data_adapter.enums.financial_info.payment_method import PaymentMethod
 from data_adapter.enums.financial_info.payment_status import PaymentStatus
 from data_adapter.enums.financial_info.query_reason import QueryReason
-from data_adapter.enums.financial_info.sector import Sector
+from data_adapter.enums.financial_info.savings_account_status import SavingsAccountStatus
 
 
-def transform_sector(value: Optional[str]) -> Sector:
+def transform_industry_sector(value: Optional[str]) -> IndustrySector:
     if not value or value.strip() == "":
-        return Sector.UNKNOWN
+        return IndustrySector.UNKNOWN
     mapping = {
-        "1": Sector.FINANCIAL,
-        "2": Sector.COOPERATIVE,
-        "3": Sector.REAL,
-        "4": Sector.TELECOM,
-        "0": Sector.UNKNOWN,
+        "1": IndustrySector.FINANCIAL,
+        "2": IndustrySector.COOPERATIVE,
+        "3": IndustrySector.REAL,
+        "4": IndustrySector.TELECOM,
+        "0": IndustrySector.UNKNOWN,
     }
-    return mapping.get(value.strip(), Sector.UNKNOWN)
+    return mapping.get(value.strip(), IndustrySector.UNKNOWN)
 
 
 def transform_credit_rating(value: Optional[str]) -> CreditRating:
@@ -45,19 +45,19 @@ def transform_credit_rating(value: Optional[str]) -> CreditRating:
     return mapping.get(value.strip(), CreditRating.UNKNOWN)
 
 
-def transform_account_state_savings(value: Optional[str]) -> AccountStateSavings:
+def transform_savings_account_status(value: Optional[str]) -> SavingsAccountStatus:
     if not value or value.strip() == "":
-        return AccountStateSavings.UNKNOWN
+        return SavingsAccountStatus.UNKNOWN
     mapping = {
-        "01": AccountStateSavings.ACTIVE,
-        "02": AccountStateSavings.CANCELLED_BAD_USE,
-        "05": AccountStateSavings.PAID_OFF,
-        "06": AccountStateSavings.SEIZED,
-        "07": AccountStateSavings.SEIZED_ACTIVE,
-        "09": AccountStateSavings.INACTIVE,
-        "00": AccountStateSavings.UNKNOWN,
+        "01": SavingsAccountStatus.ACTIVE,
+        "02": SavingsAccountStatus.CANCELLED_BAD_USE,
+        "05": SavingsAccountStatus.PAID_OFF,
+        "06": SavingsAccountStatus.SEIZED,
+        "07": SavingsAccountStatus.SEIZED_ACTIVE,
+        "09": SavingsAccountStatus.INACTIVE,
+        "00": SavingsAccountStatus.UNKNOWN,
     }
-    return mapping.get(value.strip(), AccountStateSavings.UNKNOWN)
+    return mapping.get(value.strip(), SavingsAccountStatus.UNKNOWN)
 
 
 def transform_ownership_situation(value: Optional[str]) -> OwnershipSituation:
@@ -183,26 +183,26 @@ def transform_payment_status(value: Optional[str]) -> PaymentStatus:
     return mapping.get(value.strip(), PaymentStatus.UNKNOWN)
 
 
-def transform_current_debt_state(value: Optional[str]) -> CurrentDebtState:
-    """Transform free-text current_state from EndeudamientoActual to CurrentDebtState enum."""
+def transform_current_debt_status(value: Optional[str]) -> CurrentDebtStatus:
+    """Transform free-text current_state from EndeudamientoActual to CurrentDebtStatus enum."""
     if not value or value.strip() == "":
-        return CurrentDebtState.UNKNOWN
+        return CurrentDebtStatus.UNKNOWN
     v = value.strip().lower()
     if v == "al día" or v.startswith("al día") and "mora" not in v:
-        return CurrentDebtState.ON_TIME
+        return CurrentDebtStatus.ON_TIME
     if "castigada" in v or "castig" in v:
-        return CurrentDebtState.WRITTEN_OFF
+        return CurrentDebtStatus.WRITTEN_OFF
     if "dudoso" in v:
-        return CurrentDebtState.DOUBTFUL_COLLECTION
+        return CurrentDebtStatus.DOUBTFUL_COLLECTION
     if "mora 30" in v or "m 30" in v:
-        return CurrentDebtState.PAST_DUE_30
+        return CurrentDebtStatus.PAST_DUE_30
     if "mora 60" in v or "m 60" in v:
-        return CurrentDebtState.PAST_DUE_60
+        return CurrentDebtStatus.PAST_DUE_60
     if "mora 90" in v or "m 90" in v or "rm 90" in v:
-        return CurrentDebtState.PAST_DUE_90
+        return CurrentDebtStatus.PAST_DUE_90
     if "mora 120" in v or "m 120" in v or "rm 120" in v:
-        return CurrentDebtState.PAST_DUE_120
-    return CurrentDebtState.UNKNOWN
+        return CurrentDebtStatus.PAST_DUE_120
+    return CurrentDebtStatus.UNKNOWN
 
 
 def transform_payment_behavior_char(char: str) -> PaymentBehavior:

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from data_adapter.transformers.shared_transformers import transform_current_debt_state, transform_payment_behavior_char
+from data_adapter.transformers.shared_transformers import transform_current_debt_status, transform_payment_behavior_char
 from data_adapter.xml_adapter.models.aggregated_info_models import (
     AccountBehaviorVector,
     AccountTypeTotals,
@@ -349,7 +349,7 @@ def _serialize_balance_delinquency_vector(v: BalanceDelinquencyVector) -> Serial
 def _serialize_current_debt_account(a: CurrentDebtAccount) -> SerializedCurrentDebtAccount:
     return {
         "current_state": a.current_state,
-        "current_state_label": transform_current_debt_state(a.current_state).value,
+        "current_state_label": transform_current_debt_status(a.current_state).value,
         "rating": a.rating,
         "initial_value": a.initial_value,
         "current_balance": a.current_balance,

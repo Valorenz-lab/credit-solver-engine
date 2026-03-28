@@ -2,7 +2,7 @@
 """
 
 
-from data_adapter.transformers.global_report_transformer import transform_account_condition, transform_account_type, transform_debtor_quality, transform_obligation_type, transform_payment_frequency
+from data_adapter.transformers.global_report_transformer import transform_account_condition, transform_account_type, transform_debtor_role, transform_obligation_type, transform_payment_frequency
 from data_adapter.transformers.shared_transformers import transform_guarantee, transform_payment_behavior_char, transform_payment_status
 from data_adapter.xml_adapter.models.global_report_models import GlobalReport, PortfolioAccount, PortfolioCharacteristics, PortfolioStates, PortfolioValues
 from data_adapter.xml_adapter.types import SerializedGlobalReport, SerializedPortfolioAccount, SerializedPortfolioCharacteristics, SerializedPortfolioStates, SerializedPortfolioValues
@@ -50,7 +50,7 @@ def _serialize_characteristics(c: PortfolioCharacteristics) -> SerializedPortfol
         "obligation_type": transform_obligation_type(c.obligation_type),
         "contract_type": c.contract_type,
         "contract_execution": c.contract_execution,
-        "debtor_quality": transform_debtor_quality(c.debtor_quality),
+        "debtor_quality": transform_debtor_role(c.debtor_quality),
         "guarantee": c.guarantee,
         "guarantee_label": transform_guarantee(c.guarantee).value,
         "permanence_months": c.permanence_months,
