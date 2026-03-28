@@ -205,8 +205,8 @@ Mapa completo de tablas de códigos del XSD v1.6 a sus enums Python actuales.
 
 | Tabla XSD | Atributo XML | Nodo(s) | Enum actual | Nombre correcto | Archivo | Estado |
 |---|---|---|---|---|---|---|
-| Tabla 1 | `tipoIdentificacion` | múltiples | `TypesId` | `IdentificationDocumentType` | `basic_info/types_id.py` | ⚠️ Renombrar |
-| Tabla 2 | `Identificacion.estado` | `NaturalNacional` | `IdValidity` | `IdentificationStatus` | `basic_info/id_validity.py` | ⚠️ Renombrar |
+| Tabla 1 | `tipoIdentificacion` | múltiples | `IdentificationDocumentType` | `IdentificationDocumentType` | `basic_info/identification_document_type.py` | ✅ |
+| Tabla 2 | `Identificacion.estado` | `NaturalNacional` | `IdentificationStatus` | `IdentificationStatus` | `basic_info/identification_status.py` | ✅ |
 | — | `sexo` | `NaturalNacional` | `Gender` | `Gender` | `basic_info/gender.py` | ✅ |
 | Tabla 3 | `tipoCuenta` | `CuentaCartera/Caracteristicas` | `AccountType` | `AccountType` | `financial_info/account_type.py` | ✅ |
 | Tabla 4 | `EstadoCuenta.codigo` | `CuentaCartera/Estados`, `TarjetaCredito/Estados` | `AccountCondition` | `AccountCondition` | `financial_info/account_condition.py` | ✅ |
@@ -255,8 +255,6 @@ Ordenados por impacto. Los marcados ⚠️ **BLOQUEANTE** deben resolverse antes
 
 | Archivo actual | Clase actual | Clase correcta | Archivos impactados |
 |---|---|---|---|
-| `basic_info/types_id.py` | `TypesId` | `IdentificationDocumentType` | `basic_info_transformer.py`, `serializers_basic_report.py`, `types.py` |
-| `basic_info/id_validity.py` | `IdValidity` | `IdentificationStatus` | `basic_info_transformer.py`, `serializers_basic_report.py` |
 | `financial_info/debtor_quality_portfolio.py` | `DebtorQualityPortfolio` | `DebtorRole` | `global_report_transformer.py`, `serializer_global_report.py`, `types.py` |
 | `financial_info/card_holder.py` | `CardHolder` | `CardholderRole` | `credit_card_transformer.py`, `serializer_credit_card.py` |
 | `financial_info/account_state_savings.py` | `AccountStateSavings` | `SavingsAccountStatus` | `shared_transformers.py`, `serializer_bank_account.py`, `serializer_checking_account.py` |
@@ -280,11 +278,11 @@ Cuando se renombren los enums anteriores, renombrar también sus transformers:
 
 | Función actual | Función correcta | Transformer file |
 |---|---|---|
-| `transform_status_account` | `transform_account_condition` | `global_report_transformer.py` |
-| `transform_account_type` (ya correcto) | — | — |
 | `transform_debtor_quality` | `transform_debtor_role` | `global_report_transformer.py` |
 | `transform_account_state_savings` | `transform_savings_account_status` | `shared_transformers.py` |
 | `transform_sector` | `transform_industry_sector` | `shared_transformers.py` |
+| `transform_plastic_state` | `transform_plastic_status` | `credit_card_transformer.py` |
+| `transform_current_debt_state` | `transform_current_debt_status` | `shared_transformers.py` |
 
 ---
 
