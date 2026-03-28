@@ -1,0 +1,150 @@
+from data_adapter.xml_adapter.types.types_aggregated_info import (
+    SerializedAccountTypeTotals,
+    SerializedAggregatedBalances,
+    SerializedAggregatedPrincipals,
+    SerializedAggregatedSummary,
+    SerializedAggregatedSummaryInner,
+    SerializedBalanceHistoryByType,
+    SerializedBalanceHistoryQuarter,
+    SerializedDebtEvolutionAnalysis,
+    SerializedDebtEvolutionQuarter,
+    SerializedGrandTotal,
+    SerializedMonthlyBalance,
+    SerializedMonthlyBehavior,
+    SerializedPortfolioCompositionItem,
+    SerializedPortfolioStateCount,
+    SerializedQuarterlyDebtCartera,
+    SerializedQuarterlyDebtSector,
+    SerializedQuarterlyDebtSummary,
+    SerializedSectorBalance,
+)
+from data_adapter.xml_adapter.types.types_bank_account import (
+    SerializedBankAccount,
+    SerializedBankAccountState,
+    SerializedBankAccountValue,
+    SerializedCheckingAccount,
+    SerializedCheckingAccountOverdraft,
+)
+from data_adapter.xml_adapter.types.types_basic import (
+    SerializedAge,
+    SerializedCustomerIdentification,
+    SerializedMetadata,
+    SerializedPerson,
+    SerializedReport,
+)
+from data_adapter.xml_adapter.types.types_credit_card import (
+    SerializedCreditCard,
+    SerializedCreditCardCharacteristics,
+    SerializedCreditCardStates,
+    SerializedCreditCardValues,
+)
+from data_adapter.xml_adapter.types.types_full_report import SerializedFullReport
+from data_adapter.xml_adapter.types.types_global_debt import (
+    SerializedGlobalDebt,
+    SerializedGlobalDebtEntity,
+    SerializedGlobalDebtGuarantee,
+    SerializedQueryRecord,
+)
+from data_adapter.xml_adapter.types.types_micro_credit import (
+    SerializedAccountBehaviorVector,
+    SerializedBalanceDelinquencyVector,
+    SerializedBehaviorMonthlyChar,
+    SerializedCurrentDebtAccount,
+    SerializedCurrentDebtBySector,
+    SerializedCurrentDebtByType,
+    SerializedCurrentDebtByUser,
+    SerializedGeneralProfile,
+    SerializedMicroCreditAggregatedInfo,
+    SerializedMonthlyBalancesAndArrears,
+    SerializedSectorBehaviorVector,
+    SerializedSectorCreditCount,
+    SerializedSectorSeniority,
+    SerializedTrendDataPoint,
+    SerializedTrendSeries,
+)
+from data_adapter.xml_adapter.types.types_portfolio import (
+    SerializedGlobalReport,
+    SerializedPortfolioAccount,
+    SerializedPortfolioCharacteristics,
+    SerializedPortfolioStates,
+    SerializedPortfolioValues,
+)
+from data_adapter.xml_adapter.types.types_score_alert import (
+    SerializedAlertRecord,
+    SerializedAlertSource,
+    SerializedScoreRecord,
+    SerializedScoreReason,
+)
+
+__all__ = [
+    # basic
+    "SerializedAge",
+    "SerializedCustomerIdentification",
+    "SerializedMetadata",
+    "SerializedPerson",
+    "SerializedReport",
+    # portfolio
+    "SerializedGlobalReport",
+    "SerializedPortfolioAccount",
+    "SerializedPortfolioCharacteristics",
+    "SerializedPortfolioStates",
+    "SerializedPortfolioValues",
+    # bank account
+    "SerializedBankAccount",
+    "SerializedBankAccountState",
+    "SerializedBankAccountValue",
+    "SerializedCheckingAccount",
+    "SerializedCheckingAccountOverdraft",
+    # credit card
+    "SerializedCreditCard",
+    "SerializedCreditCardCharacteristics",
+    "SerializedCreditCardStates",
+    "SerializedCreditCardValues",
+    # global debt
+    "SerializedGlobalDebt",
+    "SerializedGlobalDebtEntity",
+    "SerializedGlobalDebtGuarantee",
+    "SerializedQueryRecord",
+    # aggregated info
+    "SerializedAccountTypeTotals",
+    "SerializedAggregatedBalances",
+    "SerializedAggregatedPrincipals",
+    "SerializedAggregatedSummary",
+    "SerializedAggregatedSummaryInner",
+    "SerializedBalanceHistoryByType",
+    "SerializedBalanceHistoryQuarter",
+    "SerializedDebtEvolutionAnalysis",
+    "SerializedDebtEvolutionQuarter",
+    "SerializedGrandTotal",
+    "SerializedMonthlyBalance",
+    "SerializedMonthlyBehavior",
+    "SerializedPortfolioCompositionItem",
+    "SerializedPortfolioStateCount",
+    "SerializedQuarterlyDebtCartera",
+    "SerializedQuarterlyDebtSector",
+    "SerializedQuarterlyDebtSummary",
+    "SerializedSectorBalance",
+    # micro credit
+    "SerializedAccountBehaviorVector",
+    "SerializedBalanceDelinquencyVector",
+    "SerializedBehaviorMonthlyChar",
+    "SerializedCurrentDebtAccount",
+    "SerializedCurrentDebtBySector",
+    "SerializedCurrentDebtByType",
+    "SerializedCurrentDebtByUser",
+    "SerializedGeneralProfile",
+    "SerializedMicroCreditAggregatedInfo",
+    "SerializedMonthlyBalancesAndArrears",
+    "SerializedSectorBehaviorVector",
+    "SerializedSectorCreditCount",
+    "SerializedSectorSeniority",
+    "SerializedTrendDataPoint",
+    "SerializedTrendSeries",
+    # score & alert
+    "SerializedAlertRecord",
+    "SerializedAlertSource",
+    "SerializedScoreRecord",
+    "SerializedScoreReason",
+    # full report
+    "SerializedFullReport",
+]
