@@ -1,7 +1,7 @@
 from enum import StrEnum
 
 
-class ID_VALIDITY(StrEnum):
+class IdentificationStatus(StrEnum):
     VALID = "Vigente"
     SUSPENDED = "Suspendida"
     DECEASED = "Fallecido"

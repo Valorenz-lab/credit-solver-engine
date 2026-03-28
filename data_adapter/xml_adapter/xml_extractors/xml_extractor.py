@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional, TypeVar, overload
+from typing import Optional, TypeVar, Union, overload
 from xml.etree import ElementTree as ET
 import logging
 
@@ -33,12 +33,12 @@ class XmlExtractor:
         return node
     
     @overload
-    def get_attr(self, node: Optional[ET.Element], attr: str) -> str | None: ...
-    
+    def get_attr(self, node: Optional[ET.Element], attr: str) -> Optional[str]: ...
+
     @overload
-    def get_attr(self, node: Optional[ET.Element], attr: str, default: T) -> str | T: ...
-    
-    def get_attr(self, node: Optional[ET.Element], attr: str, default: T | None = None) -> str | T | None:
+    def get_attr(self, node: Optional[ET.Element], attr: str, default: T) -> Union[str, T]: ...
+
+    def get_attr(self, node: Optional[ET.Element], attr: str, default: Optional[T] = None) -> Optional[Union[str, T]]:
         """Extract an attribute safely."""
         if node is None:
             return default

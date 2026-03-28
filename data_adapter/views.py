@@ -7,7 +7,7 @@ from data_adapter.xml_adapter.report_builders.full_report_report_builder import 
 from data_adapter.xml_adapter.report_builders.global_report_report_builder import GlobalReportBuilder
 from data_adapter.xml_adapter.serializers.serializer_full_report import serialize_full_report
 from data_adapter.xml_adapter.serializers.serializer_global_report import serialize_global_report
-from data_adapter.xml_adapter.serializers.serializers_basic_report import serialize_basic_report
+from data_adapter.xml_adapter.serializers.serializer_basic_report import serialize_basic_report
 
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"

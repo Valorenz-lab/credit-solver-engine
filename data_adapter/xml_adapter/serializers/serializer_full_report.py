@@ -17,7 +17,7 @@ from data_adapter.xml_adapter.serializers.serializer_global_debt import serializ
 from data_adapter.xml_adapter.serializers.serializer_global_report import _serialize_account
 from data_adapter.xml_adapter.serializers.serializer_query import serialize_query_record
 from data_adapter.xml_adapter.serializers.serializer_score_alert import serialize_alert_record, serialize_score_record
-from data_adapter.xml_adapter.serializers.serializers_basic_report import serialize_basic_report
+from data_adapter.xml_adapter.serializers.serializer_basic_report import serialize_basic_report
 from data_adapter.xml_adapter.types import (
     SerializedAggregatedSummary,
     SerializedCreditCard,

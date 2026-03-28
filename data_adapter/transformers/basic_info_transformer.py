@@ -3,8 +3,8 @@
 from typing import Optional
 
 from data_adapter.enums.basic_info.gender import Gender
-from data_adapter.enums.basic_info.id_validity import ID_VALIDITY
-from data_adapter.enums.basic_info.types_id import TypesID
+from data_adapter.enums.basic_info.identification_status import IdentificationStatus
+from data_adapter.enums.basic_info.identification_document_type import IdentificationDocumentType
 
 
 
@@ -20,54 +20,54 @@ def transform_gender(value: Optional[str]) -> Gender:
     return mapping.get(code, Gender.UNKNOWN)
 
 
-def transform_id_validity(value: str) -> ID_VALIDITY:
+def transform_id_validity(value: Optional[str]) -> IdentificationStatus:
     """Transform numeric codes to ID validity status."""
     if not value or value.strip() == "":
-        return ID_VALIDITY.UNDEFINED
+        return IdentificationStatus.UNDEFINED
     try:
         code = int(value)
     except ValueError:
-        return ID_VALIDITY.UNDEFINED
+        return IdentificationStatus.UNDEFINED
 
     direct_map = {
-        0:  ID_VALIDITY.VALID,
-        12: ID_VALIDITY.SUSPENDED,
-        21: ID_VALIDITY.DECEASED,
-        29: ID_VALIDITY.CANCELED,
-        99: ID_VALIDITY.IN_PROCESS,
+        0:  IdentificationStatus.VALID,
+        12: IdentificationStatus.SUSPENDED,
+        21: IdentificationStatus.DECEASED,
+        29: IdentificationStatus.CANCELED,
+        99: IdentificationStatus.IN_PROCESS,
     }
-    
+
     if code in direct_map:
         return direct_map[code]
 
     if code < 30:
-        return ID_VALIDITY.CANCELED
+        return IdentificationStatus.CANCELED
     elif 30 <= code < 60:
-        return ID_VALIDITY.NOT_ISSUED
+        return IdentificationStatus.NOT_ISSUED
     elif 60 <= code < 99:
-        return ID_VALIDITY.UNDEFINED  
-    
-    return ID_VALIDITY.UNDEFINED
+        return IdentificationStatus.UNDEFINED
+
+    return IdentificationStatus.UNDEFINED
 
 
-def transform_id_type(value: str) -> TypesID:
+def transform_id_type(value: Optional[str]) -> IdentificationDocumentType:
     """Transform numeric codes to ID types."""
     if not value or value.strip() == "":
-        return TypesID.UNDEFINED
+        return IdentificationDocumentType.UNDEFINED
     try:
         code = int(value)
     except ValueError:
-        return TypesID.UNDEFINED
+        return IdentificationDocumentType.UNDEFINED
 
     mapping = {
-        1: TypesID.CC,
-        2: TypesID.NIT,
-        3: TypesID.PJE,
-        4: TypesID.CE,
-        5: TypesID.PAS,
-        6: TypesID.CD,
-        7: TypesID.TI,
-        8: TypesID.DNI,
-        9: TypesID.PEP
+        1: IdentificationDocumentType.CC,
+        2: IdentificationDocumentType.NIT,
+        3: IdentificationDocumentType.PJE,
+        4: IdentificationDocumentType.CE,
+        5: IdentificationDocumentType.PAS,
+        6: IdentificationDocumentType.CD,
+        7: IdentificationDocumentType.TI,
+        8: IdentificationDocumentType.DNI,
+        9: IdentificationDocumentType.PEP
     }
-    return mapping.get(code, TypesID.UNDEFINED)
+    return mapping.get(code, IdentificationDocumentType.UNDEFINED)

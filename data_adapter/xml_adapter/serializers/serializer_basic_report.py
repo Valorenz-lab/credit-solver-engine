@@ -12,7 +12,7 @@ from data_adapter.xml_adapter.types import SerializedAge, SerializedCustomerIden
 
 def serialize_basic_report(report: BasicReport) -> SerializedReport:
     meta = _serialize_metadata(report.metadata)
-    persona = _serialize_persona(report.person)
+    persona = _serialize_person(report.person)
     return {
         "metadata": meta,
         "persona": persona,
@@ -30,7 +30,7 @@ def _serialize_metadata(m: QueryMetadata) -> SerializedMetadata:
     }
 
 
-def _serialize_persona(p: BasicDataPerson) -> SerializedPerson:
+def _serialize_person(p: BasicDataPerson) -> SerializedPerson:
 
     return {
        "names": p.names,

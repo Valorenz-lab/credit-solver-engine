@@ -3,7 +3,7 @@
 from enum import StrEnum
 
 
-class TypesID(StrEnum):
+class IdentificationDocumentType(StrEnum):
     CC = "C.C - Cédula de Ciudadanía"
     NIT = "NIT - Número de identificación tributaria"
     PJE = "PJE - Persona jurídica del extranjero"
