@@ -1,324 +1,429 @@
-# Análisis de factibilidad — Mover transformers a los Builders
+# Plan de Refactoring — Fase 2: Modelos Pendientes
 
-Fecha de análisis: 2026-03-28
-Referencia: `temporary_pipeline.md`
+**Objetivo:** Mover transformers del serializer al builder en los modelos que quedan sin migrar.
+**Regla:** cada iteración termina con `0 errores mypy` antes de continuar.
+**Campos que NUNCA se migran:** `payment_history: Optional[str]` (transformado char a char en el serializer), fechas, NITs, códigos de infraestructura.
 
 ---
 
-## 1. Estado de los prerrequisitos del documento original
+## Estado de partida
 
-El `temporary_pipeline.md` listaba un prerrequisito obligatorio antes de empezar:
-
-| Prerrequisito | Estado |
+### ✅ Ya migrado (`global_report_models.py`)
+| Modelo | Campos migrados |
 |---|---|
-| Resolver colisión `AccountStatus` (enum vs dataclass) | ✅ **Resuelto** — enum → `AccountCondition`, dataclass → `PortfolioStates` |
-| Renombrar `DebtorQualityPortfolio` → `DebtorRole` | ✅ **Resuelto** |
-| Renombrar `Sector` → `IndustrySector` | ✅ **Resuelto** |
-| Renombrar `PlasticState` → `PlasticStatus`, `AccountStateSavings` → `SavingsAccountStatus`, etc. | ✅ **Resuelto** |
-| Split de `types.py` monolítico | ✅ **Resuelto** (9 archivos en `types/`) |
+| `PortfolioCharacteristics` | `account_type`, `obligation_type`, `debtor_quality`, `guarantee`, `contract_type` |
+| `PortfolioValues` | `currency_code`, `credit_rating`, `payment_frequency` |
+| `PortfolioStates` | `account_statement_code`, `origin_state_code`, `payment_status_code` |
+| `PortfolioAccount` | `credit_rating`, `ownership_status`, `industry_sector` |
+| `PortfolioAccount.is_open` | `OPEN_ACCOUNT_CODES` → `OPEN_ACCOUNT_CONDITIONS: frozenset[AccountCondition]` |
 
-**El proyecto ya cumple todos los prerrequisitos nombrados.** El documento original puede ejecutarse sin deuda técnica pendiente de naming.
-
----
-
-## 2. Inventario de campos a migrar (estado actual)
-
-Todos estos campos son `Optional[str]` con un transformer existente. Son los candidatos al cambio.
-
-### PortfolioCharacteristics
-| Campo actual | Tipo destino | Transformer |
-|---|---|---|
-| `account_type` | `Optional[AccountType]` | `transform_account_type` |
-| `obligation_type` | `Optional[ObligationType]` | `transform_obligation_type` |
-| `contract_type` | `Optional[ContractType]` | `transform_contract_type` ⚠️ *ver nota* |
-| `debtor_quality` | `Optional[DebtorRole]` | `transform_debtor_role` |
-| `guarantee` | `Optional[GuaranteeType]` | `transform_guarantee` |
-
-### PortfolioValues
-| Campo actual | Tipo destino | Transformer |
-|---|---|---|
-| `currency_code` | `Optional[Currency]` | `transform_currency` |
-| `credit_rating` | `Optional[CreditRating]` | `transform_credit_rating` |
-| `payment_frequency` | `Optional[PaymentFrequency]` | `transform_payment_frequency` |
-
-### PortfolioStates
-| Campo actual | Tipo destino | Transformer |
-|---|---|---|
-| `account_statement_code` | `Optional[AccountCondition]` | `transform_account_condition` ⚠️ *ver nota crítica* |
-| `origin_state_code` | `Optional[OriginState]` | `transform_origin_state` |
-| `payment_status_code` | `Optional[PaymentStatus]` | `transform_payment_status` |
-
-### PortfolioAccount (campos planos)
-| Campo actual | Tipo destino | Transformer |
-|---|---|---|
-| `credit_rating` | `Optional[CreditRating]` | `transform_credit_rating` |
-| `ownership_status` | `Optional[OwnershipSituation]` | `transform_ownership_situation` |
-| `industry_sector` | `Optional[IndustrySector]` | `transform_industry_sector` |
-| `payment_history` | mantener `Optional[str]` | — (caso especial, ver §4) |
-
-### BankAccountValue
-| Campo actual | Tipo destino | Transformer |
-|---|---|---|
-| `currency_code` | `Optional[Currency]` | `transform_currency` |
-| `rating` | `Optional[CreditRating]` | `transform_credit_rating` |
-
-### BankAccountState
-| Campo actual | Tipo destino | Transformer |
-|---|---|---|
-| `code` | `Optional[SavingsAccountStatus]` | `transform_savings_account_status` ⚠️ *ver nota crítica* |
-
-### BankAccount
-| Campo actual | Tipo destino | Transformer |
-|---|---|---|
-| `rating` | `Optional[CreditRating]` | `transform_credit_rating` |
-| `ownership_situation` | `Optional[OwnershipSituation]` | `transform_ownership_situation` |
-| `sector` | `Optional[IndustrySector]` | `transform_industry_sector` |
-
-### CreditCardCharacteristics
-| Campo actual | Tipo destino | Transformer |
-|---|---|---|
-| `franchise` | `Optional[CreditCardFranchise]` | `transform_franchise` |
-| `card_class` | `Optional[CreditCardClass]` | `transform_credit_card_class` |
-| `guarantee` | `Optional[GuaranteeType]` | `transform_guarantee` |
-
-### CreditCardValues
-| Campo actual | Tipo destino | Transformer |
-|---|---|---|
-| `currency_code` | `Optional[Currency]` | `transform_currency` |
-| `rating` | `Optional[CreditRating]` | `transform_credit_rating` |
-
-### CreditCardStates
-| Campo actual | Tipo destino | Transformer |
-|---|---|---|
-| `plastic_state_code` | `Optional[PlasticStatus]` | `transform_plastic_status` |
-| `account_state_code` | `Optional[AccountCondition]` | `transform_account_condition` ⚠️ *ver nota crítica* |
-| `origin_state_code` | `Optional[OriginState]` | `transform_origin_state` |
-| `payment_status_code` | `Optional[PaymentStatus]` | `transform_payment_status` |
-
-### CreditCard (campos planos)
-| Campo actual | Tipo destino | Transformer |
-|---|---|---|
-| `payment_method` | `Optional[PaymentMethod]` | `transform_payment_method` |
-| `credit_rating` | `Optional[CreditRating]` | `transform_credit_rating` |
-| `ownership_situation` | `Optional[OwnershipSituation]` | `transform_ownership_situation` |
-| `sector` | `Optional[IndustrySector]` | `transform_industry_sector` |
-
-### CheckingAccount
-| Campo actual | Tipo destino | Transformer |
-|---|---|---|
-| `ownership_situation` | `Optional[OwnershipSituation]` | `transform_ownership_situation` |
-| `sector` | `Optional[IndustrySector]` | `transform_industry_sector` |
-
-### QueryRecord
-| Campo actual | Tipo destino | Transformer |
-|---|---|---|
-| `account_type` | `Optional[AccountType]` | `transform_account_type` |
-| `reason` | `Optional[QueryReason]` | `transform_query_reason` |
-| `sector` | `Optional[IndustrySector]` | `transform_industry_sector` |
-
-### GlobalDebtRecord + sub-modelos
-| Campo actual | Tipo destino | Transformer |
-|---|---|---|
-| `rating` | `Optional[CreditRating]` | `transform_credit_rating` |
-| `credit_type` | `Optional[GlobalDebtCreditType]` | `transform_global_debt_credit_type` |
-| `currency` | `Optional[Currency]` | `transform_currency` |
-| `entity.sector` | `Optional[IndustrySector]` | `transform_industry_sector` |
-| `guarantee.guarantee_type` | `Optional[GuaranteeType]` | `transform_guarantee` |
-
-**Total de campos a migrar: ~40 campos en 13 modelos.**
+### ⏳ Pendiente
+- `credit_card_models.py` → Iteración A
+- `bank_account_models.py` + `checking_account_models.py` → Iteración B
+- `query_models.py` + `global_debt_models.py` → Iteración C
 
 ---
 
-## 3. Riesgos identificados
+## Iteración A — CreditCard
 
-### 🔴 Riesgo crítico — OPEN_ACCOUNT_CODES: transformer incompleto
+### Archivos tocados
+- `xml_adapter/models/credit_card_models.py`
+- `xml_adapter/report_builders/credit_card_report_builder.py`
+- `xml_adapter/serializers/serializer_credit_card.py`
 
-Este es el hallazgo más importante del análisis. El documento original no lo detectó.
+### A.1 — Modelo: campos a migrar
 
-`OPEN_ACCOUNT_CODES` en `global_report_models.py` tiene **35 códigos string crudos** (ej: `"01"`, `"13"`, `"14"`, ..., `"47"`).
+**`CreditCardCharacteristics`**
+| Campo actual | Tipo destino | Transformer |
+|---|---|---|
+| `franchise: Optional[str]` | `Optional[CreditCardFranchise]` | `transform_franchise` |
+| `card_class: Optional[str]` | `Optional[CreditCardClass]` | `transform_credit_card_class` |
+| `guarantee: Optional[str]` | `Optional[GuaranteeType]` | `transform_guarantee` |
 
-El `transform_account_condition` solo mapea **12 valores numéricos** (0–11). La conversión hace `int("13")` → `13`, que no está en el mapping → devuelve `AccountCondition.UNKNOWN`.
+**`CreditCardValues`**
+| Campo actual | Tipo destino | Transformer |
+|---|---|---|
+| `currency_code: Optional[str]` | `Optional[Currency]` | `transform_currency` |
+| `rating: Optional[str]` | `Optional[CreditRating]` | `transform_credit_rating` |
 
-**Consecuencia si se migra `account_statement_code` a `Optional[AccountCondition]` antes de completar el transformer:** `is_open` usaría un `frozenset[AccountCondition]` donde la mayoría de los códigos activos colapsarían en `UNKNOWN`, rompiendo silenciosamente la lógica de negocio.
+**`CreditCardStates`**
+| Campo actual | Tipo destino | Transformer |
+|---|---|---|
+| `plastic_state_code: Optional[str]` | `Optional[PlasticStatus]` | `transform_plastic_status` |
+| `account_state_code: Optional[str]` | `Optional[AccountCondition]` | `transform_account_condition` |
+| `origin_state_code: Optional[str]` | `Optional[OriginState]` | `transform_origin_state` |
+| `payment_status_code: Optional[str]` | `Optional[PaymentStatus]` | `transform_payment_status` |
 
-**Impacto:** afecta `PortfolioAccount.is_open` y `CreditCard.is_open`. Antes de migrar `account_statement_code`, hay que:
-1. Auditar todos los códigos de `OPEN_ACCOUNT_CODES` contra Tabla 4 del XSD
-2. Completar el transformer para mapear todos esos códigos a sus `AccountCondition` correctos
-3. Solo entonces convertir `OPEN_ACCOUNT_CODES: frozenset[str]` a `OPEN_ACCOUNT_STATUSES: frozenset[AccountCondition]`
+**`CreditCard` (campos planos)**
+| Campo actual | Tipo destino | Transformer |
+|---|---|---|
+| `payment_method: Optional[str]` | `Optional[PaymentMethod]` | `transform_payment_method` |
+| `credit_rating: Optional[str]` | `Optional[CreditRating]` | `transform_credit_rating` |
+| `ownership_situation: Optional[str]` | `Optional[OwnershipSituation]` | `transform_ownership_situation` |
+| `sector: Optional[str]` | `Optional[IndustrySector]` | `transform_industry_sector` |
 
-El mismo riesgo aplica a `BankAccountState.code` → `SavingsAccountStatus` vs `_OPEN_BANK_ACCOUNT_CODES: frozenset[str]`.
+### A.2 — `is_open`: migración de frozenset
 
-### 🔴 Riesgo crítico — `contract_type` sin transformer
-
-`PortfolioCharacteristics.contract_type: Optional[str]` tiene el enum `ContractType` definido, pero **no existe `transform_contract_type`** en ningún transformer. Hay que crearlo antes de migrar este campo.
-
-### 🟡 Riesgo medio — Serializers: cambio de `.value` en ~20 puntos
-
-Hoy el serializer hace: `"sector_label": transform_industry_sector(account.sector).value`
-Después haría: `"sector_label": account.sector.value if account.sector else None`
-
-Esto afecta ~20 puntos de uso en 6 serializers. Mypy detecta cualquier error, pero hay que hacerlo cuidadosamente. Los TypedDicts **no cambian** — siguen emitiendo `str` via `.value`.
-
-### 🟡 Riesgo medio — `payment_history` (caso especial, ya documentado)
-
-`payment_history: Optional[str]` se parsea carácter a carácter. Migrar esto al builder requeriría añadir `payment_history_parsed: Optional[tuple[PaymentBehavior, ...]]` como campo adicional. El string crudo tiene valor para auditoría y debug. **Recomendación: no migrar este campo.**
-
-### 🟢 Riesgo bajo — Scope sin tests
-
-~13 modelos, ~12 builders, ~11 serializers tocados. Sin tests, mypy es la única red. Esto es un riesgo conocido y mitigado por el plan de fases: cada fase termina con `0 errores mypy`.
-
----
-
-## 4. Justificación del cambio
-
-**Muy justificado.** Las razones del documento original siguen vigentes y se añade una nueva:
-
-- El engine (`engines/`) está vacío. Si se llena con raw codes, la deuda técnica se multiplica.
-- `is_open` ya opera con lógica de negocio pero comparando strings crudos — esto es inconsistente con el diseño del modelo.
-- El refactor de naming que ya se hizo (enums con clasificadores semánticos) pierde valor si los modelos no los usan.
-- La nueva razón: el riesgo crítico de `OPEN_ACCOUNT_CODES` ya existe hoy — si alguien añade un nuevo código al XSD, hay que actualizarlo en dos lugares (el transformer Y el frozenset). Con enums en el modelo, hay un solo lugar.
-
----
-
-## 5. Plan de implementación (actualizado)
-
-### Prerrequisito nuevo (antes de Fase 1)
-
-**P0 — Completar transformer de `AccountCondition`**
-- Auditar `OPEN_ACCOUNT_CODES` (35 códigos) contra Tabla 4 del XSD
-- Mapear todos los códigos numéricos que faltan en `transform_account_condition`
-- Hacer lo mismo para `_OPEN_BANK_ACCOUNT_CODES` vs `transform_savings_account_status`
-- Verificar mypy: 0 errores
-
-**P1 — Crear `transform_contract_type`**
-- Añadir en `global_report_transformer.py`
-- Mapear los códigos de `ContractType` (FIXED_TERM, INDEFINITE, NOT_REPORTED)
-- Verificar mypy: 0 errores
-
----
-
-### Fase 1 — Piloto: `PortfolioCharacteristics` (excluyendo `contract_type`)
-
-Modelos: `PortfolioCharacteristics`
-Builders: `GlobalReportBuilder._parse_characteristics()`
-Serializers: `serializer_global_report._serialize_characteristics()`
-
-Campos a migrar:
-- `account_type: Optional[str]` → `Optional[AccountType]`
-- `obligation_type: Optional[str]` → `Optional[ObligationType]`
-- `debtor_quality: Optional[str]` → `Optional[DebtorRole]`
-- `guarantee: Optional[str]` → `Optional[GuaranteeType]`
-
-Impacto en TypedDicts: `SerializedPortfolioCharacteristics` — los campos que hoy son `Optional[str]` se quedan como `Optional[str]` (reciben `.value`). Sin cambio.
-Gate: 0 errores mypy → commit.
-
----
-
-### Fase 2 — `PortfolioValues` + campos planos de `PortfolioAccount` + `contract_type`
-
-Modelos: `PortfolioValues`, `PortfolioAccount` (campos planos, no `payment_history`)
-Builders: `GlobalReportBuilder._parse_values()`, `GlobalReportBuilder._parse_account()`
-Serializers: `serializer_global_report._serialize_value()`, `_serialize_account()`
-
-Campos a migrar en `PortfolioValues`:
-- `currency_code` → `Optional[Currency]`
-- `credit_rating` → `Optional[CreditRating]`
-- `payment_frequency` → `Optional[PaymentFrequency]`
-
-Campos a migrar en `PortfolioAccount`:
-- `credit_rating` → `Optional[CreditRating]`
-- `ownership_status` → `Optional[OwnershipSituation]`
-- `industry_sector` → `Optional[IndustrySector]`
-- `contract_type` (en `PortfolioCharacteristics`) → `Optional[ContractType]` (requiere P1)
-
-Gate: 0 errores mypy → commit.
-
----
-
-### Fase 3 — `PortfolioStates` + `CreditCardStates` + actualizar `is_open`
-
-Este es el paso más delicado. Requiere P0 completado.
-
-Modelos: `PortfolioStates`, `CreditCardStates`
-Builders: parseo de estados en `GlobalReportBuilder`, `CreditCardReportBuilder`
-Serializers: `_serialize_portfolio_states()`, `_serialize_states()`
-
-Campos a migrar:
-- `account_statement_code` → `Optional[AccountCondition]`
-- `origin_state_code` → `Optional[OriginState]`
-- `payment_status_code` → `Optional[PaymentStatus]`
-- `plastic_state_code` → `Optional[PlasticStatus]`
-
-Migración de `is_open`:
 ```python
 # Antes
-OPEN_ACCOUNT_CODES: frozenset[str]
-return code in OPEN_ACCOUNT_CODES
+_OPEN_CARD_CODES: frozenset[str] = frozenset({"01","13","14",...})
+
+def is_open(self) -> bool:
+    code = self.states.account_state_code   # Optional[str]
+    return code in _OPEN_CARD_CODES
 
 # Después
-OPEN_ACCOUNT_STATUSES: frozenset[AccountCondition]
-return self.states.account_statement_code in OPEN_ACCOUNT_STATUSES
+_OPEN_CARD_CONDITIONS: frozenset[AccountCondition] = frozenset({
+    AccountCondition.ON_TIME,
+    AccountCondition.OVERDUE_DEBT,
+    AccountCondition.WRITTEN_OFF,
+    AccountCondition.DOUBTFUL_COLLECTION,
+})
+
+def is_open(self) -> bool:
+    condition = self.states.account_state_code  # Optional[AccountCondition]
+    if condition is None:
+        return False
+    return condition in _OPEN_CARD_CONDITIONS
 ```
 
-Gate: 0 errores mypy → commit.
+### A.3 — Builder: transformers a agregar
 
----
+Agregar al builder (`credit_card_report_builder.py`):
+```python
+from data_adapter.transformers.credit_card_transformer import (
+    transform_credit_card_class,
+    transform_franchise,
+    transform_plastic_status,
+)
+from data_adapter.transformers.global_report_transformer import transform_account_condition
+from data_adapter.transformers.shared_transformers import (
+    transform_credit_rating,
+    transform_currency,
+    transform_guarantee,
+    transform_industry_sector,
+    transform_origin_state,
+    transform_ownership_situation,
+    transform_payment_method,
+    transform_payment_status,
+)
+```
 
-### Fase 4 — `BankAccount`, `CheckingAccount` + `BankAccountState` + `is_open`
+Métodos a modificar: `_parse_card`, `_parse_characteristics`, `_parse_values`, `_parse_states`.
 
-Mismo patrón. Menor complejidad conceptual.
-Incluye actualizar `_OPEN_BANK_ACCOUNT_CODES` → `_OPEN_BANK_ACCOUNT_STATUSES: frozenset[SavingsAccountStatus]`
+### A.4 — Serializer: patrón después del refactor
 
-Gate: 0 errores mypy → commit.
-
----
-
-### Fase 5 — `CreditCard`, `CreditCardCharacteristics`, `CreditCardValues`
-
-Mismo patrón. Builders de tarjeta de crédito.
-Gate: 0 errores mypy → commit.
-
----
-
-### Fase 6 — `QueryRecord`, `GlobalDebtRecord`
-
-Builders de consultas y deuda global.
-Gate: 0 errores mypy → commit.
-
----
-
-### Fase 7 — `AggregatedInfo` / `MicroCreditAggregatedInfo` (opcional, baja urgencia)
-
-Estos modelos son complejos y el engine no los consumirá en las primeras iteraciones.
-Defer hasta que el engine los necesite.
-
----
-
-## 6. Impacto en TypedDicts
-
-Los TypedDicts en `types/` **no cambian estructuralmente**. Los serializers seguirán emitiendo `str` via `.value`:
+El serializer actual usa doble campo: `field` (código crudo) + `field_label` (label del transformer).
+Después del refactor, el modelo ya no guarda el código crudo — ambos campos emiten `.value`.
 
 ```python
-# Hoy (serializer llama transformer)
-"sector_label": transform_industry_sector(account.sector).value
+# Antes (ejemplo con franchise)
+"franchise":       c.franchise,                          # str crudo: "2"
+"franchise_label": transform_franchise(c.franchise).value  # label: "Visa"
 
-# Después (serializer usa .value directamente)
-"sector_label": account.sector.value if account.sector else None
+# Después
+"franchise":       c.franchise.value if c.franchise else None,  # label: "Visa"
+"franchise_label": c.franchise.value if c.franchise else None,  # label: "Visa" (idéntico)
 ```
 
-Los campos `_code` (código crudo) que hoy exponen algunos serializers (ej: `"sector": account.sector`) desaparecen del modelo. Si la API los necesita, el serializer puede omitirlos o el TypedDict puede eliminar esos campos. Esto es una decisión de API, no de modelo.
+⚠️ **Resultado:** `franchise` y `franchise_label` emiten el mismo valor. La misma situación aplica a `card_class`/`card_class_label`, `guarantee`/`guarantee_label`, `rating`/`rating_label`, `credit_rating`/`credit_rating_label`, `payment_method`/`payment_method_label`, `sector`/`sector_label`, etc. Los TypedDicts NO cambian. Esta redundancia es heredada del diseño original.
+
+Transformers a **eliminar** del serializer (ya no son necesarios):
+- `transform_franchise`, `transform_credit_card_class`, `transform_plastic_status`
+- `transform_credit_rating`, `transform_guarantee`
+- `transform_origin_state`, `transform_ownership_situation`
+- `transform_payment_behavior_char` — **NO eliminar**, sigue aplicándose a `payment_history` char a char
+- `transform_payment_method`, `transform_payment_status`, `transform_industry_sector`
+
+### A.5 — TypedDicts: sin cambios estructurales
+
+`types_credit_card.py` no cambia. Todos los campos siguen siendo `Optional[str]` (reciben `.value`) o tipos ya correctos.
 
 ---
 
-## 7. Veredicto final
+## Iteración B — BankAccount + CheckingAccount
 
-| Dimensión | Evaluación |
-|---|---|
-| ¿Es posible hacerlo ahora? | **Sí**, con dos prerrequisitos pequeños (P0, P1) |
-| ¿Está justificado? | **Sí, fuertemente** — el engine vacío es el momento ideal |
-| Riesgo principal | `OPEN_ACCOUNT_CODES` incompleto — bloquea Fase 3, no las anteriores |
-| Esfuerzo estimado | Fases 1-2: bajo. Fase 3: medio. Fases 4-6: bajo-medio |
-| Reversibilidad | Alta — cada fase es un commit independiente y mypy valida cada paso |
-| Urgencia | Media — no urgente, pero el costo crece con cada línea de engine escrita |
+### Archivos tocados
+- `xml_adapter/models/bank_account_models.py`
+- `xml_adapter/models/checking_account_models.py` ← sólo campos planos
+- `xml_adapter/report_builders/bank_account_report_builder.py`
+- `xml_adapter/report_builders/checking_account_report_builder.py`
+- `xml_adapter/serializers/serializer_bank_account.py`
+- `xml_adapter/serializers/serializer_checking_account.py`
 
-**Recomendación: ejecutar P0 + P1 + Fases 1 y 2 en la próxima sesión. Fases 3 en adelante cuando se confirme el mapping completo del XSD.**
+### B.1 — Modelo: campos a migrar
+
+**`BankAccountValue`** (compartido entre `BankAccount` y `CheckingAccount`)
+| Campo actual | Tipo destino | Transformer |
+|---|---|---|
+| `currency_code: Optional[str]` | `Optional[Currency]` | `transform_currency` |
+| `rating: Optional[str]` | `Optional[CreditRating]` | `transform_credit_rating` |
+
+**`BankAccountState`** (compartido entre `BankAccount` y `CheckingAccount`)
+| Campo actual | Tipo destino | Transformer |
+|---|---|---|
+| `code: Optional[str]` | `Optional[SavingsAccountStatus]` | `transform_savings_account_status` |
+
+**`BankAccount` (campos planos)**
+| Campo actual | Tipo destino | Transformer |
+|---|---|---|
+| `rating: Optional[str]` | `Optional[CreditRating]` | `transform_credit_rating` |
+| `ownership_situation: Optional[str]` | `Optional[OwnershipSituation]` | `transform_ownership_situation` |
+| `sector: Optional[str]` | `Optional[IndustrySector]` | `transform_industry_sector` |
+
+**`CheckingAccount` (campos planos)**
+| Campo actual | Tipo destino | Transformer |
+|---|---|---|
+| `ownership_situation: Optional[str]` | `Optional[OwnershipSituation]` | `transform_ownership_situation` |
+| `sector: Optional[str]` | `Optional[IndustrySector]` | `transform_industry_sector` |
+
+### B.2 — `is_open`: migración de frozenset
+
+```python
+# Antes (bank_account_models.py)
+_OPEN_BANK_ACCOUNT_CODES: frozenset[str] = frozenset({"01", "06", "07"})
+
+def is_open(self) -> bool:
+    if self.state is None or self.state.code is None:
+        return False
+    return self.state.code in _OPEN_BANK_ACCOUNT_CODES
+
+# Después
+_OPEN_BANK_ACCOUNT_STATUSES: frozenset[SavingsAccountStatus] = frozenset({
+    SavingsAccountStatus.ACTIVE,      # "01"
+    SavingsAccountStatus.SEIZED,      # "06"
+    SavingsAccountStatus.SEIZED_ACTIVE,  # "07"
+})
+
+def is_open(self) -> bool:
+    if self.state is None or self.state.code is None:
+        return False
+    return self.state.code in _OPEN_BANK_ACCOUNT_STATUSES
+```
+
+Verificación de consistencia con `transform_savings_account_status`:
+- `"01"` → `SavingsAccountStatus.ACTIVE` ✓
+- `"06"` → `SavingsAccountStatus.SEIZED` ✓
+- `"07"` → `SavingsAccountStatus.SEIZED_ACTIVE` ✓
+
+### B.3 — Builder bank_account: transformers a agregar
+
+```python
+from data_adapter.transformers.shared_transformers import (
+    transform_credit_rating,
+    transform_currency,
+    transform_industry_sector,
+    transform_ownership_situation,
+    transform_savings_account_status,
+)
+```
+
+Métodos a modificar: `_parse_account`, `_parse_value`, `_parse_state`.
+
+### B.4 — Builder checking_account: transformers a agregar
+
+```python
+from data_adapter.transformers.shared_transformers import (
+    transform_credit_rating,
+    transform_currency,
+    transform_industry_sector,
+    transform_ownership_situation,
+    transform_savings_account_status,
+)
+```
+
+Métodos a modificar: `_parse_account`, `_parse_value`, `_parse_state`.
+
+⚠️ **Nota crítica:** `BankAccountValue` y `BankAccountState` son compartidos entre `BankAccount` y `CheckingAccount`. Si el builder de `BankAccount` los migra en `_parse_value` / `_parse_state`, el builder de `CheckingAccount` hace exactamente lo mismo (los métodos son idénticos en estructura). Ambos builders deben migrarse en la misma iteración.
+
+### B.5 — Serializer bank_account: patrón después del refactor
+
+```python
+# Antes
+"rating":       account.rating,                                      # str crudo
+"rating_label": transform_credit_rating(account.rating).value        # label
+
+# Después
+"rating":       account.rating.value if account.rating else None,    # label (mismo)
+"rating_label": account.rating.value if account.rating else None,    # label (idéntico)
+```
+
+Lo mismo para `ownership_situation`/`ownership_situation_label`, `sector`/`sector_label`.
+
+Para `BankAccountState`:
+```python
+# Antes
+"code":  s.code,                                     # str crudo: "01"
+"label": transform_savings_account_status(s.code).value  # label
+
+# Después
+"code":  s.code.value if s.code else None,           # label
+"label": s.code.value if s.code else None,           # label (idéntico)
+```
+
+Para `BankAccountValue`:
+```python
+# Antes
+"currency_code":  v.currency_code,     # str crudo (currency_label hardcodeado None — ver §Bugs)
+"rating":         v.rating,            # str crudo
+"rating_label":   transform_credit_rating(v.rating).value
+
+# Después
+"currency_code":  v.currency_code.value if v.currency_code else None,
+"rating":         v.rating.value if v.rating else None,
+"rating_label":   v.rating.value if v.rating else None,
+```
+
+Transformers a **eliminar** del serializer_bank_account: todos excepto ninguno queda.
+Transformers a **eliminar** del serializer_checking_account: todos.
+
+### B.6 — TypedDicts: sin cambios estructurales
+
+`types_bank_account.py` no cambia.
+
+---
+
+## Iteración C — QueryRecord + GlobalDebtRecord
+
+### Archivos tocados
+- `xml_adapter/models/query_models.py`
+- `xml_adapter/models/global_debt_models.py`
+- `xml_adapter/report_builders/query_builder.py`
+- `xml_adapter/report_builders/global_debt_builder.py`
+- `xml_adapter/serializers/serializer_query.py`
+- `xml_adapter/serializers/serializer_global_debt.py`
+
+### C.1 — Modelo: campos a migrar
+
+**`QueryRecord`**
+| Campo actual | Tipo destino | Transformer |
+|---|---|---|
+| `account_type: Optional[str]` | `Optional[AccountType]` | `transform_account_type` |
+| `reason: Optional[str]` | `Optional[QueryReason]` | `transform_query_reason` |
+| `sector: Optional[str]` | `Optional[IndustrySector]` | `transform_industry_sector` |
+
+**`GlobalDebtRecord`**
+| Campo actual | Tipo destino | Transformer |
+|---|---|---|
+| `rating: Optional[str]` | `Optional[CreditRating]` | `transform_credit_rating` |
+| `credit_type: Optional[str]` | `Optional[GlobalDebtCreditType]` | `transform_global_debt_credit_type` |
+| `currency: Optional[str]` | `Optional[Currency]` | `transform_currency` |
+
+**`GlobalDebtEntity`**
+| Campo actual | Tipo destino | Transformer |
+|---|---|---|
+| `sector: Optional[str]` | `Optional[IndustrySector]` | `transform_industry_sector` |
+
+**`GlobalDebtGuarantee`**
+| Campo actual | Tipo destino | Transformer |
+|---|---|---|
+| `guarantee_type: Optional[str]` | `Optional[GuaranteeType]` | `transform_guarantee` |
+
+### C.2 — Builder query_builder: transformers a agregar
+
+```python
+from data_adapter.transformers.global_report_transformer import transform_account_type
+from data_adapter.transformers.shared_transformers import transform_industry_sector, transform_query_reason
+```
+
+Método a modificar: `_parse_record`.
+
+### C.3 — Builder global_debt_builder: transformers a agregar
+
+```python
+from data_adapter.transformers.global_debt_transformer import transform_global_debt_credit_type
+from data_adapter.transformers.shared_transformers import (
+    transform_credit_rating,
+    transform_currency,
+    transform_guarantee,
+    transform_industry_sector,
+)
+```
+
+Métodos a modificar: `_parse_record`, `_parse_guarantee` (inline en `_parse_record` para entity).
+
+### C.4 — Serializer query: patrón después del refactor
+
+```python
+# Antes
+"account_type": record.account_type,   # str crudo
+"reason":       record.reason,         # str crudo
+"reason_label": transform_query_reason(record.reason).value,
+"sector":       record.sector,         # str crudo
+"sector_label": transform_industry_sector(record.sector).value,
+
+# Después
+"account_type": record.account_type.value if record.account_type else None,
+"reason":       record.reason.value if record.reason else None,
+"reason_label": record.reason.value if record.reason else None,  # idéntico
+"sector":       record.sector.value if record.sector else None,
+"sector_label": record.sector.value if record.sector else None,  # idéntico
+```
+
+### C.5 — Serializer global_debt: patrón después del refactor
+
+```python
+# GlobalDebtRecord
+"rating":            record.rating.value if record.rating else None,
+"credit_type":       record.credit_type.value if record.credit_type else None,
+"credit_type_label": record.credit_type.value if record.credit_type else None,  # idéntico
+"currency":          record.currency.value if record.currency else None,
+
+# GlobalDebtEntity
+"sector":       e.sector.value if e.sector else None,
+"sector_label": e.sector.value if e.sector else None,  # idéntico
+
+# GlobalDebtGuarantee
+"guarantee_type":       g.guarantee_type.value if g.guarantee_type else None,
+"guarantee_type_label": g.guarantee_type.value if g.guarantee_type else None,  # idéntico
+```
+
+Transformers a **eliminar** del serializer_global_debt: `transform_guarantee`, `transform_industry_sector`, `transform_global_debt_credit_type`.
+
+### C.6 — TypedDicts: sin cambios estructurales
+
+`types_global_debt.py` no cambia.
+
+---
+
+## Trampas y reglas transversales
+
+### Regla 1 — `payment_history` nunca va al modelo como enum
+El campo `payment_history: Optional[str]` se transforma character a character con `transform_payment_behavior_char` directamente en el serializer. No es un código único — es una secuencia histórica. No migrar.
+
+### Regla 2 — Los `*_label` quedan redundantes tras la migración
+Todos los pares `field_code + field_label` quedan emitiendo el mismo `.value` porque el modelo ya no guarda el código crudo. Los TypedDicts no cambian; la API expone ambos campos con el mismo valor. Esta redundancia es deuda pre-existente en el diseño de la API — no es scope de este refactor.
+
+### Regla 3 — No olvidar los fallbacks `None` en builders
+Cuando un builder construye el modelo con `None` (nodo XML ausente), los campos ahora son `Optional[Enum]` — el valor `None` sigue siendo válido y el transformer no se llama. El transformer solo se llama cuando hay un valor: `transform_x(ex.get_attr(node, "attr"))`.
+
+### Regla 4 — Modelos compartidos: migrar en la misma iteración
+`BankAccountValue` y `BankAccountState` son usados por `BankAccount` y `CheckingAccount` — ambos builders deben migrarse juntos en Iteración B para evitar inconsistencias de tipos.
+
+---
+
+## Bugs pre-existentes (no scope del refactor)
+
+Documentados para no confundirlos con errores introducidos.
+
+### Bug 1 — `currency_label: None` hardcodeado (3 serializers)
+| Archivo | Línea | Descripción |
+|---|---|---|
+| `serializer_bank_account.py` | 43 | `"currency_label": None` — transformer existe pero no se aplica |
+| `serializer_checking_account.py` | 48 | `"currency_label": None` — ídem |
+| `serializer_credit_card.py` | 83 | `"currency_label": None` — ídem |
+
+**Causa:** Se dejó el campo pero nunca se implementó `transform_currency` para esa posición.
+**Impacto:** La API siempre devuelve `null` en `currency_label`. Bajo.
+**Corrección:** Después del refactor, el modelo almacenará `Optional[Currency]`, por lo que `currency_label` pasará a ser `v.currency_code.value if v.currency_code else None` de forma natural — **este bug desaparece automáticamente en Iteración B**.
+
+### Bug 2 — `is_blocked: Optional[bool]` en `SerializedPortfolioAccount`
+**Archivo:** `types_portfolio.py`, línea 58
+**Problema:** El TypedDict permite `None`, pero el modelo `PortfolioAccount.is_blocked: bool` nunca es `None`. Mypy strict podría aceptarlo (asignación `bool` → `Optional[bool]` es válida), pero es impreciso.
+**Corrección:** Cambiar a `is_blocked: bool` en el TypedDict en una limpieza futura.
+
+### Bug 3 — `payment_status_code` y `payment_status_label` emiten el mismo valor (post-refactor)
+**Archivo:** `serializer_global_report.py`, líneas 86-87
+**Causa:** Introducido en nuestra migración. Antes, `payment_status_code` era el código crudo (`"20"`) y `payment_status_label` el label (`"En Mora 30 días"`). Ahora ambos emiten `.value` del enum.
+**Impacto:** Medio — el código crudo ya no está disponible en la API.
+**Decisión pendiente:** Si el engine o consumidores necesitan el código crudo (`"20"`), hay que evaluar si conservarlo en el TypedDict. Por ahora se acepta la pérdida.
