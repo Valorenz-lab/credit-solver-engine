@@ -6,11 +6,22 @@ Single responsibility: receive XML as string/bytes/Path and return dataclasses.
 import os
 
 from data_adapter.transformers.global_report_transformer import (
+    transform_account_condition,
     transform_account_type,
+    transform_contract_type,
     transform_debtor_role,
     transform_obligation_type,
+    transform_payment_frequency,
 )
-from data_adapter.transformers.shared_transformers import transform_guarantee
+from data_adapter.transformers.shared_transformers import (
+    transform_credit_rating,
+    transform_currency,
+    transform_guarantee,
+    transform_industry_sector,
+    transform_origin_state,
+    transform_ownership_situation,
+    transform_payment_status,
+)
 from data_adapter.xml_adapter.exceptions import XmlParseError
 from data_adapter.xml_adapter.models.global_report_models import GlobalReport, PortfolioAccount, PortfolioCharacteristics, PortfolioStates, PortfolioValues
 from data_adapter.xml_adapter.xml_extractors.xml_extractor import XmlExtractor
@@ -72,12 +83,12 @@ class GlobalReportBuilder:
             opened_date=ex.get_attr(node, "fechaApertura"),
             maturity_date=ex.get_attr(node, "fechaVencimiento"),
             payment_history=ex.get_attr(node, "comportamiento"),
-            credit_rating=ex.get_attr(node, "calificacion"),
-            ownership_status=ex.get_attr(node, "situacionTitular"),
+            credit_rating=transform_credit_rating(ex.get_attr(node, "calificacion")),
+            ownership_status=transform_ownership_situation(ex.get_attr(node, "situacionTitular")),
             is_blocked=ex.get_bool(node, "bloqueada"),
             city=ex.get_attr(node, "ciudad"),
             dane_city_code=ex.get_attr(node, "codigoDaneCiudad"),
-            industry_sector=ex.get_attr(node, "sector"),
+            industry_sector=transform_industry_sector(ex.get_attr(node, "sector")),
             default_probability=ex.get_float(node, "probabilidadIncumplimiento"),
             subscriber_code=ex.get_attr(node, "codSuscriptor"),
             entity_id_type=ex.get_attr(node, "tipoIdentificacion"),
@@ -93,7 +104,7 @@ class GlobalReportBuilder:
         return PortfolioCharacteristics(
             account_type=transform_account_type(ex.get_attr(node, "tipoCuenta")),
             obligation_type=transform_obligation_type(ex.get_attr(node, "tipoObligacion")),
-            contract_type=ex.get_attr(node, "tipoContrato"),
+            contract_type=transform_contract_type(ex.get_attr(node, "tipoContrato")),
             contract_execution=ex.get_attr(node, "ejecucionContrato"),
             debtor_quality=transform_debtor_role(ex.get_attr(node, "calidadDeudor")),
             guarantee=transform_guarantee(ex.get_attr(node, "garantia")),
@@ -108,8 +119,8 @@ class GlobalReportBuilder:
             
         return PortfolioValues(
             date=ex.get_attr(node, "fecha"),
-            currency_code=ex.get_attr(node, "moneda"),
-            credit_rating=ex.get_attr(node, "calificacion"),
+            currency_code=transform_currency(ex.get_attr(node, "moneda")),
+            credit_rating=transform_credit_rating(ex.get_attr(node, "calificacion")),
             outstanding_balance=ex.get_float(node, "saldoActual"),
             past_due_amount=ex.get_float(node, "saldoMora"),
             available_limit=ex.get_float(node, "disponible"),
@@ -119,9 +130,9 @@ class GlobalReportBuilder:
             installments_paid=ex.get_int(node, "cuotasCanceladas"),
             principal_amount=ex.get_float(node, "valorInicial"),
             due_date=ex.get_attr(node, "fechaLimitePago"),
-            payment_frequency=ex.get_attr(node, "periodicidad"),
+            payment_frequency=transform_payment_frequency(ex.get_attr(node, "periodicidad")),
             last_payment_date=ex.get_attr(node, "fechaPagoCuota"),
-            days_past_due=ex.get_int(node, "diasMora")
+            days_past_due=ex.get_int(node, "diasMora"),
         )
 
     def _parse_states(self, ex: XmlExtractor, parent: ET.Element) -> PortfolioStates:
@@ -134,11 +145,11 @@ class GlobalReportBuilder:
         ep = ex.find_node("EstadoPago", parent=states_node)
 
         return PortfolioStates(
-            account_statement_code=ex.get_attr(ec, "codigo"),
+            account_statement_code=transform_account_condition(ex.get_attr(ec, "codigo")),
             account_statement_date=ex.get_attr(ec, "fecha"),
-            origin_state_code=ex.get_attr(eo, "codigo"),
+            origin_state_code=transform_origin_state(ex.get_attr(eo, "codigo")),
             origin_statement_date=ex.get_attr(eo, "fecha"),
-            payment_status_code=ex.get_attr(ep, "codigo"),
+            payment_status_code=transform_payment_status(ex.get_attr(ep, "codigo")),
             payment_status_months=ex.get_attr(ep, "meses"),
             payment_status_date=ex.get_attr(ep, "fecha"),
         )

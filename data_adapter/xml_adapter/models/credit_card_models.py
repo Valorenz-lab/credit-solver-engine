@@ -1,7 +1,11 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from data_adapter.xml_adapter.models.global_report_models import OPEN_ACCOUNT_CODES
+_OPEN_CARD_CODES: frozenset[str] = frozenset({
+    "01", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23",
+    "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35",
+    "36", "37", "38", "39", "40", "41", "45", "47",
+})
 
 
 @dataclass(frozen=True)
@@ -72,4 +76,4 @@ class CreditCard:
         code = self.states.account_state_code
         if code is None:
             return False
-        return code in OPEN_ACCOUNT_CODES
+        return code in _OPEN_CARD_CODES

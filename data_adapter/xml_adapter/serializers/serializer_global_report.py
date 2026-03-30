@@ -2,8 +2,7 @@
 """
 
 
-from data_adapter.transformers.global_report_transformer import transform_account_condition, transform_payment_frequency
-from data_adapter.transformers.shared_transformers import transform_payment_behavior_char, transform_payment_status
+from data_adapter.transformers.shared_transformers import transform_payment_behavior_char
 from data_adapter.xml_adapter.models.global_report_models import GlobalReport, PortfolioAccount, PortfolioCharacteristics, PortfolioStates, PortfolioValues
 from data_adapter.xml_adapter.types import SerializedGlobalReport, SerializedPortfolioAccount, SerializedPortfolioCharacteristics, SerializedPortfolioStates, SerializedPortfolioValues
 
@@ -26,12 +25,12 @@ def _serialize_account(c: PortfolioAccount) -> SerializedPortfolioAccount:
             else None
         ),
 
-        "credit_rating": c.credit_rating,
-        "ownership_status": c.ownership_status,
+        "credit_rating": c.credit_rating.value if c.credit_rating else None,
+        "ownership_status": c.ownership_status.value if c.ownership_status else None,
         "is_blocked": c.is_blocked,
         "city": c.city,
         "dane_city_code": c.dane_city_code,
-        "industry_sector": c.industry_sector,
+        "industry_sector": c.industry_sector.value if c.industry_sector else None,
         "default_probability": c.default_probability,
         "subscriber_code": c.subscriber_code,
         "entity_id_type": c.entity_id_type,
@@ -48,7 +47,7 @@ def _serialize_characteristics(c: PortfolioCharacteristics) -> SerializedPortfol
     return {
         "account_type": c.account_type.value if c.account_type else None,
         "obligation_type": c.obligation_type,
-        "contract_type": c.contract_type,
+        "contract_type": c.contract_type.value if c.contract_type else None,
         "contract_execution": c.contract_execution,
         "debtor_quality": c.debtor_quality,
         "guarantee": c.guarantee.value if c.guarantee else None,
@@ -59,8 +58,8 @@ def _serialize_characteristics(c: PortfolioCharacteristics) -> SerializedPortfol
 def _serialize_value(v: PortfolioValues) -> SerializedPortfolioValues:
     return {
         "date": v.date,
-        "currency": v.currency_code,
-        "credit_rating": v.credit_rating,
+        "currency": v.currency_code.value if v.currency_code else None,
+        "credit_rating": v.credit_rating.value if v.credit_rating else None,
         "outstanding_balance": v.outstanding_balance,
         "past_due_balance": v.past_due_amount,
         "available_limit": v.available_limit,
@@ -71,21 +70,21 @@ def _serialize_value(v: PortfolioValues) -> SerializedPortfolioValues:
         "installments_paid": v.installments_paid,
         "principal_amount": v.principal_amount,
         "due_date": v.due_date,
-        "payment_frequency": transform_payment_frequency(v.payment_frequency),
+        "payment_frequency": v.payment_frequency,
         "last_payment_date": v.last_payment_date,
     }
 
 
 def _serialize_portfolio_states(e: PortfolioStates) -> SerializedPortfolioStates:
     return {
-        "account_statement_code": transform_account_condition(e.account_statement_code),
+        "account_statement_code": e.account_statement_code,
         "account_statement_date": e.account_statement_date,
 
-        "origin_state_code": e.origin_state_code,
+        "origin_state_code": e.origin_state_code.value if e.origin_state_code else None,
         "origin_statement_date": e.origin_statement_date,
 
-        "payment_status_code": e.payment_status_code,
-        "payment_status_label": transform_payment_status(e.payment_status_code).value,
+        "payment_status_code": e.payment_status_code.value if e.payment_status_code else None,
+        "payment_status_label": e.payment_status_code.value if e.payment_status_code else None,
         "payment_status_months": e.payment_status_months,
         "payment_status_date": e.payment_status_date,
     }
