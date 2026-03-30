@@ -4,6 +4,7 @@ from typing import Optional
 
 from data_adapter.enums.financial_info.account_condition import AccountCondition
 from data_adapter.enums.financial_info.account_type import AccountType
+from data_adapter.enums.financial_info.contract_type import ContractType
 from data_adapter.enums.financial_info.debtor_role import DebtorRole
 from data_adapter.enums.financial_info.obligation_type import ObligationType
 from data_adapter.enums.financial_info.payment_frequency import PaymentFrequency
@@ -91,26 +92,82 @@ def transform_obligation_type(value: Optional[str]) -> ObligationType:
 
 
 def transform_account_condition(value: Optional[str]) -> AccountCondition:
+    """Transform EstadoCuenta.codigo (Tabla 4) to AccountCondition.
+
+    Vigente codes: 01, 13-41, 45, 47
+    Cerrada codes: 02-12, 46, 49
+    """
     if not value or value.strip() == "":
         return AccountCondition.UNKNOWN
-    try:
-        number_value = int(value)
-        mapping = {
-            0: AccountCondition.ENTITY_NO_REPORT,
-            1: AccountCondition.ON_TIME,
-            2: AccountCondition.OVERDUE_DEBT,
-            3: AccountCondition.FULL_PAYMENT,
-            4: AccountCondition.JUDICIAL_PAYMENT,
-            5: AccountCondition.DOUBTFUL_COLLECTION,
-            6: AccountCondition.WRITTEN_OFF,
-            7: AccountCondition.DATION_IN_PAYMENT,
-            8: AccountCondition.VOLUNTARY_CANCELLED,
-            9: AccountCondition.CANCELLED_DUE_TO_MISMANAGEMENT,
-            10: AccountCondition.CANCELLED_DUE_TO_STATUTE_OF_LIMITATIONS,
-            11: AccountCondition.CANCELLED_BY_INSTITUTION,
-        }
-        if number_value in mapping:
-            return mapping[number_value]
-        return AccountCondition.UNKNOWN
-    except ValueError:
-        return AccountCondition.UNKNOWN
+    mapping: dict[str, AccountCondition] = {
+        # Vigente — Al día
+        "01": AccountCondition.ON_TIME,
+        "13": AccountCondition.ON_TIME,       # Al día, mora máx 30 días histórica
+        "14": AccountCondition.ON_TIME,       # Al día, mora máx 60 días histórica
+        "15": AccountCondition.ON_TIME,       # Al día, mora máx 90 días histórica
+        "16": AccountCondition.ON_TIME,       # Al día, mora máx 120 días histórica
+        # Vigente — En mora actual
+        "17": AccountCondition.OVERDUE_DEBT,  # En mora 30 días
+        "18": AccountCondition.OVERDUE_DEBT,  # En mora 60 días
+        "19": AccountCondition.OVERDUE_DEBT,  # En mora 90 días
+        "20": AccountCondition.OVERDUE_DEBT,  # En mora 120+ días
+        # Vigente — Fue mora, está en mora (FM)
+        "21": AccountCondition.OVERDUE_DEBT,
+        "22": AccountCondition.OVERDUE_DEBT,
+        "23": AccountCondition.OVERDUE_DEBT,
+        "24": AccountCondition.OVERDUE_DEBT,
+        "25": AccountCondition.OVERDUE_DEBT,
+        "26": AccountCondition.OVERDUE_DEBT,
+        # Vigente — Reincidencia en mora (RM)
+        "27": AccountCondition.OVERDUE_DEBT,
+        "28": AccountCondition.OVERDUE_DEBT,
+        "29": AccountCondition.OVERDUE_DEBT,
+        "30": AccountCondition.OVERDUE_DEBT,
+        "31": AccountCondition.OVERDUE_DEBT,
+        "32": AccountCondition.OVERDUE_DEBT,
+        "33": AccountCondition.OVERDUE_DEBT,
+        "34": AccountCondition.OVERDUE_DEBT,
+        "35": AccountCondition.OVERDUE_DEBT,
+        "36": AccountCondition.OVERDUE_DEBT,
+        "37": AccountCondition.OVERDUE_DEBT,
+        "38": AccountCondition.OVERDUE_DEBT,
+        "39": AccountCondition.OVERDUE_DEBT,
+        "40": AccountCondition.OVERDUE_DEBT,
+        "41": AccountCondition.OVERDUE_DEBT,
+        # Vigente — Estado especial
+        "45": AccountCondition.WRITTEN_OFF,        # Cartera castigada
+        "47": AccountCondition.DOUBTFUL_COLLECTION,  # Dudoso recaudo
+        # Cerrada — Tarjeta
+        "02": AccountCondition.CARD_NOT_DELIVERED,
+        "04": AccountCondition.CARD_STOLEN,
+        "07": AccountCondition.CARD_LOST,
+        "49": AccountCondition.CARD_NOT_RENEWED,
+        # Cerrada — Cancelación
+        "03": AccountCondition.CANCELLED_DUE_TO_MISMANAGEMENT,
+        "05": AccountCondition.VOLUNTARY_CANCELLED,
+        "06": AccountCondition.CANCELLED_BY_INSTITUTION,
+        # Cerrada — Pago total (variantes por mora máxima histórica)
+        "08": AccountCondition.FULL_PAYMENT,
+        "09": AccountCondition.FULL_PAYMENT,
+        "10": AccountCondition.FULL_PAYMENT,
+        "11": AccountCondition.FULL_PAYMENT,
+        "12": AccountCondition.FULL_PAYMENT,
+        # Cerrada — Recuperación anormal (cobro judicial, embargo, arreglo)
+        "46": AccountCondition.JUDICIAL_PAYMENT,
+    }
+    return mapping.get(value.strip(), AccountCondition.UNKNOWN)
+
+
+def transform_contract_type(value: Optional[str]) -> ContractType:
+    """Transform tipoContrato code (Tabla 41) to ContractType.
+
+    0 = No reportado, 1 = Definido (término fijo), 2 = Indefinido
+    """
+    if not value or value.strip() == "":
+        return ContractType.UNKNOWN
+    mapping: dict[str, ContractType] = {
+        "0": ContractType.NOT_REPORTED,
+        "1": ContractType.FIXED_TERM,
+        "2": ContractType.INDEFINITE,
+    }
+    return mapping.get(value.strip(), ContractType.UNKNOWN)
