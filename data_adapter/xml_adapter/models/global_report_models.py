@@ -1,6 +1,11 @@
 from dataclasses import dataclass
 from typing import Optional
 
+from data_adapter.enums.financial_info.account_type import AccountType
+from data_adapter.enums.financial_info.debtor_role import DebtorRole
+from data_adapter.enums.financial_info.guarantee_type import GuaranteeType
+from data_adapter.enums.financial_info.obligation_type import ObligationType
+
 # Account state codes (account_statement_code) that represent an open/active obligation.
 # Source: Datacredito XSD Tabla 4 — vigente codes.
 OPEN_ACCOUNT_CODES: frozenset[str] = frozenset({
@@ -52,17 +57,14 @@ class PortfolioStates:
 
 @dataclass(frozen=True)
 class PortfolioCharacteristics:
-    """
-    Nodo <Caracteristicas>.
-    debtor_quality: "00"=Principal, "01"=Codeudor (see codetables.py)
-    """
-    account_type: Optional[str]           # código crudo ej: "LBZ"=libranza, "EDU"=educativo
-    obligation_type: Optional[str]       # código crudo
+    """Nodo <Caracteristicas>."""
+    account_type: Optional[AccountType]
+    obligation_type: Optional[ObligationType]
     contract_type: Optional[str]
     contract_execution: Optional[str]
-    debtor_quality: Optional[str]        # "00"=Principal, "01"=Codeudor
-    guarantee: Optional[str]
-    permanence_months: Optional[int]     # mesesPermanencia
+    debtor_quality: Optional[DebtorRole]
+    guarantee: Optional[GuaranteeType]
+    permanence_months: Optional[int]
 
 
 @dataclass(frozen=True)

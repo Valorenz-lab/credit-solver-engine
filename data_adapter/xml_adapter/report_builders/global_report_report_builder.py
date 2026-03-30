@@ -1,11 +1,16 @@
 """
 Parser of Datacredito XML (Experian).
 Single responsibility: receive XML as string/bytes/Path and return dataclasses.
-Does not transform codes — returns raw values from the XML.
 """
 
 import os
 
+from data_adapter.transformers.global_report_transformer import (
+    transform_account_type,
+    transform_debtor_role,
+    transform_obligation_type,
+)
+from data_adapter.transformers.shared_transformers import transform_guarantee
 from data_adapter.xml_adapter.exceptions import XmlParseError
 from data_adapter.xml_adapter.models.global_report_models import GlobalReport, PortfolioAccount, PortfolioCharacteristics, PortfolioStates, PortfolioValues
 from data_adapter.xml_adapter.xml_extractors.xml_extractor import XmlExtractor
@@ -85,14 +90,13 @@ class GlobalReportBuilder:
 
     def _parse_characteristics(self, ex: XmlExtractor, parent: ET.Element) -> PortfolioCharacteristics:
         node = ex.find_node("Caracteristicas", parent=parent)
-        # If the node does not exist, we return an object with Nones using the advantages of the extractor
         return PortfolioCharacteristics(
-            account_type=ex.get_attr(node, "tipoCuenta"),
-            obligation_type=ex.get_attr(node, "tipoObligacion"),
+            account_type=transform_account_type(ex.get_attr(node, "tipoCuenta")),
+            obligation_type=transform_obligation_type(ex.get_attr(node, "tipoObligacion")),
             contract_type=ex.get_attr(node, "tipoContrato"),
             contract_execution=ex.get_attr(node, "ejecucionContrato"),
-            debtor_quality=ex.get_attr(node, "calidadDeudor"),
-            guarantee=ex.get_attr(node, "garantia"),
+            debtor_quality=transform_debtor_role(ex.get_attr(node, "calidadDeudor")),
+            guarantee=transform_guarantee(ex.get_attr(node, "garantia")),
             permanence_months=ex.get_int(node, "mesesPermanencia"),
         )
 
