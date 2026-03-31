@@ -22,6 +22,7 @@ OPEN_ACCOUNT_CONDITIONS: frozenset[AccountCondition] = frozenset(
         AccountCondition.OVERDUE_DEBT,
         AccountCondition.WRITTEN_OFF,
         AccountCondition.DOUBTFUL_COLLECTION,
+        AccountCondition.CLAIM_IN_PROGRESS,  # código 60 — En reclamación (Vigente, Tabla 4)
     }
 )
 

@@ -153,6 +153,8 @@ def transform_account_condition(value: Optional[str]) -> AccountCondition:
         "12": AccountCondition.FULL_PAYMENT,
         # Cerrada — Recuperación anormal (cobro judicial, embargo, arreglo)
         "46": AccountCondition.JUDICIAL_PAYMENT,
+        # Vigente — En reclamación
+        "60": AccountCondition.CLAIM_IN_PROGRESS,
     }
     return mapping.get(value.strip(), AccountCondition.UNKNOWN)
 

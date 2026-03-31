@@ -2,6 +2,7 @@ from pathlib import Path
 
 from django.http import HttpRequest, JsonResponse
 
+from data_adapter.xml_adapter.extraction_validator import validate_extraction
 from data_adapter.xml_adapter.report_builders.basic_data_report_builder import (
     BasicDataReportBuilder,
 )
@@ -59,3 +60,14 @@ def full_report(request: HttpRequest, document_id: str) -> JsonResponse:
     data = serialize_full_report(report)
 
     return JsonResponse(data)
+
+
+def extraction_quality_report(request: HttpRequest, document_id: str) -> JsonResponse:
+    xml_path = DATA_DIR / f"{document_id}.xml"
+
+    if not xml_path.exists():
+        return JsonResponse({"error": f"No XML found for '{document_id}'"}, status=404)
+
+    result = validate_extraction(str(xml_path))
+    result["document_id"] = document_id
+    return JsonResponse(result)

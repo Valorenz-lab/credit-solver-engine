@@ -23,6 +23,8 @@ class AccountCondition(StrEnum):
     FULL_PAYMENT = "Pago Total"
     JUDICIAL_PAYMENT = "Cartera Recuperada"
     CARD_NOT_RENEWED = "Tarjeta no renovada"
+    # Vigente — En reclamación (código 60)
+    CLAIM_IN_PROGRESS = "En reclamación"
     # Sin equivalente directo en Tabla 4 (compatibilidad)
     ENTITY_NO_REPORT = "Entidad no reportó"
     DATION_IN_PAYMENT = "Dación en Pago"

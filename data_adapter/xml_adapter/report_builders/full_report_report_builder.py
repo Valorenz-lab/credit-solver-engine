@@ -49,6 +49,10 @@ class FullReportBuilder:
         root = self._parse_xml(xml_input)
         return self._build(XmlExtractor(root))
 
+    def build_from_extractor(self, ex: XmlExtractor) -> FullReport:
+        """Build a FullReport from an already-parsed XmlExtractor (avoids re-parsing)."""
+        return self._build(ex)
+
     def parse_file(self, filepath: str) -> FullReport:
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"Not found: {filepath}")
