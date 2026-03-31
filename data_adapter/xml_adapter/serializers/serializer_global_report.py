@@ -83,6 +83,9 @@ def _serialize_portfolio_states(e: PortfolioStates) -> SerializedPortfolioStates
         "origin_state_code": e.origin_state_code.value if e.origin_state_code else None,
         "origin_statement_date": e.origin_statement_date,
 
+        # Ambos campos emiten el label del enum. El código crudo XML (ej. "20") se descarta
+        # en el builder al transformar a PaymentStatus. Si el engine necesita el código
+        # crudo en el futuro, agregar payment_status_raw_code al modelo y al TypedDict.
         "payment_status_code": e.payment_status_code.value if e.payment_status_code else None,
         "payment_status_label": e.payment_status_code.value if e.payment_status_code else None,
         "payment_status_months": e.payment_status_months,

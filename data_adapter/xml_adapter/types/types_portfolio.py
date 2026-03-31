@@ -47,15 +47,15 @@ class SerializedPortfolioCharacteristics(TypedDict):
 
 
 class SerializedPortfolioAccount(TypedDict):
-    lender: Optional[str]
-    account_number: Optional[str]
+    lender: str
+    account_number: str
     opening_date: Optional[str]
     maturity_date: Optional[str]
     payment_history: Optional[str]
     payment_history_parsed: Optional[list[str]]
     credit_rating: Optional[str]
     ownership_status: Optional[str]
-    is_blocked: Optional[bool]
+    is_blocked: bool
     city: Optional[str]
     dane_city_code: Optional[str]
     industry_sector: Optional[str]
