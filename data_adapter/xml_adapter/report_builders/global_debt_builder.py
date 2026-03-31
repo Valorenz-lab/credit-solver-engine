@@ -3,6 +3,13 @@
 from typing import Optional
 from xml.etree import ElementTree as ET
 
+from data_adapter.transformers.global_debt_transformer import transform_global_debt_credit_type
+from data_adapter.transformers.shared_transformers import (
+    transform_credit_rating,
+    transform_currency,
+    transform_guarantee,
+    transform_industry_sector,
+)
 from data_adapter.xml_adapter.models.global_debt_models import (
     GlobalDebtEntity,
     GlobalDebtGuarantee,
@@ -27,14 +34,14 @@ class GlobalDebtBuilder:
         entity = GlobalDebtEntity(
             name=self._ex.get_attr(entity_node, "nombre") or "",
             nit=self._ex.get_attr(entity_node, "nit"),
-            sector=self._ex.get_attr(entity_node, "sector"),
+            sector=transform_industry_sector(self._ex.get_attr(entity_node, "sector")),
         )
         return GlobalDebtRecord(
-            rating=self._ex.get_attr(node, "calificacion"),
+            rating=transform_credit_rating(self._ex.get_attr(node, "calificacion")),
             source=self._ex.get_attr(node, "fuente"),
             outstanding_balance=self._ex.get_float(node, "saldoPendiente"),
-            credit_type=self._ex.get_attr(node, "tipoCredito"),
-            currency=self._ex.get_attr(node, "moneda"),
+            credit_type=transform_global_debt_credit_type(self._ex.get_attr(node, "tipoCredito")),
+            currency=transform_currency(self._ex.get_attr(node, "moneda")),
             credit_count=self._ex.get_int(node, "numeroCreditos"),
             report_date=self._ex.get_attr(node, "fechaReporte"),
             independent=self._ex.get_attr(node, "independiente"),
@@ -47,7 +54,7 @@ class GlobalDebtBuilder:
         if guarantee_node is None:
             return None
         return GlobalDebtGuarantee(
-            guarantee_type=self._ex.get_attr(guarantee_node, "tipo"),
+            guarantee_type=transform_guarantee(self._ex.get_attr(guarantee_node, "tipo")),
             value=self._ex.get_float(guarantee_node, "valor"),
             date=self._ex.get_attr(guarantee_node, "fecha"),
         )

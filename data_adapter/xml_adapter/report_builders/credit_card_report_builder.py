@@ -1,6 +1,22 @@
 from typing import Optional
 from xml.etree import ElementTree as ET
 
+from data_adapter.transformers.credit_card_transformer import (
+    transform_credit_card_class,
+    transform_franchise,
+    transform_plastic_status,
+)
+from data_adapter.transformers.global_report_transformer import transform_account_condition
+from data_adapter.transformers.shared_transformers import (
+    transform_credit_rating,
+    transform_currency,
+    transform_guarantee,
+    transform_industry_sector,
+    transform_origin_state,
+    transform_ownership_situation,
+    transform_payment_method,
+    transform_payment_status,
+)
 from data_adapter.xml_adapter.models.credit_card_models import (
     CreditCard,
     CreditCardCharacteristics,
@@ -25,15 +41,15 @@ class CreditCardReportBuilder:
             opened_date=ex.get_attr(node, "fechaApertura"),
             maturity_date=ex.get_attr(node, "fechaVencimiento"),
             payment_history=ex.get_attr(node, "comportamiento"),
-            payment_method=ex.get_attr(node, "formaPago"),
+            payment_method=transform_payment_method(ex.get_attr(node, "formaPago")),
             default_probability=ex.get_float(node, "probabilidadIncumplimiento"),
-            credit_rating=ex.get_attr(node, "calificacion"),
-            ownership_situation=ex.get_attr(node, "situacionTitular"),
+            credit_rating=transform_credit_rating(ex.get_attr(node, "calificacion")),
+            ownership_situation=transform_ownership_situation(ex.get_attr(node, "situacionTitular")),
             is_blocked=self._parse_blocked(ex, node),
             office=ex.get_attr(node, "oficina"),
             city=ex.get_attr(node, "ciudad"),
             dane_city_code=ex.get_attr(node, "codigoDaneCiudad"),
-            sector=ex.get_attr(node, "sector"),
+            sector=transform_industry_sector(ex.get_attr(node, "sector")),
             entity_id_type=ex.get_attr(node, "tipoIdentificacion"),
             entity_id=ex.get_attr(node, "identificacion"),
             hd_rating=raw_hd is not None and raw_hd.lower() in ("true", "1"),
@@ -53,12 +69,12 @@ class CreditCardReportBuilder:
         raw_covered = ex.get_attr(node, "amparada")
         is_covered = raw_covered is not None and raw_covered.lower() in ("true", "1", "s", "si")
         return CreditCardCharacteristics(
-            franchise=ex.get_attr(node, "franquicia"),
-            card_class=ex.get_attr(node, "clase"),
+            franchise=transform_franchise(ex.get_attr(node, "franquicia")),
+            card_class=transform_credit_card_class(ex.get_attr(node, "clase")),
             brand=ex.get_attr(node, "marca"),
             is_covered=is_covered,
             covered_code=ex.get_attr(node, "codigoAmparada"),
-            guarantee=ex.get_attr(node, "garantia"),
+            guarantee=transform_guarantee(ex.get_attr(node, "garantia")),
         )
 
     def _parse_values(self, ex: XmlExtractor, parent: ET.Element) -> Optional[CreditCardValues]:
@@ -69,9 +85,9 @@ class CreditCardReportBuilder:
         if valor_node is None:
             return None
         return CreditCardValues(
-            currency_code=ex.get_attr(valor_node, "moneda"),
+            currency_code=transform_currency(ex.get_attr(valor_node, "moneda")),
             date=ex.get_attr(valor_node, "fecha"),
-            rating=ex.get_attr(valor_node, "calificacion"),
+            rating=transform_credit_rating(ex.get_attr(valor_node, "calificacion")),
             outstanding_balance=ex.get_float(valor_node, "saldoActual"),
             past_due_amount=ex.get_float(valor_node, "saldoMora"),
             available_limit=ex.get_float(valor_node, "disponible"),
@@ -104,13 +120,13 @@ class CreditCardReportBuilder:
         epago = ex.find_node("EstadoPago", parent=states_node)
 
         return CreditCardStates(
-            plastic_state_code=ex.get_attr(ep, "codigo"),
+            plastic_state_code=transform_plastic_status(ex.get_attr(ep, "codigo")),
             plastic_state_date=ex.get_attr(ep, "fecha"),
-            account_state_code=ex.get_attr(ec, "codigo"),
+            account_state_code=transform_account_condition(ex.get_attr(ec, "codigo")),
             account_state_date=ex.get_attr(ec, "fecha"),
-            origin_state_code=ex.get_attr(eo, "codigo"),
+            origin_state_code=transform_origin_state(ex.get_attr(eo, "codigo")),
             origin_state_date=ex.get_attr(eo, "fecha"),
-            payment_status_code=ex.get_attr(epago, "codigo"),
+            payment_status_code=transform_payment_status(ex.get_attr(epago, "codigo")),
             payment_status_months=ex.get_attr(epago, "meses"),
             payment_status_date=ex.get_attr(epago, "fecha"),
         )

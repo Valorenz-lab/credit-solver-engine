@@ -1,7 +1,5 @@
 from typing import Optional
 
-from data_adapter.transformers.global_debt_transformer import transform_global_debt_credit_type
-from data_adapter.transformers.shared_transformers import transform_guarantee, transform_industry_sector
 from data_adapter.xml_adapter.models.global_debt_models import GlobalDebtEntity, GlobalDebtGuarantee, GlobalDebtRecord
 from data_adapter.xml_adapter.types import (
     SerializedGlobalDebt,
@@ -12,12 +10,12 @@ from data_adapter.xml_adapter.types import (
 
 def serialize_global_debt_record(record: GlobalDebtRecord) -> SerializedGlobalDebt:
     return {
-        "rating": record.rating,
+        "rating": record.rating.value if record.rating else None,
         "source": record.source,
         "outstanding_balance": record.outstanding_balance,
-        "credit_type": record.credit_type,
-        "credit_type_label": transform_global_debt_credit_type(record.credit_type).value,
-        "currency": record.currency,
+        "credit_type": record.credit_type.value if record.credit_type else None,
+        "credit_type_label": record.credit_type.value if record.credit_type else None,
+        "currency": record.currency.value if record.currency else None,
         "credit_count": record.credit_count,
         "report_date": record.report_date,
         "independent": record.independent,
@@ -30,8 +28,8 @@ def _serialize_entity(e: GlobalDebtEntity) -> SerializedGlobalDebtEntity:
     return {
         "name": e.name,
         "nit": e.nit,
-        "sector": e.sector,
-        "sector_label": transform_industry_sector(e.sector).value,
+        "sector": e.sector.value if e.sector else None,
+        "sector_label": e.sector.value if e.sector else None,
     }
 
 
@@ -39,8 +37,8 @@ def _serialize_guarantee(g: Optional[GlobalDebtGuarantee]) -> Optional[Serialize
     if g is None:
         return None
     return {
-        "guarantee_type": g.guarantee_type,
-        "guarantee_type_label": transform_guarantee(g.guarantee_type).value,
+        "guarantee_type": g.guarantee_type.value if g.guarantee_type else None,
+        "guarantee_type_label": g.guarantee_type.value if g.guarantee_type else None,
         "value": g.value,
         "date": g.date,
     }

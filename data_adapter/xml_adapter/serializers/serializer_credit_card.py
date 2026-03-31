@@ -1,20 +1,4 @@
-
-
-from data_adapter.transformers.credit_card_transformer import (
-    transform_credit_card_class,
-    transform_franchise,
-    transform_plastic_status,
-)
-from data_adapter.transformers.shared_transformers import (
-    transform_credit_rating,
-    transform_guarantee,
-    transform_origin_state,
-    transform_ownership_situation,
-    transform_payment_behavior_char,
-    transform_payment_method,
-    transform_payment_status,
-    transform_industry_sector,
-)
+from data_adapter.transformers.shared_transformers import transform_payment_behavior_char
 from data_adapter.xml_adapter.models.credit_card_models import (
     CreditCard,
     CreditCardCharacteristics,
@@ -41,19 +25,19 @@ def serialize_credit_card(card: CreditCard) -> SerializedCreditCard:
             if card.payment_history is not None
             else None
         ),
-        "payment_method": card.payment_method,
-        "payment_method_label": transform_payment_method(card.payment_method).value,
+        "payment_method": card.payment_method.value if card.payment_method else None,
+        "payment_method_label": card.payment_method.value if card.payment_method else None,
         "default_probability": card.default_probability,
-        "credit_rating": card.credit_rating,
-        "credit_rating_label": transform_credit_rating(card.credit_rating).value,
-        "ownership_situation": card.ownership_situation,
-        "ownership_situation_label": transform_ownership_situation(card.ownership_situation).value,
+        "credit_rating": card.credit_rating.value if card.credit_rating else None,
+        "credit_rating_label": card.credit_rating.value if card.credit_rating else None,
+        "ownership_situation": card.ownership_situation.value if card.ownership_situation else None,
+        "ownership_situation_label": card.ownership_situation.value if card.ownership_situation else None,
         "is_blocked": card.is_blocked,
         "office": card.office,
         "city": card.city,
         "dane_city_code": card.dane_city_code,
-        "sector": card.sector,
-        "sector_label": transform_industry_sector(card.sector).value,
+        "sector": card.sector.value if card.sector else None,
+        "sector_label": card.sector.value if card.sector else None,
         "entity_id_type": card.entity_id_type,
         "entity_id": card.entity_id,
         "hd_rating": card.hd_rating,
@@ -65,25 +49,25 @@ def serialize_credit_card(card: CreditCard) -> SerializedCreditCard:
 
 def _serialize_characteristics(c: CreditCardCharacteristics) -> SerializedCreditCardCharacteristics:
     return {
-        "franchise": c.franchise,
-        "franchise_label": transform_franchise(c.franchise).value,
-        "card_class": c.card_class,
-        "card_class_label": transform_credit_card_class(c.card_class).value,
+        "franchise": c.franchise.value if c.franchise else None,
+        "franchise_label": c.franchise.value if c.franchise else None,
+        "card_class": c.card_class.value if c.card_class else None,
+        "card_class_label": c.card_class.value if c.card_class else None,
         "brand": c.brand,
         "is_covered": c.is_covered,
         "covered_code": c.covered_code,
-        "guarantee": c.guarantee,
-        "guarantee_label": transform_guarantee(c.guarantee).value,
+        "guarantee": c.guarantee.value if c.guarantee else None,
+        "guarantee_label": c.guarantee.value if c.guarantee else None,
     }
 
 
 def _serialize_values(v: CreditCardValues) -> SerializedCreditCardValues:
     return {
-        "currency_code": v.currency_code,
-        "currency_label": None,
+        "currency_code": v.currency_code.value if v.currency_code else None,
+        "currency_label": v.currency_code.value if v.currency_code else None,
         "date": v.date,
-        "rating": v.rating,
-        "rating_label": transform_credit_rating(v.rating).value,
+        "rating": v.rating.value if v.rating else None,
+        "rating_label": v.rating.value if v.rating else None,
         "outstanding_balance": v.outstanding_balance,
         "past_due_amount": v.past_due_amount,
         "available_limit": v.available_limit,
@@ -98,16 +82,16 @@ def _serialize_values(v: CreditCardValues) -> SerializedCreditCardValues:
 
 def _serialize_states(s: CreditCardStates) -> SerializedCreditCardStates:
     return {
-        "plastic_state_code": s.plastic_state_code,
-        "plastic_state_label": transform_plastic_status(s.plastic_state_code).value,
+        "plastic_state_code": s.plastic_state_code.value if s.plastic_state_code else None,
+        "plastic_state_label": s.plastic_state_code.value if s.plastic_state_code else None,
         "plastic_state_date": s.plastic_state_date,
-        "account_state_code": s.account_state_code,
+        "account_state_code": s.account_state_code.value if s.account_state_code else None,
         "account_state_date": s.account_state_date,
-        "origin_state_code": s.origin_state_code,
-        "origin_state_label": transform_origin_state(s.origin_state_code).value,
+        "origin_state_code": s.origin_state_code.value if s.origin_state_code else None,
+        "origin_state_label": s.origin_state_code.value if s.origin_state_code else None,
         "origin_state_date": s.origin_state_date,
-        "payment_status_code": s.payment_status_code,
-        "payment_status_label": transform_payment_status(s.payment_status_code).value,
+        "payment_status_code": s.payment_status_code.value if s.payment_status_code else None,
+        "payment_status_label": s.payment_status_code.value if s.payment_status_code else None,
         "payment_status_months": s.payment_status_months,
         "payment_status_date": s.payment_status_date,
     }

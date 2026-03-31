@@ -2,6 +2,8 @@
 
 from xml.etree import ElementTree as ET
 
+from data_adapter.transformers.global_report_transformer import transform_account_type
+from data_adapter.transformers.shared_transformers import transform_industry_sector, transform_query_reason
 from data_adapter.xml_adapter.models.query_models import QueryRecord
 from data_adapter.xml_adapter.xml_extractors.xml_extractor import XmlExtractor
 
@@ -20,12 +22,12 @@ class QueryBuilder:
     def _parse_record(self, node: ET.Element) -> QueryRecord:
         return QueryRecord(
             date=self._ex.get_attr_required(node, "fecha"),
-            account_type=self._ex.get_attr(node, "tipoCuenta"),
+            account_type=transform_account_type(self._ex.get_attr(node, "tipoCuenta")),
             entity=self._ex.get_attr_required(node, "entidad"),
             office=self._ex.get_attr(node, "oficina"),
             city=self._ex.get_attr(node, "ciudad"),
-            reason=self._ex.get_attr(node, "razon"),
+            reason=transform_query_reason(self._ex.get_attr(node, "razon")),
             count=self._ex.get_int(node, "cantidad"),
             subscriber_nit=self._ex.get_attr(node, "nitSuscriptor"),
-            sector=self._ex.get_attr(node, "sector"),
+            sector=transform_industry_sector(self._ex.get_attr(node, "sector")),
         )

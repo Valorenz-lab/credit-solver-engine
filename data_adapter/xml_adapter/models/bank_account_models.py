@@ -1,21 +1,29 @@
 from dataclasses import dataclass
 from typing import Optional
 
-# Savings account state codes that represent an open/active account.
-# Source: Datacredito — CuentaAhorro active codes (distinct from portfolio codes).
-_OPEN_BANK_ACCOUNT_CODES: frozenset[str] = frozenset({"01", "06", "07"})
+from data_adapter.enums.financial_info.credit_rating import CreditRating
+from data_adapter.enums.financial_info.currency import Currency
+from data_adapter.enums.financial_info.industry_sector import IndustrySector
+from data_adapter.enums.financial_info.ownership_situation import OwnershipSituation
+from data_adapter.enums.financial_info.savings_account_status import SavingsAccountStatus
+
+_OPEN_BANK_ACCOUNT_STATUSES: frozenset[SavingsAccountStatus] = frozenset({
+    SavingsAccountStatus.ACTIVE,        # "01"
+    SavingsAccountStatus.SEIZED,        # "06"
+    SavingsAccountStatus.SEIZED_ACTIVE, # "07"
+})
 
 
 @dataclass(frozen=True)
 class BankAccountValue:
-    currency_code: Optional[str]
+    currency_code: Optional[Currency]
     date: Optional[str]
-    rating: Optional[str]
+    rating: Optional[CreditRating]
 
 
 @dataclass(frozen=True)
 class BankAccountState:
-    code: Optional[str]
+    code: Optional[SavingsAccountStatus]
     date: Optional[str]
 
 
@@ -25,13 +33,13 @@ class BankAccount:
     account_number: str
     account_class: Optional[str]
     opened_date: Optional[str]
-    rating: Optional[str]
-    ownership_situation: Optional[str]
+    rating: Optional[CreditRating]
+    ownership_situation: Optional[OwnershipSituation]
     is_blocked: bool
     office: Optional[str]
     city: Optional[str]
     dane_city_code: Optional[str]        # codigoDaneCiudad
-    sector: Optional[str]
+    sector: Optional[IndustrySector]
     entity_id_type: Optional[str]        # tipoIdentificacion of the lending entity
     entity_id: Optional[str]             # identificacion (NIT) of the lending entity
     value: Optional[BankAccountValue]
@@ -42,4 +50,4 @@ class BankAccount:
         """Return True if the account state code indicates an active savings account."""
         if self.state is None or self.state.code is None:
             return False
-        return self.state.code in _OPEN_BANK_ACCOUNT_CODES
+        return self.state.code in _OPEN_BANK_ACCOUNT_STATUSES
