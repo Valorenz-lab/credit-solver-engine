@@ -3,6 +3,7 @@ from enum import StrEnum
 
 class CurrentDebtStatus(StrEnum):
     """Current state of an obligation in EndeudamientoActual/Cuenta. Free text from Datacredito — mapped from observed XML values."""
+
     ON_TIME = "Al día"
     PAST_DUE_30 = "En mora 30 días"
     PAST_DUE_60 = "En mora 60 días"

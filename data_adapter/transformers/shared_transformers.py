@@ -11,7 +11,9 @@ from data_adapter.enums.financial_info.payment_behavior import PaymentBehavior
 from data_adapter.enums.financial_info.payment_method import PaymentMethod
 from data_adapter.enums.financial_info.payment_status import PaymentStatus
 from data_adapter.enums.financial_info.query_reason import QueryReason
-from data_adapter.enums.financial_info.savings_account_status import SavingsAccountStatus
+from data_adapter.enums.financial_info.savings_account_status import (
+    SavingsAccountStatus,
+)
 
 
 def transform_industry_sector(value: Optional[str]) -> IndustrySector:

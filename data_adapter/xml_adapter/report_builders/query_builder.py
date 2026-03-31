@@ -3,7 +3,10 @@
 from xml.etree import ElementTree as ET
 
 from data_adapter.transformers.global_report_transformer import transform_account_type
-from data_adapter.transformers.shared_transformers import transform_industry_sector, transform_query_reason
+from data_adapter.transformers.shared_transformers import (
+    transform_industry_sector,
+    transform_query_reason,
+)
 from data_adapter.xml_adapter.models.query_models import QueryRecord
 from data_adapter.xml_adapter.xml_extractors.xml_extractor import XmlExtractor
 

@@ -20,9 +20,7 @@ class ScoreBuilder:
         self._report_node = report_node
 
     def build(self) -> tuple[ScoreRecord, ...]:
-        return tuple(
-            self._parse_record(n) for n in self._report_node.findall("Score")
-        )
+        return tuple(self._parse_record(n) for n in self._report_node.findall("Score"))
 
     def _parse_record(self, node: ET.Element) -> ScoreRecord:
         reasons = tuple(
@@ -47,9 +45,7 @@ class AlertBuilder:
         self._report_node = report_node
 
     def build(self) -> tuple[AlertRecord, ...]:
-        return tuple(
-            self._parse_record(n) for n in self._report_node.findall("Alerta")
-        )
+        return tuple(self._parse_record(n) for n in self._report_node.findall("Alerta"))
 
     def _parse_record(self, node: ET.Element) -> AlertRecord:
         source: Optional[AlertSource] = None

@@ -3,7 +3,9 @@
 from typing import Optional
 from xml.etree import ElementTree as ET
 
-from data_adapter.transformers.global_debt_transformer import transform_global_debt_credit_type
+from data_adapter.transformers.global_debt_transformer import (
+    transform_global_debt_credit_type,
+)
 from data_adapter.transformers.shared_transformers import (
     transform_credit_rating,
     transform_currency,
@@ -40,7 +42,9 @@ class GlobalDebtBuilder:
             rating=transform_credit_rating(self._ex.get_attr(node, "calificacion")),
             source=self._ex.get_attr(node, "fuente"),
             outstanding_balance=self._ex.get_float(node, "saldoPendiente"),
-            credit_type=transform_global_debt_credit_type(self._ex.get_attr(node, "tipoCredito")),
+            credit_type=transform_global_debt_credit_type(
+                self._ex.get_attr(node, "tipoCredito")
+            ),
             currency=transform_currency(self._ex.get_attr(node, "moneda")),
             credit_count=self._ex.get_int(node, "numeroCreditos"),
             report_date=self._ex.get_attr(node, "fechaReporte"),
@@ -54,7 +58,9 @@ class GlobalDebtBuilder:
         if guarantee_node is None:
             return None
         return GlobalDebtGuarantee(
-            guarantee_type=transform_guarantee(self._ex.get_attr(guarantee_node, "tipo")),
+            guarantee_type=transform_guarantee(
+                self._ex.get_attr(guarantee_node, "tipo")
+            ),
             value=self._ex.get_float(guarantee_node, "valor"),
             date=self._ex.get_attr(guarantee_node, "fecha"),
         )

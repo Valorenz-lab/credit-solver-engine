@@ -4,10 +4,25 @@ Converts data classes from InformeBasico to serializable dicts (JSON-safe).
 If you use DRF, you can replace this with a DRF Serializer.
 """
 
-
-from data_adapter.transformers.basic_info_transformer import transform_gender, transform_id_type, transform_id_validity
-from data_adapter.xml_adapter.models.basic_data_models import Age, BasicDataPerson, BasicReport, CustomerIdentification, QueryMetadata
-from data_adapter.xml_adapter.types import SerializedAge, SerializedCustomerIdentification, SerializedMetadata, SerializedPerson, SerializedReport
+from data_adapter.transformers.basic_info_transformer import (
+    transform_gender,
+    transform_id_type,
+    transform_id_validity,
+)
+from data_adapter.xml_adapter.models.basic_data_models import (
+    Age,
+    BasicDataPerson,
+    BasicReport,
+    CustomerIdentification,
+    QueryMetadata,
+)
+from data_adapter.xml_adapter.types import (
+    SerializedAge,
+    SerializedCustomerIdentification,
+    SerializedMetadata,
+    SerializedPerson,
+    SerializedReport,
+)
 
 
 def serialize_basic_report(report: BasicReport) -> SerializedReport:
@@ -33,7 +48,7 @@ def _serialize_metadata(m: QueryMetadata) -> SerializedMetadata:
 def _serialize_person(p: BasicDataPerson) -> SerializedPerson:
 
     return {
-       "names": p.names,
+        "names": p.names,
         "first_surname": p.first_surname,
         "second_surname": p.second_surname,
         "full_name": p.full_name,
@@ -41,11 +56,13 @@ def _serialize_person(p: BasicDataPerson) -> SerializedPerson:
         "validated": p.validated,
         "rut": p.rut,
         "customer_identification": _serialize_identification(p.customer_identification),
-        "age": _serialize_age(p.age)
+        "age": _serialize_age(p.age),
     }
 
 
-def _serialize_identification(i: CustomerIdentification ) -> SerializedCustomerIdentification:
+def _serialize_identification(
+    i: CustomerIdentification,
+) -> SerializedCustomerIdentification:
     issue_date = i.issue_date.isoformat() if i.issue_date else None
     return {
         "number": i.number,
@@ -53,7 +70,7 @@ def _serialize_identification(i: CustomerIdentification ) -> SerializedCustomerI
         "issue_date": issue_date,
         "city": i.city,
         "department": i.department,
-        "gender": transform_gender(i.gender)
+        "gender": transform_gender(i.gender),
     }
 
 

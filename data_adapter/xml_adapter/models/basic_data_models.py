@@ -44,7 +44,8 @@ class BasicDataPerson:
 @dataclass(frozen=True)
 class QueryMetadata:
     """Root node metadata <Reporte>"""
-    query_date: str          # ISO string, ej: "2024-03-22T07:45:03"
+
+    query_date: str  # ISO string, ej: "2024-03-22T07:45:03"
     answer: str
     cod_security: str
     type_id_entered: str
@@ -55,5 +56,6 @@ class QueryMetadata:
 @dataclass(frozen=True)
 class BasicReport:
     """Complete result of the basic information parse."""
+
     metadata: QueryMetadata
     person: BasicDataPerson

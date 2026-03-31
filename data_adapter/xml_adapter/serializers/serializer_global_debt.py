@@ -1,6 +1,10 @@
 from typing import Optional
 
-from data_adapter.xml_adapter.models.global_debt_models import GlobalDebtEntity, GlobalDebtGuarantee, GlobalDebtRecord
+from data_adapter.xml_adapter.models.global_debt_models import (
+    GlobalDebtEntity,
+    GlobalDebtGuarantee,
+    GlobalDebtRecord,
+)
 from data_adapter.xml_adapter.types import (
     SerializedGlobalDebt,
     SerializedGlobalDebtEntity,
@@ -33,7 +37,9 @@ def _serialize_entity(e: GlobalDebtEntity) -> SerializedGlobalDebtEntity:
     }
 
 
-def _serialize_guarantee(g: Optional[GlobalDebtGuarantee]) -> Optional[SerializedGlobalDebtGuarantee]:
+def _serialize_guarantee(
+    g: Optional[GlobalDebtGuarantee],
+) -> Optional[SerializedGlobalDebtGuarantee]:
     if g is None:
         return None
     return {

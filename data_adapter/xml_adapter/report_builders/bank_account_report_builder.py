@@ -8,21 +8,31 @@ from data_adapter.transformers.shared_transformers import (
     transform_ownership_situation,
     transform_savings_account_status,
 )
-from data_adapter.xml_adapter.models.bank_account_models import BankAccount, BankAccountState, BankAccountValue
+from data_adapter.xml_adapter.models.bank_account_models import (
+    BankAccount,
+    BankAccountState,
+    BankAccountValue,
+)
 from data_adapter.xml_adapter.xml_extractors.xml_extractor import XmlExtractor
 
 
 class BankAccountReportBuilder:
     """Parses CuentaAhorro nodes into BankAccount dataclasses."""
 
-    def parse_accounts(self, ex: XmlExtractor, report_node: ET.Element) -> tuple[BankAccount, ...]:
+    def parse_accounts(
+        self, ex: XmlExtractor, report_node: ET.Element
+    ) -> tuple[BankAccount, ...]:
         nodes = report_node.findall(".//CuentaAhorro")
         return tuple(self._parse_account(ex, node) for node in nodes)
 
     def _parse_account(self, ex: XmlExtractor, node: ET.Element) -> BankAccount:
         characteristics_node = ex.find_node("Caracteristicas", parent=node)
         values_node = ex.find_node("Valores", parent=node)
-        valor_node = ex.find_node("Valor", parent=values_node) if values_node is not None else None
+        valor_node = (
+            ex.find_node("Valor", parent=values_node)
+            if values_node is not None
+            else None
+        )
         state_node = ex.find_node("Estado", parent=node)
 
         return BankAccount(
@@ -31,7 +41,9 @@ class BankAccountReportBuilder:
             account_class=ex.get_attr(characteristics_node, "clase"),
             opened_date=ex.get_attr(node, "fechaApertura"),
             rating=transform_credit_rating(ex.get_attr(node, "calificacion")),
-            ownership_situation=transform_ownership_situation(ex.get_attr(node, "situacionTitular")),
+            ownership_situation=transform_ownership_situation(
+                ex.get_attr(node, "situacionTitular")
+            ),
             is_blocked=self._parse_blocked(ex, node),
             office=ex.get_attr(node, "oficina"),
             city=ex.get_attr(node, "ciudad"),

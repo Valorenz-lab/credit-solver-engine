@@ -3,6 +3,7 @@ from enum import StrEnum
 
 class GuaranteeType(StrEnum):
     """Table 11 — Guarantee type (garantia field in CuentaCartera/Caracteristicas)."""
+
     NO_GUARANTEE = "Sin garantía"
     ADMISSIBLE = "Admisible"
     OTHER_SUITABLE = "Otras garantías idóneas"
@@ -18,7 +19,9 @@ class GuaranteeType(StrEnum):
     PERSONAL = "Personal"
     NON_REAL_ESTATE_LEASING = "Bienes dados en leasing diferente a inmobiliario"
     REAL_ESTATE_LEASING = "Bienes dados en leasing inmobiliario"
-    SECURITIES_PLEDGE = "Prenda sobre títulos valores emitidos por instituciones financieras"
+    SECURITIES_PLEDGE = (
+        "Prenda sobre títulos valores emitidos por instituciones financieras"
+    )
     CASH_DEPOSITS = "Depósitos de dinero en garantía colateral"
     CREDIT_INSURANCE = "Seguros de crédito"
     UNKNOWN = "Desconocido"

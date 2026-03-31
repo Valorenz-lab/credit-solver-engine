@@ -35,7 +35,9 @@ class MicroCreditBuilder:
         self._report_node = report_node
 
     def build(self) -> Optional[MicroCreditAggregatedInfo]:
-        micro_node = self._ex.find_node("InfoAgregadaMicrocredito", parent=self._report_node)
+        micro_node = self._ex.find_node(
+            "InfoAgregadaMicrocredito", parent=self._report_node
+        )
         if micro_node is None:
             return None
 
@@ -51,12 +53,16 @@ class MicroCreditBuilder:
 
         return MicroCreditAggregatedInfo(
             general_profile=self._parse_general_profile(resumen_node),
-            balance_delinquency_vector=self._parse_balance_delinquency_vector(resumen_node),
+            balance_delinquency_vector=self._parse_balance_delinquency_vector(
+                resumen_node
+            ),
             current_debt_by_sector=self._parse_current_debt(resumen_node),
             sector_behavior_vectors=self._parse_behavior_vectors(analisis_node),
             trend_series=self._parse_trend_series(imagen_node),
             debt_evolution=parse_debt_evolution_quarters(self._ex, evolution_node),
-            debt_evolution_analysis=parse_debt_evolution_analysis(self._ex, evolution_node),
+            debt_evolution_analysis=parse_debt_evolution_analysis(
+                self._ex, evolution_node
+            ),
         )
 
     # ── PerfilGeneral ─────────────────────────────────────────────────────────
@@ -80,8 +86,12 @@ class MicroCreditBuilder:
         return GeneralProfile(
             active_credits=self._parse_sector_credit_count(node, "CreditosVigentes"),
             closed_credits=self._parse_sector_credit_count(node, "CreditosCerrados"),
-            restructured_credits=self._parse_sector_credit_count(node, "CreditosReestructurados"),
-            refinanced_credits=self._parse_sector_credit_count(node, "CreditosRefinanciados"),
+            restructured_credits=self._parse_sector_credit_count(
+                node, "CreditosReestructurados"
+            ),
+            refinanced_credits=self._parse_sector_credit_count(
+                node, "CreditosRefinanciados"
+            ),
             queries_last_6m=self._parse_sector_credit_count(node, "ConsultaUlt6Meses"),
             disputes=self._parse_sector_credit_count(node, "Desacuerdos"),
             oldest_account=oldest,
@@ -117,13 +127,19 @@ class MicroCreditBuilder:
                 total_accounts_past_due=self._ex.get_int(sm, "totalCuentasMora") or 0,
                 past_due_balance=self._ex.get_float(sm, "saldoDeudaTotalMora") or 0.0,
                 total_balance=self._ex.get_float(sm, "saldoDeudaTotal") or 0.0,
-                max_delinquency_financial=self._ex.get_attr(sm, "morasMaxSectorFinanciero"),
-                max_delinquency_cooperative=self._ex.get_attr(sm, "morasMaxSectorCooperativo"),
+                max_delinquency_financial=self._ex.get_attr(
+                    sm, "morasMaxSectorFinanciero"
+                ),
+                max_delinquency_cooperative=self._ex.get_attr(
+                    sm, "morasMaxSectorCooperativo"
+                ),
                 max_delinquency_real=self._ex.get_attr(sm, "morasMaxSectorReal"),
                 max_delinquency_telecom=self._ex.get_attr(sm, "morasMaxSectorTelcos"),
                 max_delinquency_overall=self._ex.get_attr(sm, "morasMaximas"),
                 accounts_past_due_30=self._ex.get_int(sm, "numCreditos30"),
-                accounts_past_due_60_plus=self._ex.get_int(sm, "numCreditosMayorIgual60"),
+                accounts_past_due_60_plus=self._ex.get_int(
+                    sm, "numCreditosMayorIgual60"
+                ),
             )
             for sm in node.findall("SaldosYMoras")
         )
@@ -225,7 +241,9 @@ class MicroCreditBuilder:
                 date=self._ex.get_attr_required(c, "fecha"),
                 behavior=self._ex.get_attr(c, "saldoDeudaTotalMora"),
             )
-            for c in (moras_node.findall("CaracterFecha") if moras_node is not None else [])
+            for c in (
+                moras_node.findall("CaracterFecha") if moras_node is not None else []
+            )
         )
         return AccountBehaviorVector(
             entity=self._ex.get_attr(node, "entidad") or "",
@@ -252,12 +270,16 @@ class MicroCreditBuilder:
                     value=self._ex.get_float(v, "valor") or 0.0,
                     date=self._ex.get_attr_required(v, "fecha"),
                 )
-                for v in (valores_node.findall("Valor") if valores_node is not None else [])
+                for v in (
+                    valores_node.findall("Valor") if valores_node is not None else []
+                )
             )
-            result.append(TrendSeries(
-                series_name=self._ex.get_attr(series_node, "serie") or "",
-                data_points=data_points,
-            ))
+            result.append(
+                TrendSeries(
+                    series_name=self._ex.get_attr(series_node, "serie") or "",
+                    data_points=data_points,
+                )
+            )
         return tuple(result)
 
     # ── Helpers ───────────────────────────────────────────────────────────────

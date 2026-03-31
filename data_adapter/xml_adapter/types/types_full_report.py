@@ -14,7 +14,9 @@ from data_adapter.xml_adapter.types.types_global_debt import (
     SerializedGlobalDebt,
     SerializedQueryRecord,
 )
-from data_adapter.xml_adapter.types.types_micro_credit import SerializedMicroCreditAggregatedInfo
+from data_adapter.xml_adapter.types.types_micro_credit import (
+    SerializedMicroCreditAggregatedInfo,
+)
 from data_adapter.xml_adapter.types.types_portfolio import SerializedPortfolioAccount
 from data_adapter.xml_adapter.types.types_score_alert import (
     SerializedAlertRecord,
@@ -30,8 +32,12 @@ class SerializedFullReport(TypedDict):
     closed_bank_accounts: list[SerializedBankAccount]
     checking_accounts: list[SerializedCheckingAccount]
     active_obligations: list[Union[SerializedPortfolioAccount, SerializedCreditCard]]
-    payment_habits_open: dict[str, list[Union[SerializedPortfolioAccount, SerializedCreditCard]]]
-    payment_habits_closed: dict[str, list[Union[SerializedPortfolioAccount, SerializedCreditCard]]]
+    payment_habits_open: dict[
+        str, list[Union[SerializedPortfolioAccount, SerializedCreditCard]]
+    ]
+    payment_habits_closed: dict[
+        str, list[Union[SerializedPortfolioAccount, SerializedCreditCard]]
+    ]
     query_history: list[SerializedQueryRecord]
     global_debt_records: list[SerializedGlobalDebt]
     debt_evolution: list[SerializedDebtEvolutionQuarter]

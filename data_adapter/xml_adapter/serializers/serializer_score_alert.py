@@ -1,6 +1,11 @@
 from typing import Optional
 
-from data_adapter.xml_adapter.models.score_alert_models import AlertRecord, AlertSource, ScoreReason, ScoreRecord
+from data_adapter.xml_adapter.models.score_alert_models import (
+    AlertRecord,
+    AlertSource,
+    ScoreReason,
+    ScoreRecord,
+)
 from data_adapter.xml_adapter.types import (
     SerializedAlertRecord,
     SerializedAlertSource,
@@ -31,7 +36,11 @@ def serialize_alert_record(record: AlertRecord) -> SerializedAlertRecord:
         "cancelled_date": record.cancelled_date,
         "code": record.code,
         "text": record.text,
-        "source": _serialize_alert_source(record.source) if record.source is not None else None,
+        "source": (
+            _serialize_alert_source(record.source)
+            if record.source is not None
+            else None
+        ),
     }
 
 

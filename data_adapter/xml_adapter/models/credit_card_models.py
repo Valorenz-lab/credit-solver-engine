@@ -14,12 +14,14 @@ from data_adapter.enums.financial_info.payment_method import PaymentMethod
 from data_adapter.enums.financial_info.payment_status import PaymentStatus
 from data_adapter.enums.financial_info.plastic_status import PlasticStatus
 
-_OPEN_CARD_CONDITIONS: frozenset[AccountCondition] = frozenset({
-    AccountCondition.ON_TIME,
-    AccountCondition.OVERDUE_DEBT,
-    AccountCondition.WRITTEN_OFF,
-    AccountCondition.DOUBTFUL_COLLECTION,
-})
+_OPEN_CARD_CONDITIONS: frozenset[AccountCondition] = frozenset(
+    {
+        AccountCondition.ON_TIME,
+        AccountCondition.OVERDUE_DEBT,
+        AccountCondition.WRITTEN_OFF,
+        AccountCondition.DOUBTFUL_COLLECTION,
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -75,11 +77,11 @@ class CreditCard:
     is_blocked: bool
     office: Optional[str]
     city: Optional[str]
-    dane_city_code: Optional[str]        # codigoDaneCiudad
+    dane_city_code: Optional[str]  # codigoDaneCiudad
     sector: Optional[IndustrySector]
-    entity_id_type: Optional[str]        # tipoIdentificacion of the lending entity
-    entity_id: Optional[str]             # identificacion (NIT) of the lending entity
-    hd_rating: Optional[bool]            # calificacionHD flag
+    entity_id_type: Optional[str]  # tipoIdentificacion of the lending entity
+    entity_id: Optional[str]  # identificacion (NIT) of the lending entity
+    hd_rating: Optional[bool]  # calificacionHD flag
     characteristics: CreditCardCharacteristics
     values: Optional[CreditCardValues]
     states: CreditCardStates

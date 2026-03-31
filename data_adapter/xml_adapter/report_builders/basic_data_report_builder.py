@@ -8,7 +8,14 @@ import os
 from xml.etree import ElementTree as ET
 
 from data_adapter.xml_adapter.exceptions import XmlParseError
-from data_adapter.xml_adapter.models.basic_data_models import Age, BasicDataPerson, BasicReport, CustomerIdentification, CustomerIdentification, QueryMetadata
+from data_adapter.xml_adapter.models.basic_data_models import (
+    Age,
+    BasicDataPerson,
+    BasicReport,
+    CustomerIdentification,
+    CustomerIdentification,
+    QueryMetadata,
+)
 from data_adapter.xml_adapter.xml_extractors.xml_extractor import XmlExtractor
 
 
@@ -53,17 +60,21 @@ class BasicDataReportBuilder:
         report_node = extractor.require_node("Informe")
         return self.build_from_node(extractor, report_node)
 
-    def _parse_metadata(self, extractor: XmlExtractor, node: ET.Element) -> QueryMetadata:
+    def _parse_metadata(
+        self, extractor: XmlExtractor, node: ET.Element
+    ) -> QueryMetadata:
         return QueryMetadata(
             query_date=extractor.get_attr_required(node, "fechaConsulta"),
             answer=extractor.get_attr_required(node, "respuesta"),
             cod_security=extractor.get_attr_required(node, "codSeguridad"),
             type_id_entered=extractor.get_attr_required(node, "tipoIdDigitado"),
             id_typed=extractor.get_attr_required(node, "identificacionDigitada"),
-            last_name_typed=extractor.get_attr_required(node, "apellidoDigitado")
+            last_name_typed=extractor.get_attr_required(node, "apellidoDigitado"),
         )
 
-    def _parse_persona(self, extractor: XmlExtractor, node: ET.Element) -> BasicDataPerson:
+    def _parse_persona(
+        self, extractor: XmlExtractor, node: ET.Element
+    ) -> BasicDataPerson:
         return BasicDataPerson(
             names=extractor.get_attr_required(node, "nombres"),
             first_surname=extractor.get_attr_required(node, "primerApellido"),
@@ -76,7 +87,9 @@ class BasicDataReportBuilder:
             age=self._parse_edad(extractor, node),
         )
 
-    def _parse_identification(self, extractor: XmlExtractor, parent: ET.Element) -> CustomerIdentification:
+    def _parse_identification(
+        self, extractor: XmlExtractor, parent: ET.Element
+    ) -> CustomerIdentification:
         node = extractor.require_node("Identificacion", parent)
         return CustomerIdentification(
             number=extractor.get_attr_required(node, "numero"),
@@ -84,14 +97,14 @@ class BasicDataReportBuilder:
             issue_date=extractor.get_date(node, "fechaExpedicion"),
             city=extractor.get_attr(node, "ciudad"),
             department=extractor.get_attr(node, "departamento"),
-            gender=extractor.get_attr(node, "genero")
+            gender=extractor.get_attr(node, "genero"),
         )
 
     def _parse_edad(self, extractor: XmlExtractor, parent: ET.Element) -> Age:
         node = extractor.find_node("Edad", parent)
         if node is None:
             return Age(min=None, max=None)
-        
+
         return Age(
             min=extractor.get_int(node, "min"),
             max=extractor.get_int(node, "max"),

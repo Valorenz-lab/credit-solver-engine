@@ -9,4 +9,3 @@ class IdentificationStatus(StrEnum):
     NOT_ISSUED = "No expedida"
     UNDEFINED = "Indefinido"
     IN_PROCESS = "En proceso"
-

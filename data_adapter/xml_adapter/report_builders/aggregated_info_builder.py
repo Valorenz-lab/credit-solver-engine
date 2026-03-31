@@ -31,8 +31,8 @@ from data_adapter.xml_adapter.models.aggregated_info_models import (
 )
 from data_adapter.xml_adapter.xml_extractors.xml_extractor import XmlExtractor
 
-
 # ── Shared functions (also used by MicroCreditBuilder) ────────────────────────
+
 
 def parse_debt_evolution_quarters(
     ex: XmlExtractor,
@@ -89,6 +89,7 @@ def _parse_quarter(ex: XmlExtractor, node: ET.Element) -> DebtEvolutionQuarter:
 
 # ── AggregatedInfoBuilder ─────────────────────────────────────────────────────
 
+
 class AggregatedInfoBuilder:
     """Parses <InfoAgregada> within an <Informe> node."""
 
@@ -105,7 +106,9 @@ class AggregatedInfoBuilder:
         totales_node = self._ex.find_node("Totales", parent=info_node)
         composition_node = self._ex.find_node("ComposicionPortafolio", parent=info_node)
         evolution_node = self._ex.find_node("EvolucionDeuda", parent=info_node)
-        quarterly_debt_node = self._ex.find_node("ResumenEndeudamiento", parent=info_node)
+        quarterly_debt_node = self._ex.find_node(
+            "ResumenEndeudamiento", parent=info_node
+        )
 
         return AggregatedInfo(
             summary=self._parse_summary(resumen_node),
@@ -113,9 +116,13 @@ class AggregatedInfoBuilder:
             grand_totals=self._parse_grand_totals(totales_node),
             portfolio_composition=self._parse_portfolio_composition(composition_node),
             debt_evolution=parse_debt_evolution_quarters(self._ex, evolution_node),
-            debt_evolution_analysis=parse_debt_evolution_analysis(self._ex, evolution_node),
+            debt_evolution_analysis=parse_debt_evolution_analysis(
+                self._ex, evolution_node
+            ),
             balance_history_by_type=self._parse_balance_history_by_type(info_node),
-            quarterly_debt_summary=self._parse_quarterly_debt_summary(quarterly_debt_node),
+            quarterly_debt_summary=self._parse_quarterly_debt_summary(
+                quarterly_debt_node
+            ),
         )
 
     # ── Resumen ───────────────────────────────────────────────────────────────
@@ -127,7 +134,9 @@ class AggregatedInfoBuilder:
             behavior_history=self._parse_behavior_history(resumen_node),
         )
 
-    def _parse_principals(self, resumen_node: Optional[ET.Element]) -> AggregatedPrincipals:
+    def _parse_principals(
+        self, resumen_node: Optional[ET.Element]
+    ) -> AggregatedPrincipals:
         node: Optional[ET.Element] = None
         if resumen_node is not None:
             node = self._ex.find_node("Principales", parent=resumen_node)
@@ -137,7 +146,8 @@ class AggregatedInfoBuilder:
             current_negative=self._ex.get_int(node, "creditosActualesNegativos") or 0,
             negative_last_12m=self._ex.get_int(node, "histNegUlt12Meses") or 0,
             open_savings_checking=self._ex.get_int(node, "cuentasAbiertasAHOCCB") or 0,
-            closed_savings_checking=self._ex.get_int(node, "cuentasCerradasAHOCCB") or 0,
+            closed_savings_checking=self._ex.get_int(node, "cuentasCerradasAHOCCB")
+            or 0,
             queries_last_6m=self._ex.get_int(node, "consultadasUlt6meses") or 0,
             disputes_current=self._ex.get_int(node, "desacuerdosALaFecha") or 0,
             oldest_account_date=self._ex.get_attr(node, "antiguedadDesde"),
@@ -177,7 +187,10 @@ class AggregatedInfoBuilder:
             past_due_60=self._ex.get_float(saldos_node, "saldoM60") or 0.0,
             past_due_90=self._ex.get_float(saldos_node, "saldoM90") or 0.0,
             monthly_installment=self._ex.get_float(saldos_node, "cuotaMensual") or 0.0,
-            highest_credit_balance=self._ex.get_float(saldos_node, "saldoCreditoMasAlto") or 0.0,
+            highest_credit_balance=self._ex.get_float(
+                saldos_node, "saldoCreditoMasAlto"
+            )
+            or 0.0,
             total_balance=self._ex.get_float(saldos_node, "saldoTotal") or 0.0,
             by_sector=by_sector,
             monthly_history=monthly_history,

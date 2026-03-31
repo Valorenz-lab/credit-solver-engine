@@ -1,11 +1,10 @@
-
-
 from typing import Optional
 
 from data_adapter.enums.basic_info.gender import Gender
 from data_adapter.enums.basic_info.identification_status import IdentificationStatus
-from data_adapter.enums.basic_info.identification_document_type import IdentificationDocumentType
-
+from data_adapter.enums.basic_info.identification_document_type import (
+    IdentificationDocumentType,
+)
 
 
 def transform_gender(value: Optional[str]) -> Gender:
@@ -30,7 +29,7 @@ def transform_id_validity(value: Optional[str]) -> IdentificationStatus:
         return IdentificationStatus.UNDEFINED
 
     direct_map = {
-        0:  IdentificationStatus.VALID,
+        0: IdentificationStatus.VALID,
         12: IdentificationStatus.SUSPENDED,
         21: IdentificationStatus.DECEASED,
         29: IdentificationStatus.CANCELED,
@@ -68,6 +67,6 @@ def transform_id_type(value: Optional[str]) -> IdentificationDocumentType:
         6: IdentificationDocumentType.CD,
         7: IdentificationDocumentType.TI,
         8: IdentificationDocumentType.DNI,
-        9: IdentificationDocumentType.PEP
+        9: IdentificationDocumentType.PEP,
     }
     return mapping.get(code, IdentificationDocumentType.UNDEFINED)

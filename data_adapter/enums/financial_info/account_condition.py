@@ -1,6 +1,3 @@
-
-
-
 from enum import StrEnum
 
 
@@ -10,6 +7,7 @@ class AccountCondition(StrEnum):
     Códigos vigentes (abiertos): 01, 13-41, 45, 47
     Códigos cerrados: 02-12, 46, 49
     """
+
     # Vigente
     ON_TIME = "Al día"
     OVERDUE_DEBT = "En Mora"
@@ -29,5 +27,7 @@ class AccountCondition(StrEnum):
     ENTITY_NO_REPORT = "Entidad no reportó"
     DATION_IN_PAYMENT = "Dación en Pago"
     CANCELLED_DUE_TO_STATUTE_OF_LIMITATIONS = "Cancelada por prescripción"
-    CANCELLED_DUE_TO_RESTRUCTURING_REFINANCING = "Cancelada por reestructuración/refinanciación"
+    CANCELLED_DUE_TO_RESTRUCTURING_REFINANCING = (
+        "Cancelada por reestructuración/refinanciación"
+    )
     UNKNOWN = "Desconocido"

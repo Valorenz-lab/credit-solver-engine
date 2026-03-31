@@ -1,11 +1,9 @@
-
-
 from enum import StrEnum
 
 
 class DebtorRole(StrEnum):
     DEBTOR = "Deudor"
-    CO_DEBTOR ="Codeudor"
+    CO_DEBTOR = "Codeudor"
     CO_SINGER = "Avalista"
     SOLIDARY_DEBTOR = "Deudor solidario"
     CO_TENANT = "Coarrendatario"

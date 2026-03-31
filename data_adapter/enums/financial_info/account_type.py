@@ -1,4 +1,3 @@
-
 from enum import StrEnum
 
 
@@ -52,4 +51,3 @@ class AccountType(StrEnum):
     SBG = "Cartera de Sobregiro"
     MCR = "Cartera Microcrédito"
     UNKNOWN = "Desconocido"
-

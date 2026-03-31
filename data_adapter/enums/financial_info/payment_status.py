@@ -3,6 +3,7 @@ from enum import StrEnum
 
 class PaymentStatus(StrEnum):
     """Table 4 — Accumulated payment status (EstadoPago.codigo). Two-digit codes observed in real Datacredito XMLs."""
+
     NORMAL = "Normal"
     PAST_DUE_30 = "Mora 30 días"
     PAST_DUE_60 = "Mora 60 días"

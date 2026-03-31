@@ -6,7 +6,9 @@ from data_adapter.transformers.credit_card_transformer import (
     transform_franchise,
     transform_plastic_status,
 )
-from data_adapter.transformers.global_report_transformer import transform_account_condition
+from data_adapter.transformers.global_report_transformer import (
+    transform_account_condition,
+)
 from data_adapter.transformers.shared_transformers import (
     transform_credit_rating,
     transform_currency,
@@ -29,7 +31,9 @@ from data_adapter.xml_adapter.xml_extractors.xml_extractor import XmlExtractor
 class CreditCardReportBuilder:
     """Parses TarjetaCredito nodes into CreditCard dataclasses."""
 
-    def parse_cards(self, ex: XmlExtractor, report_node: ET.Element) -> tuple[CreditCard, ...]:
+    def parse_cards(
+        self, ex: XmlExtractor, report_node: ET.Element
+    ) -> tuple[CreditCard, ...]:
         nodes = report_node.findall(".//TarjetaCredito")
         return tuple(self._parse_card(ex, node) for node in nodes)
 
@@ -44,7 +48,9 @@ class CreditCardReportBuilder:
             payment_method=transform_payment_method(ex.get_attr(node, "formaPago")),
             default_probability=ex.get_float(node, "probabilidadIncumplimiento"),
             credit_rating=transform_credit_rating(ex.get_attr(node, "calificacion")),
-            ownership_situation=transform_ownership_situation(ex.get_attr(node, "situacionTitular")),
+            ownership_situation=transform_ownership_situation(
+                ex.get_attr(node, "situacionTitular")
+            ),
             is_blocked=self._parse_blocked(ex, node),
             office=ex.get_attr(node, "oficina"),
             city=ex.get_attr(node, "ciudad"),
@@ -64,10 +70,17 @@ class CreditCardReportBuilder:
             return False
         return raw.lower() in ("true", "1", "s", "si")
 
-    def _parse_characteristics(self, ex: XmlExtractor, parent: ET.Element) -> CreditCardCharacteristics:
+    def _parse_characteristics(
+        self, ex: XmlExtractor, parent: ET.Element
+    ) -> CreditCardCharacteristics:
         node = ex.find_node("Caracteristicas", parent=parent)
         raw_covered = ex.get_attr(node, "amparada")
-        is_covered = raw_covered is not None and raw_covered.lower() in ("true", "1", "s", "si")
+        is_covered = raw_covered is not None and raw_covered.lower() in (
+            "true",
+            "1",
+            "s",
+            "si",
+        )
         return CreditCardCharacteristics(
             franchise=transform_franchise(ex.get_attr(node, "franquicia")),
             card_class=transform_credit_card_class(ex.get_attr(node, "clase")),
@@ -77,7 +90,9 @@ class CreditCardReportBuilder:
             guarantee=transform_guarantee(ex.get_attr(node, "garantia")),
         )
 
-    def _parse_values(self, ex: XmlExtractor, parent: ET.Element) -> Optional[CreditCardValues]:
+    def _parse_values(
+        self, ex: XmlExtractor, parent: ET.Element
+    ) -> Optional[CreditCardValues]:
         values_node = ex.find_node("Valores", parent=parent)
         if values_node is None:
             return None

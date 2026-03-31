@@ -3,6 +3,7 @@ from enum import StrEnum
 
 class QueryReason(StrEnum):
     """Table 23 — Query reason (razon field in Consulta)."""
+
     UNKNOWN_REASON = "Razón desconocida"
     PRODUCT_REQUEST_01 = "Solicitud de producto (01)"
     ENTITY_PORTFOLIO_REVIEW = "Revisión del portafolio por parte de la entidad"

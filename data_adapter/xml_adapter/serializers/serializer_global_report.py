@@ -1,16 +1,29 @@
-"""
-"""
+""" """
 
-
-from data_adapter.transformers.shared_transformers import transform_payment_behavior_char
-from data_adapter.xml_adapter.models.global_report_models import GlobalReport, PortfolioAccount, PortfolioCharacteristics, PortfolioStates, PortfolioValues
-from data_adapter.xml_adapter.types import SerializedGlobalReport, SerializedPortfolioAccount, SerializedPortfolioCharacteristics, SerializedPortfolioStates, SerializedPortfolioValues
+from data_adapter.transformers.shared_transformers import (
+    transform_payment_behavior_char,
+)
+from data_adapter.xml_adapter.models.global_report_models import (
+    GlobalReport,
+    PortfolioAccount,
+    PortfolioCharacteristics,
+    PortfolioStates,
+    PortfolioValues,
+)
+from data_adapter.xml_adapter.types import (
+    SerializedGlobalReport,
+    SerializedPortfolioAccount,
+    SerializedPortfolioCharacteristics,
+    SerializedPortfolioStates,
+    SerializedPortfolioValues,
+)
 
 
 def serialize_global_report(report: GlobalReport) -> SerializedGlobalReport:
     return {
         "portfolio_accounts": [_serialize_account(c) for c in report.portfolio_account],
     }
+
 
 def _serialize_account(c: PortfolioAccount) -> SerializedPortfolioAccount:
     return {
@@ -24,7 +37,6 @@ def _serialize_account(c: PortfolioAccount) -> SerializedPortfolioAccount:
             if c.payment_history is not None
             else None
         ),
-
         "credit_rating": c.credit_rating.value if c.credit_rating else None,
         "ownership_status": c.ownership_status.value if c.ownership_status else None,
         "is_blocked": c.is_blocked,
@@ -36,14 +48,17 @@ def _serialize_account(c: PortfolioAccount) -> SerializedPortfolioAccount:
         "entity_id_type": c.entity_id_type,
         "entity_id": c.entity_id,
         "hd_rating": c.hd_rating,
-
-        "characteristics": _serialize_characteristics(c.characteristics) if c.characteristics else None,
+        "characteristics": (
+            _serialize_characteristics(c.characteristics) if c.characteristics else None
+        ),
         "values": _serialize_value(c.values) if c.values else None,
         "states": _serialize_portfolio_states(c.states) if c.states else None,
     }
 
 
-def _serialize_characteristics(c: PortfolioCharacteristics) -> SerializedPortfolioCharacteristics:
+def _serialize_characteristics(
+    c: PortfolioCharacteristics,
+) -> SerializedPortfolioCharacteristics:
     return {
         "account_type": c.account_type.value if c.account_type else None,
         "obligation_type": c.obligation_type.value if c.obligation_type else None,
@@ -54,6 +69,7 @@ def _serialize_characteristics(c: PortfolioCharacteristics) -> SerializedPortfol
         "guarantee_label": c.guarantee.value if c.guarantee else None,
         "permanence_months": c.permanence_months,
     }
+
 
 def _serialize_value(v: PortfolioValues) -> SerializedPortfolioValues:
     return {
@@ -77,17 +93,21 @@ def _serialize_value(v: PortfolioValues) -> SerializedPortfolioValues:
 
 def _serialize_portfolio_states(e: PortfolioStates) -> SerializedPortfolioStates:
     return {
-        "account_statement_code": e.account_statement_code.value if e.account_statement_code else None,
+        "account_statement_code": (
+            e.account_statement_code.value if e.account_statement_code else None
+        ),
         "account_statement_date": e.account_statement_date,
-
         "origin_state_code": e.origin_state_code.value if e.origin_state_code else None,
         "origin_statement_date": e.origin_statement_date,
-
         # Ambos campos emiten el label del enum. El código crudo XML (ej. "20") se descarta
         # en el builder al transformar a PaymentStatus. Si el engine necesita el código
         # crudo en el futuro, agregar payment_status_raw_code al modelo y al TypedDict.
-        "payment_status_code": e.payment_status_code.value if e.payment_status_code else None,
-        "payment_status_label": e.payment_status_code.value if e.payment_status_code else None,
+        "payment_status_code": (
+            e.payment_status_code.value if e.payment_status_code else None
+        ),
+        "payment_status_label": (
+            e.payment_status_code.value if e.payment_status_code else None
+        ),
         "payment_status_months": e.payment_status_months,
         "payment_status_date": e.payment_status_date,
     }

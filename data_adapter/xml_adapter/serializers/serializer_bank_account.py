@@ -1,4 +1,8 @@
-from data_adapter.xml_adapter.models.bank_account_models import BankAccount, BankAccountState, BankAccountValue
+from data_adapter.xml_adapter.models.bank_account_models import (
+    BankAccount,
+    BankAccountState,
+    BankAccountValue,
+)
 from data_adapter.xml_adapter.types import (
     SerializedBankAccount,
     SerializedBankAccountState,
@@ -14,8 +18,12 @@ def serialize_bank_account(account: BankAccount) -> SerializedBankAccount:
         "opened_date": account.opened_date,
         "rating": account.rating.value if account.rating else None,
         "rating_label": account.rating.value if account.rating else None,
-        "ownership_situation": account.ownership_situation.value if account.ownership_situation else None,
-        "ownership_situation_label": account.ownership_situation.value if account.ownership_situation else None,
+        "ownership_situation": (
+            account.ownership_situation.value if account.ownership_situation else None
+        ),
+        "ownership_situation_label": (
+            account.ownership_situation.value if account.ownership_situation else None
+        ),
         "is_blocked": account.is_blocked,
         "office": account.office,
         "city": account.city,
@@ -24,8 +32,16 @@ def serialize_bank_account(account: BankAccount) -> SerializedBankAccount:
         "sector_label": account.sector.value if account.sector else None,
         "entity_id_type": account.entity_id_type,
         "entity_id": account.entity_id,
-        "value": _serialize_bank_account_value(account.value) if account.value is not None else None,
-        "state": _serialize_bank_account_state(account.state) if account.state is not None else None,
+        "value": (
+            _serialize_bank_account_value(account.value)
+            if account.value is not None
+            else None
+        ),
+        "state": (
+            _serialize_bank_account_state(account.state)
+            if account.state is not None
+            else None
+        ),
     }
 
 

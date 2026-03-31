@@ -1,4 +1,7 @@
-from data_adapter.xml_adapter.models.bank_account_models import BankAccountState, BankAccountValue
+from data_adapter.xml_adapter.models.bank_account_models import (
+    BankAccountState,
+    BankAccountValue,
+)
 from data_adapter.xml_adapter.models.checking_account_models import (
     CheckingAccount,
     CheckingAccountOverdraft,
@@ -17,8 +20,12 @@ def serialize_checking_account(account: CheckingAccount) -> SerializedCheckingAc
         "account_number": account.account_number,
         "account_class": account.account_class,
         "opened_date": account.opened_date,
-        "ownership_situation": account.ownership_situation.value if account.ownership_situation else None,
-        "ownership_situation_label": account.ownership_situation.value if account.ownership_situation else None,
+        "ownership_situation": (
+            account.ownership_situation.value if account.ownership_situation else None
+        ),
+        "ownership_situation_label": (
+            account.ownership_situation.value if account.ownership_situation else None
+        ),
         "is_blocked": account.is_blocked,
         "office": account.office,
         "city": account.city,
@@ -30,7 +37,11 @@ def serialize_checking_account(account: CheckingAccount) -> SerializedCheckingAc
         "entity_id": account.entity_id,
         "value": _serialize_value(account.value) if account.value is not None else None,
         "state": _serialize_state(account.state) if account.state is not None else None,
-        "overdraft": _serialize_overdraft(account.overdraft) if account.overdraft is not None else None,
+        "overdraft": (
+            _serialize_overdraft(account.overdraft)
+            if account.overdraft is not None
+            else None
+        ),
     }
 
 
@@ -52,7 +63,9 @@ def _serialize_state(s: BankAccountState) -> SerializedBankAccountState:
     }
 
 
-def _serialize_overdraft(o: CheckingAccountOverdraft) -> SerializedCheckingAccountOverdraft:
+def _serialize_overdraft(
+    o: CheckingAccountOverdraft,
+) -> SerializedCheckingAccountOverdraft:
     return {
         "value": o.value,
         "days": o.days,

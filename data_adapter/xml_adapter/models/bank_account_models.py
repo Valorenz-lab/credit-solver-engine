@@ -5,13 +5,17 @@ from data_adapter.enums.financial_info.credit_rating import CreditRating
 from data_adapter.enums.financial_info.currency import Currency
 from data_adapter.enums.financial_info.industry_sector import IndustrySector
 from data_adapter.enums.financial_info.ownership_situation import OwnershipSituation
-from data_adapter.enums.financial_info.savings_account_status import SavingsAccountStatus
+from data_adapter.enums.financial_info.savings_account_status import (
+    SavingsAccountStatus,
+)
 
-_OPEN_BANK_ACCOUNT_STATUSES: frozenset[SavingsAccountStatus] = frozenset({
-    SavingsAccountStatus.ACTIVE,        # "01"
-    SavingsAccountStatus.SEIZED,        # "06"
-    SavingsAccountStatus.SEIZED_ACTIVE, # "07"
-})
+_OPEN_BANK_ACCOUNT_STATUSES: frozenset[SavingsAccountStatus] = frozenset(
+    {
+        SavingsAccountStatus.ACTIVE,  # "01"
+        SavingsAccountStatus.SEIZED,  # "06"
+        SavingsAccountStatus.SEIZED_ACTIVE,  # "07"
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -38,10 +42,10 @@ class BankAccount:
     is_blocked: bool
     office: Optional[str]
     city: Optional[str]
-    dane_city_code: Optional[str]        # codigoDaneCiudad
+    dane_city_code: Optional[str]  # codigoDaneCiudad
     sector: Optional[IndustrySector]
-    entity_id_type: Optional[str]        # tipoIdentificacion of the lending entity
-    entity_id: Optional[str]             # identificacion (NIT) of the lending entity
+    entity_id_type: Optional[str]  # tipoIdentificacion of the lending entity
+    entity_id: Optional[str]  # identificacion (NIT) of the lending entity
     value: Optional[BankAccountValue]
     state: Optional[BankAccountState]
 

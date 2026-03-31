@@ -8,7 +8,10 @@ from data_adapter.transformers.shared_transformers import (
     transform_ownership_situation,
     transform_savings_account_status,
 )
-from data_adapter.xml_adapter.models.bank_account_models import BankAccountState, BankAccountValue
+from data_adapter.xml_adapter.models.bank_account_models import (
+    BankAccountState,
+    BankAccountValue,
+)
 from data_adapter.xml_adapter.models.checking_account_models import (
     CheckingAccount,
     CheckingAccountOverdraft,
@@ -19,26 +22,39 @@ from data_adapter.xml_adapter.xml_extractors.xml_extractor import XmlExtractor
 class CheckingAccountReportBuilder:
     """Parses CuentaCorriente nodes into CheckingAccount dataclasses."""
 
-    def parse_accounts(self, ex: XmlExtractor, report_node: ET.Element) -> tuple[CheckingAccount, ...]:
+    def parse_accounts(
+        self, ex: XmlExtractor, report_node: ET.Element
+    ) -> tuple[CheckingAccount, ...]:
         nodes = report_node.findall(".//CuentaCorriente")
         return tuple(self._parse_account(ex, node) for node in nodes)
 
     def _parse_account(self, ex: XmlExtractor, node: ET.Element) -> CheckingAccount:
         characteristics_node = ex.find_node("Caracteristicas", parent=node)
         values_node = ex.find_node("Valores", parent=node)
-        valor_node = ex.find_node("Valor", parent=values_node) if values_node is not None else None
+        valor_node = (
+            ex.find_node("Valor", parent=values_node)
+            if values_node is not None
+            else None
+        )
         state_node = ex.find_node("Estado", parent=node)
         overdraft_node = ex.find_node("Sobregiro", parent=node)
 
         raw_blocked = ex.get_attr(node, "bloqueada")
-        is_blocked = raw_blocked is not None and raw_blocked.lower() in ("true", "1", "s", "si")
+        is_blocked = raw_blocked is not None and raw_blocked.lower() in (
+            "true",
+            "1",
+            "s",
+            "si",
+        )
 
         return CheckingAccount(
             lender=ex.get_attr_required(node, "entidad"),
             account_number=ex.get_attr_required(node, "numero"),
             account_class=ex.get_attr(characteristics_node, "clase"),
             opened_date=ex.get_attr(node, "fechaApertura"),
-            ownership_situation=transform_ownership_situation(ex.get_attr(node, "situacionTitular")),
+            ownership_situation=transform_ownership_situation(
+                ex.get_attr(node, "situacionTitular")
+            ),
             is_blocked=is_blocked,
             office=ex.get_attr(node, "oficina"),
             city=ex.get_attr(node, "ciudad"),

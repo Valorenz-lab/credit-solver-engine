@@ -16,12 +16,14 @@ from data_adapter.enums.financial_info.payment_frequency import PaymentFrequency
 from data_adapter.enums.financial_info.payment_status import PaymentStatus
 
 # AccountCondition values that represent an open/active obligation (Tabla 4 — vigente).
-OPEN_ACCOUNT_CONDITIONS: frozenset[AccountCondition] = frozenset({
-    AccountCondition.ON_TIME,
-    AccountCondition.OVERDUE_DEBT,
-    AccountCondition.WRITTEN_OFF,
-    AccountCondition.DOUBTFUL_COLLECTION,
-})
+OPEN_ACCOUNT_CONDITIONS: frozenset[AccountCondition] = frozenset(
+    {
+        AccountCondition.ON_TIME,
+        AccountCondition.OVERDUE_DEBT,
+        AccountCondition.WRITTEN_OFF,
+        AccountCondition.DOUBTFUL_COLLECTION,
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -30,6 +32,7 @@ class PortfolioValues:
     Financial status of a credit obligation.
     Reflects the <Valor> node within <Valores>.
     """
+
     date: Optional[str]
     currency_code: Optional[Currency]
     credit_rating: Optional[CreditRating]
@@ -53,6 +56,7 @@ class PortfolioStates:
     Groups the three state sub-nodes within <Estados> of CuentaCartera:
     EstadoCuenta, EstadoOrigen, EstadoPago.
     """
+
     account_statement_code: Optional[AccountCondition]
     account_statement_date: Optional[str]
 
@@ -67,6 +71,7 @@ class PortfolioStates:
 @dataclass(frozen=True)
 class PortfolioCharacteristics:
     """Nodo <Caracteristicas>."""
+
     account_type: Optional[AccountType]
     obligation_type: Optional[ObligationType]
     contract_type: Optional[ContractType]
@@ -82,25 +87,28 @@ class PortfolioAccount:
     Represents a credit obligation node <CuentaCartera>.
     An individual may have multiple accounts within the XML report.
     """
-    lender: str                          # Entidad (Banco, Cooperativa, etc.)
-    account_number: str                  # Número de la obligación
-    opened_date: Optional[str]           # Fecha de apertura
-    maturity_date: Optional[str]         # Fecha de vencimiento del contrato
-    
+
+    lender: str  # Entidad (Banco, Cooperativa, etc.)
+    account_number: str  # Número de la obligación
+    opened_date: Optional[str]  # Fecha de apertura
+    maturity_date: Optional[str]  # Fecha de vencimiento del contrato
+
     # Historical monthly status (e.g., 'N'=Current, '1-6'=Past Due, 'C'=Charged-off)
-    payment_history: Optional[str]       
-    
+    payment_history: Optional[str]
+
     credit_rating: Optional[CreditRating]
     ownership_status: Optional[OwnershipSituation]
     is_blocked: bool
     city: Optional[str]
     dane_city_code: Optional[str]
     industry_sector: Optional[IndustrySector]
-    default_probability: Optional[float] # PD (Probability of Default)
-    subscriber_code: Optional[str]       # codSuscriptor — Datacredito internal subscriber code
-    entity_id_type: Optional[str]        # tipoIdentificacion of the lending entity
-    entity_id: Optional[str]             # identificacion (NIT) of the lending entity
-    hd_rating: Optional[bool]            # calificacionHD flag
+    default_probability: Optional[float]  # PD (Probability of Default)
+    subscriber_code: Optional[
+        str
+    ]  # codSuscriptor — Datacredito internal subscriber code
+    entity_id_type: Optional[str]  # tipoIdentificacion of the lending entity
+    entity_id: Optional[str]  # identificacion (NIT) of the lending entity
+    hd_rating: Optional[bool]  # calificacionHD flag
 
     # Relationships with other nodes
     characteristics: PortfolioCharacteristics

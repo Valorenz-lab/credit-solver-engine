@@ -1,6 +1,9 @@
 from typing import Optional
 
-from data_adapter.transformers.shared_transformers import transform_current_debt_status, transform_payment_behavior_char
+from data_adapter.transformers.shared_transformers import (
+    transform_current_debt_status,
+    transform_payment_behavior_char,
+)
 from data_adapter.xml_adapter.models.aggregated_info_models import (
     AccountBehaviorVector,
     AccountTypeTotals,
@@ -76,10 +79,16 @@ from data_adapter.xml_adapter.types import (
 def serialize_aggregated_info(info: AggregatedInfo) -> SerializedAggregatedSummary:
     return {
         "summary": _serialize_summary(info.summary),
-        "account_totals": [_serialize_account_type_totals(t) for t in info.account_totals],
+        "account_totals": [
+            _serialize_account_type_totals(t) for t in info.account_totals
+        ],
         "grand_totals": [_serialize_grand_total(g) for g in info.grand_totals],
-        "portfolio_composition": [_serialize_composition_item(c) for c in info.portfolio_composition],
-        "debt_evolution": [serialize_debt_evolution_quarter(q) for q in info.debt_evolution],
+        "portfolio_composition": [
+            _serialize_composition_item(c) for c in info.portfolio_composition
+        ],
+        "debt_evolution": [
+            serialize_debt_evolution_quarter(q) for q in info.debt_evolution
+        ],
         "debt_evolution_analysis": (
             _serialize_debt_evolution_analysis(info.debt_evolution_analysis)
             if info.debt_evolution_analysis is not None
@@ -94,14 +103,30 @@ def serialize_aggregated_info(info: AggregatedInfo) -> SerializedAggregatedSumma
     }
 
 
-def serialize_micro_credit_info(info: MicroCreditAggregatedInfo) -> SerializedMicroCreditAggregatedInfo:
+def serialize_micro_credit_info(
+    info: MicroCreditAggregatedInfo,
+) -> SerializedMicroCreditAggregatedInfo:
     return {
-        "general_profile": _serialize_general_profile(info.general_profile) if info.general_profile else None,
-        "balance_delinquency_vector": _serialize_balance_delinquency_vector(info.balance_delinquency_vector) if info.balance_delinquency_vector else None,
-        "current_debt_by_sector": [_serialize_current_debt_sector(s) for s in info.current_debt_by_sector],
-        "sector_behavior_vectors": [_serialize_sector_behavior_vector(s) for s in info.sector_behavior_vectors],
+        "general_profile": (
+            _serialize_general_profile(info.general_profile)
+            if info.general_profile
+            else None
+        ),
+        "balance_delinquency_vector": (
+            _serialize_balance_delinquency_vector(info.balance_delinquency_vector)
+            if info.balance_delinquency_vector
+            else None
+        ),
+        "current_debt_by_sector": [
+            _serialize_current_debt_sector(s) for s in info.current_debt_by_sector
+        ],
+        "sector_behavior_vectors": [
+            _serialize_sector_behavior_vector(s) for s in info.sector_behavior_vectors
+        ],
         "trend_series": [_serialize_trend_series(t) for t in info.trend_series],
-        "debt_evolution": [serialize_debt_evolution_quarter(q) for q in info.debt_evolution],
+        "debt_evolution": [
+            serialize_debt_evolution_quarter(q) for q in info.debt_evolution
+        ],
         "debt_evolution_analysis": (
             _serialize_debt_evolution_analysis(info.debt_evolution_analysis)
             if info.debt_evolution_analysis is not None
@@ -114,7 +139,9 @@ def _serialize_summary(s: AggregatedSummary) -> SerializedAggregatedSummaryInner
     return {
         "principals": _serialize_principals(s.principals),
         "balances": _serialize_balances(s.balances),
-        "behavior_history": [_serialize_monthly_behavior(b) for b in s.behavior_history],
+        "behavior_history": [
+            _serialize_monthly_behavior(b) for b in s.behavior_history
+        ],
     }
 
 
@@ -194,7 +221,9 @@ def _serialize_grand_total(g: GrandTotal) -> SerializedGrandTotal:
     }
 
 
-def _serialize_composition_item(c: PortfolioCompositionItem) -> SerializedPortfolioCompositionItem:
+def _serialize_composition_item(
+    c: PortfolioCompositionItem,
+) -> SerializedPortfolioCompositionItem:
     return {
         "account_type": c.account_type,
         "debtor_quality": c.debtor_quality,
@@ -211,7 +240,9 @@ def _serialize_state_count(s: PortfolioStateCount) -> SerializedPortfolioStateCo
     }
 
 
-def serialize_debt_evolution_quarter(q: DebtEvolutionQuarter) -> SerializedDebtEvolutionQuarter:
+def serialize_debt_evolution_quarter(
+    q: DebtEvolutionQuarter,
+) -> SerializedDebtEvolutionQuarter:
     return {
         "date": q.date,
         "installment": q.installment,
@@ -229,7 +260,9 @@ def serialize_debt_evolution_quarter(q: DebtEvolutionQuarter) -> SerializedDebtE
     }
 
 
-def _serialize_debt_evolution_analysis(a: DebtEvolutionAnalysis) -> SerializedDebtEvolutionAnalysis:
+def _serialize_debt_evolution_analysis(
+    a: DebtEvolutionAnalysis,
+) -> SerializedDebtEvolutionAnalysis:
     return {
         "installment_pct": a.installment_pct,
         "total_credit_limit_pct": a.total_credit_limit_pct,
@@ -245,7 +278,9 @@ def _serialize_debt_evolution_analysis(a: DebtEvolutionAnalysis) -> SerializedDe
     }
 
 
-def _serialize_balance_history_quarter(q: BalanceHistoryQuarter) -> SerializedBalanceHistoryQuarter:
+def _serialize_balance_history_quarter(
+    q: BalanceHistoryQuarter,
+) -> SerializedBalanceHistoryQuarter:
     return {
         "date": q.date,
         "total_accounts": q.total_accounts,
@@ -254,14 +289,18 @@ def _serialize_balance_history_quarter(q: BalanceHistoryQuarter) -> SerializedBa
     }
 
 
-def _serialize_balance_history_by_type(b: BalanceHistoryByType) -> SerializedBalanceHistoryByType:
+def _serialize_balance_history_by_type(
+    b: BalanceHistoryByType,
+) -> SerializedBalanceHistoryByType:
     return {
         "account_type": b.account_type,
         "quarters": [_serialize_balance_history_quarter(q) for q in b.quarters],
     }
 
 
-def _serialize_quarterly_debt_cartera(c: QuarterlyDebtCartera) -> SerializedQuarterlyDebtCartera:
+def _serialize_quarterly_debt_cartera(
+    c: QuarterlyDebtCartera,
+) -> SerializedQuarterlyDebtCartera:
     return {
         "portfolio_type": c.portfolio_type,
         "account_count": c.account_count,
@@ -269,7 +308,9 @@ def _serialize_quarterly_debt_cartera(c: QuarterlyDebtCartera) -> SerializedQuar
     }
 
 
-def _serialize_quarterly_debt_sector(s: QuarterlyDebtSector) -> SerializedQuarterlyDebtSector:
+def _serialize_quarterly_debt_sector(
+    s: QuarterlyDebtSector,
+) -> SerializedQuarterlyDebtSector:
     return {
         "sector_name": s.sector_name,
         "sector_code": s.sector_code,
@@ -279,7 +320,9 @@ def _serialize_quarterly_debt_sector(s: QuarterlyDebtSector) -> SerializedQuarte
     }
 
 
-def _serialize_quarterly_debt_summary(q: QuarterlyDebtSummary) -> SerializedQuarterlyDebtSummary:
+def _serialize_quarterly_debt_summary(
+    q: QuarterlyDebtSummary,
+) -> SerializedQuarterlyDebtSummary:
     return {
         "date": q.date,
         "sectors": [_serialize_quarterly_debt_sector(s) for s in q.sectors],
@@ -287,6 +330,7 @@ def _serialize_quarterly_debt_summary(q: QuarterlyDebtSummary) -> SerializedQuar
 
 
 # ── MicroCredit serializers ───────────────────────────────────────────────────
+
 
 def _serialize_sector_credit_count(c: SectorCreditCount) -> SerializedSectorCreditCount:
     return {
@@ -320,7 +364,9 @@ def _serialize_general_profile(p: GeneralProfile) -> SerializedGeneralProfile:
     }
 
 
-def _serialize_monthly_balances_and_arrears(m: MonthlyBalancesAndArrears) -> SerializedMonthlyBalancesAndArrears:
+def _serialize_monthly_balances_and_arrears(
+    m: MonthlyBalancesAndArrears,
+) -> SerializedMonthlyBalancesAndArrears:
     return {
         "date": m.date,
         "total_accounts_past_due": m.total_accounts_past_due,
@@ -336,17 +382,23 @@ def _serialize_monthly_balances_and_arrears(m: MonthlyBalancesAndArrears) -> Ser
     }
 
 
-def _serialize_balance_delinquency_vector(v: BalanceDelinquencyVector) -> SerializedBalanceDelinquencyVector:
+def _serialize_balance_delinquency_vector(
+    v: BalanceDelinquencyVector,
+) -> SerializedBalanceDelinquencyVector:
     return {
         "has_financial": v.has_financial,
         "has_cooperative": v.has_cooperative,
         "has_real": v.has_real,
         "has_telecom": v.has_telecom,
-        "monthly_data": [_serialize_monthly_balances_and_arrears(m) for m in v.monthly_data],
+        "monthly_data": [
+            _serialize_monthly_balances_and_arrears(m) for m in v.monthly_data
+        ],
     }
 
 
-def _serialize_current_debt_account(a: CurrentDebtAccount) -> SerializedCurrentDebtAccount:
+def _serialize_current_debt_account(
+    a: CurrentDebtAccount,
+) -> SerializedCurrentDebtAccount:
     return {
         "current_state": a.current_state,
         "current_state_label": transform_current_debt_status(a.current_state).value,
@@ -374,14 +426,18 @@ def _serialize_current_debt_type(t: CurrentDebtByType) -> SerializedCurrentDebtB
     }
 
 
-def _serialize_current_debt_sector(s: CurrentDebtBySector) -> SerializedCurrentDebtBySector:
+def _serialize_current_debt_sector(
+    s: CurrentDebtBySector,
+) -> SerializedCurrentDebtBySector:
     return {
         "sector_code": s.sector_code,
         "by_type": [_serialize_current_debt_type(t) for t in s.by_type],
     }
 
 
-def _serialize_behavior_monthly_char(c: BehaviorMonthlyChar) -> SerializedBehaviorMonthlyChar:
+def _serialize_behavior_monthly_char(
+    c: BehaviorMonthlyChar,
+) -> SerializedBehaviorMonthlyChar:
     behavior_label: Optional[str] = None
     if c.behavior is not None:
         if len(c.behavior) == 1:
@@ -397,7 +453,9 @@ def _serialize_behavior_monthly_char(c: BehaviorMonthlyChar) -> SerializedBehavi
     }
 
 
-def _serialize_account_behavior_vector(a: AccountBehaviorVector) -> SerializedAccountBehaviorVector:
+def _serialize_account_behavior_vector(
+    a: AccountBehaviorVector,
+) -> SerializedAccountBehaviorVector:
     return {
         "entity": a.entity,
         "account_number": a.account_number,
@@ -405,11 +463,15 @@ def _serialize_account_behavior_vector(a: AccountBehaviorVector) -> SerializedAc
         "state": a.state,
         "contains_data": a.contains_data,
         "monthly_chars": [_serialize_behavior_monthly_char(c) for c in a.monthly_chars],
-        "max_delinquency_chars": [_serialize_behavior_monthly_char(c) for c in a.max_delinquency_chars],
+        "max_delinquency_chars": [
+            _serialize_behavior_monthly_char(c) for c in a.max_delinquency_chars
+        ],
     }
 
 
-def _serialize_sector_behavior_vector(s: SectorBehaviorVector) -> SerializedSectorBehaviorVector:
+def _serialize_sector_behavior_vector(
+    s: SectorBehaviorVector,
+) -> SerializedSectorBehaviorVector:
     return {
         "sector_name": s.sector_name,
         "accounts": [_serialize_account_behavior_vector(a) for a in s.accounts],

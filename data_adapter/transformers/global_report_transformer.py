@@ -1,5 +1,3 @@
-
-
 from typing import Optional
 
 from data_adapter.enums.financial_info.account_condition import AccountCondition
@@ -9,7 +7,8 @@ from data_adapter.enums.financial_info.debtor_role import DebtorRole
 from data_adapter.enums.financial_info.obligation_type import ObligationType
 from data_adapter.enums.financial_info.payment_frequency import PaymentFrequency
 
-def transform_account_type(value: Optional[str])->AccountType:
+
+def transform_account_type(value: Optional[str]) -> AccountType:
     if not value or value.strip() == "":
         return AccountType.UNKNOWN
     try:
@@ -36,7 +35,7 @@ def transform_debtor_role(value: Optional[str]) -> DebtorRole:
             9: DebtorRole.NOT_APPLICABLE,
             96: DebtorRole.CO_HOLDER,
             97: DebtorRole.COMMUNAL,
-            99: DebtorRole.NOT_APPLICABLE
+            99: DebtorRole.NOT_APPLICABLE,
         }
 
         if number_value in mapping:
@@ -45,7 +44,8 @@ def transform_debtor_role(value: Optional[str]) -> DebtorRole:
     except ValueError:
         return DebtorRole.UNKNOWN
 
-def transform_payment_frequency(value: Optional[str])->PaymentFrequency:
+
+def transform_payment_frequency(value: Optional[str]) -> PaymentFrequency:
     if not value or value.strip() == "":
         return PaymentFrequency.UNKNOWN
     try:
@@ -58,7 +58,7 @@ def transform_payment_frequency(value: Optional[str])->PaymentFrequency:
             4: PaymentFrequency.BI_ANNUALLY,
             5: PaymentFrequency.ANNUALLY,
             6: PaymentFrequency.AT_EXPIRATION,
-            7: PaymentFrequency.OTHER
+            7: PaymentFrequency.OTHER,
         }
         if number_value in mapping:
             return mapping[number_value]
@@ -81,14 +81,13 @@ def transform_obligation_type(value: Optional[str]) -> ObligationType:
             5: ObligationType.MICRO_CREDIT,
             6: ObligationType.PAYROLL_LOAN,
             7: ObligationType.INSURANCE,
-            8: ObligationType.PUBLIC
+            8: ObligationType.PUBLIC,
         }
         if number_value in mapping:
             return mapping[number_value]
         return ObligationType.UNKNOWN
     except ValueError:
         return ObligationType.UNKNOWN
-    
 
 
 def transform_account_condition(value: Optional[str]) -> AccountCondition:
@@ -102,10 +101,10 @@ def transform_account_condition(value: Optional[str]) -> AccountCondition:
     mapping: dict[str, AccountCondition] = {
         # Vigente — Al día
         "01": AccountCondition.ON_TIME,
-        "13": AccountCondition.ON_TIME,       # Al día, mora máx 30 días histórica
-        "14": AccountCondition.ON_TIME,       # Al día, mora máx 60 días histórica
-        "15": AccountCondition.ON_TIME,       # Al día, mora máx 90 días histórica
-        "16": AccountCondition.ON_TIME,       # Al día, mora máx 120 días histórica
+        "13": AccountCondition.ON_TIME,  # Al día, mora máx 30 días histórica
+        "14": AccountCondition.ON_TIME,  # Al día, mora máx 60 días histórica
+        "15": AccountCondition.ON_TIME,  # Al día, mora máx 90 días histórica
+        "16": AccountCondition.ON_TIME,  # Al día, mora máx 120 días histórica
         # Vigente — En mora actual
         "17": AccountCondition.OVERDUE_DEBT,  # En mora 30 días
         "18": AccountCondition.OVERDUE_DEBT,  # En mora 60 días
@@ -135,7 +134,7 @@ def transform_account_condition(value: Optional[str]) -> AccountCondition:
         "40": AccountCondition.OVERDUE_DEBT,
         "41": AccountCondition.OVERDUE_DEBT,
         # Vigente — Estado especial
-        "45": AccountCondition.WRITTEN_OFF,        # Cartera castigada
+        "45": AccountCondition.WRITTEN_OFF,  # Cartera castigada
         "47": AccountCondition.DOUBTFUL_COLLECTION,  # Dudoso recaudo
         # Cerrada — Tarjeta
         "02": AccountCondition.CARD_NOT_DELIVERED,
