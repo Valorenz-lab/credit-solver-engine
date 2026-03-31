@@ -383,8 +383,13 @@ def _serialize_current_debt_sector(s: CurrentDebtBySector) -> SerializedCurrentD
 
 def _serialize_behavior_monthly_char(c: BehaviorMonthlyChar) -> SerializedBehaviorMonthlyChar:
     behavior_label: Optional[str] = None
-    if c.behavior is not None and len(c.behavior) == 1:
-        behavior_label = transform_payment_behavior_char(c.behavior).value
+    if c.behavior is not None:
+        if len(c.behavior) == 1:
+            behavior_label = transform_payment_behavior_char(c.behavior).value
+        else:
+            # Multi-character values (e.g. "1-6") represent ranges not covered by the
+            # single-character transformer; emit the raw value to avoid silent data loss.
+            behavior_label = c.behavior
     return {
         "date": c.date,
         "behavior": c.behavior,

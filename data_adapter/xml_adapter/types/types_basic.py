@@ -26,8 +26,8 @@ class SerializedAge(TypedDict):
 
 class SerializedPerson(TypedDict):
     names: str
-    first_name: str
-    last_name: Optional[str]
+    first_surname: str
+    second_surname: Optional[str]
     full_name: str
     gender: Optional[str]
     validated: bool

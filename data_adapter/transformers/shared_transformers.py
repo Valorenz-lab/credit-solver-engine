@@ -184,11 +184,29 @@ def transform_payment_status(value: Optional[str]) -> PaymentStatus:
 
 
 def transform_current_debt_status(value: Optional[str]) -> CurrentDebtStatus:
-    """Transform free-text current_state from EndeudamientoActual to CurrentDebtStatus enum."""
+    """Transform free-text estadoActual from EndeudamientoActual/Cuenta to CurrentDebtStatus.
+
+    The XSD (InformeCliente-v1.6.xsd) define estadoActual como xs:string sin restricción
+    de enumeración ni código numérico separado. El matching es heurístico sobre el texto
+    normalizado (.strip().lower()).
+
+    Valores observados en datos reales de Datacredito:
+      "Al día"              → ON_TIME
+      "Al día Mora 60"      → PAST_DUE_60  (al día pero con historial de mora 60)
+      "Al día Mora 120"     → PAST_DUE_120
+      "Esta en mora 30"     → PAST_DUE_30
+      "Esta en mora 90"     → PAST_DUE_90
+      "Esta en mora 120"    → PAST_DUE_120
+      "Esta M 120 RM 90"    → PAST_DUE_90  (mora 120, referencia mora 90)
+      "Esta M 120 RM 120"   → PAST_DUE_120
+      "Dudoso recaudo"      → DOUBTFUL_COLLECTION
+      "Cart. castigada"     → WRITTEN_OFF
+      cualquier otro valor  → UNKNOWN
+    """
     if not value or value.strip() == "":
         return CurrentDebtStatus.UNKNOWN
     v = value.strip().lower()
-    if v == "al día" or v.startswith("al día") and "mora" not in v:
+    if v.startswith("al día") and "mora" not in v:
         return CurrentDebtStatus.ON_TIME
     if "castigada" in v or "castig" in v:
         return CurrentDebtStatus.WRITTEN_OFF

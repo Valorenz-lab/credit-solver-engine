@@ -46,10 +46,10 @@ def _serialize_account(c: PortfolioAccount) -> SerializedPortfolioAccount:
 def _serialize_characteristics(c: PortfolioCharacteristics) -> SerializedPortfolioCharacteristics:
     return {
         "account_type": c.account_type.value if c.account_type else None,
-        "obligation_type": c.obligation_type,
+        "obligation_type": c.obligation_type.value if c.obligation_type else None,
         "contract_type": c.contract_type.value if c.contract_type else None,
         "contract_execution": c.contract_execution,
-        "debtor_quality": c.debtor_quality,
+        "debtor_quality": c.debtor_quality.value if c.debtor_quality else None,
         "guarantee": c.guarantee.value if c.guarantee else None,
         "guarantee_label": c.guarantee.value if c.guarantee else None,
         "permanence_months": c.permanence_months,
@@ -70,14 +70,14 @@ def _serialize_value(v: PortfolioValues) -> SerializedPortfolioValues:
         "installments_paid": v.installments_paid,
         "principal_amount": v.principal_amount,
         "due_date": v.due_date,
-        "payment_frequency": v.payment_frequency,
+        "payment_frequency": v.payment_frequency.value if v.payment_frequency else None,
         "last_payment_date": v.last_payment_date,
     }
 
 
 def _serialize_portfolio_states(e: PortfolioStates) -> SerializedPortfolioStates:
     return {
-        "account_statement_code": e.account_statement_code,
+        "account_statement_code": e.account_statement_code.value if e.account_statement_code else None,
         "account_statement_date": e.account_statement_date,
 
         "origin_state_code": e.origin_state_code.value if e.origin_state_code else None,

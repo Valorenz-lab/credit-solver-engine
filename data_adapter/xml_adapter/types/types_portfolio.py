@@ -1,10 +1,5 @@
 from typing import Optional, TypedDict
 
-from data_adapter.enums.financial_info.account_condition import AccountCondition
-from data_adapter.enums.financial_info.debtor_role import DebtorRole
-from data_adapter.enums.financial_info.obligation_type import ObligationType
-from data_adapter.enums.financial_info.payment_frequency import PaymentFrequency
-
 
 class SerializedPortfolioValues(TypedDict):
     date: Optional[str]
@@ -20,12 +15,12 @@ class SerializedPortfolioValues(TypedDict):
     installments_paid: Optional[int]
     principal_amount: Optional[float]
     due_date: Optional[str]
-    payment_frequency: Optional[PaymentFrequency]
+    payment_frequency: Optional[str]
     last_payment_date: Optional[str]
 
 
 class SerializedPortfolioStates(TypedDict):
-    account_statement_code: Optional[AccountCondition]
+    account_statement_code: Optional[str]
     account_statement_date: Optional[str]
     origin_state_code: Optional[str]
     origin_statement_date: Optional[str]
@@ -37,10 +32,10 @@ class SerializedPortfolioStates(TypedDict):
 
 class SerializedPortfolioCharacteristics(TypedDict):
     account_type: Optional[str]
-    obligation_type: Optional[ObligationType]
+    obligation_type: Optional[str]
     contract_type: Optional[str]
     contract_execution: Optional[str]
-    debtor_quality: Optional[DebtorRole]
+    debtor_quality: Optional[str]
     guarantee: Optional[str]
     guarantee_label: Optional[str]
     permanence_months: Optional[int]

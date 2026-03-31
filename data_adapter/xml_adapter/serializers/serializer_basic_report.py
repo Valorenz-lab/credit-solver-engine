@@ -34,8 +34,8 @@ def _serialize_person(p: BasicDataPerson) -> SerializedPerson:
 
     return {
        "names": p.names,
-        "first_name": p.first_name,
-        "last_name": p.last_name,
+        "first_surname": p.first_surname,
+        "second_surname": p.second_surname,
         "full_name": p.full_name,
         "gender": transform_gender(p.gender),
         "validated": p.validated,

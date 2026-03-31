@@ -66,8 +66,8 @@ class BasicDataReportBuilder:
     def _parse_persona(self, extractor: XmlExtractor, node: ET.Element) -> BasicDataPerson:
         return BasicDataPerson(
             names=extractor.get_attr_required(node, "nombres"),
-            first_name=extractor.get_attr_required(node, "primerApellido"),
-            last_name=extractor.get_attr(node, "segundoApellido"),
+            first_surname=extractor.get_attr_required(node, "primerApellido"),
+            second_surname=extractor.get_attr(node, "segundoApellido"),
             full_name=extractor.get_attr_required(node, "nombreCompleto"),
             gender=extractor.get_attr(node, "genero"),
             validated=extractor.get_bool(node, "validada"),

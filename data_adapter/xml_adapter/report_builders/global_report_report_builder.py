@@ -77,6 +77,7 @@ class GlobalReportBuilder:
 
     def _parse_account_wallet(self, ex: XmlExtractor, node: ET.Element) -> PortfolioAccount:
         raw_hd = ex.get_attr(node, "calificacionHD")
+        raw_blocked = ex.get_attr(node, "bloqueada")
         return PortfolioAccount(
             lender=ex.get_attr_required(node, "entidad"),
             account_number=ex.get_attr_required(node, "numero"),
@@ -85,7 +86,7 @@ class GlobalReportBuilder:
             payment_history=ex.get_attr(node, "comportamiento"),
             credit_rating=transform_credit_rating(ex.get_attr(node, "calificacion")),
             ownership_status=transform_ownership_situation(ex.get_attr(node, "situacionTitular")),
-            is_blocked=ex.get_bool(node, "bloqueada"),
+            is_blocked=raw_blocked is not None and raw_blocked.lower() in ("true", "1", "s", "si"),
             city=ex.get_attr(node, "ciudad"),
             dane_city_code=ex.get_attr(node, "codigoDaneCiudad"),
             industry_sector=transform_industry_sector(ex.get_attr(node, "sector")),
