@@ -9,4 +9,9 @@ urlpatterns = [
         views.extraction_quality_report,
         name="extraction_quality_report",
     ),
+    path(
+        "debug/<str:document_id>/",
+        views.extraction_debug_report,
+        name="extraction_debug_report",
+    ),
 ]
