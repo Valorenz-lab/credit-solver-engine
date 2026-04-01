@@ -33,17 +33,30 @@ class GlobalDebtBuilder:
 
     def _parse_record(self, node: ET.Element) -> GlobalDebtRecord:
         entity_node = self._ex.find_node("Entidad", parent=node)
+        entity_name = self._ex.get_attr(entity_node, "nombre") or ""
+        source = self._ex.get_attr(node, "fuente")
+        record_context: dict[str, str] = {
+            "entity": entity_name,
+            "source": source or "",
+        }
         entity = GlobalDebtEntity(
-            name=self._ex.get_attr(entity_node, "nombre") or "",
+            name=entity_name,
             nit=self._ex.get_attr(entity_node, "nit"),
-            sector=transform_industry_sector(self._ex.get_attr(entity_node, "sector")),
+            sector=transform_industry_sector(
+                self._ex.get_attr(entity_node, "sector"),
+                xml_node="Entidad",
+                record_type="GlobalDebtRecord",
+                record_context=record_context,
+            ),
         )
         return GlobalDebtRecord(
             rating=transform_credit_rating(self._ex.get_attr(node, "calificacion")),
-            source=self._ex.get_attr(node, "fuente"),
+            source=source,
             outstanding_balance=self._ex.get_float(node, "saldoPendiente"),
             credit_type=transform_global_debt_credit_type(
-                self._ex.get_attr(node, "tipoCredito")
+                self._ex.get_attr(node, "tipoCredito"),
+                record_type="GlobalDebtRecord",
+                record_context=record_context,
             ),
             currency=transform_currency(self._ex.get_attr(node, "moneda")),
             credit_count=self._ex.get_int(node, "numeroCreditos"),

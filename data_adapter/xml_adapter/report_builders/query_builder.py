@@ -23,14 +23,31 @@ class QueryBuilder:
         return tuple(self._parse_record(node) for node in nodes)
 
     def _parse_record(self, node: ET.Element) -> QueryRecord:
+        date = self._ex.get_attr_required(node, "fecha")
+        entity = self._ex.get_attr_required(node, "entidad")
+        record_context: dict[str, str] = {"entity": entity, "date": date}
         return QueryRecord(
-            date=self._ex.get_attr_required(node, "fecha"),
-            account_type=transform_account_type(self._ex.get_attr(node, "tipoCuenta")),
-            entity=self._ex.get_attr_required(node, "entidad"),
+            date=date,
+            account_type=transform_account_type(
+                self._ex.get_attr(node, "tipoCuenta"),
+                xml_node="Consulta",
+                record_type="QueryRecord",
+                record_context=record_context,
+            ),
+            entity=entity,
             office=self._ex.get_attr(node, "oficina"),
             city=self._ex.get_attr(node, "ciudad"),
-            reason=transform_query_reason(self._ex.get_attr(node, "razon")),
+            reason=transform_query_reason(
+                self._ex.get_attr(node, "razon"),
+                record_type="QueryRecord",
+                record_context=record_context,
+            ),
             count=self._ex.get_int(node, "cantidad"),
             subscriber_nit=self._ex.get_attr(node, "nitSuscriptor"),
-            sector=transform_industry_sector(self._ex.get_attr(node, "sector")),
+            sector=transform_industry_sector(
+                self._ex.get_attr(node, "sector"),
+                xml_node="Consulta",
+                record_type="QueryRecord",
+                record_context=record_context,
+            ),
         )

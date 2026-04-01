@@ -9,12 +9,35 @@ from data_adapter.enums.financial_info.obligation_type import ObligationType
 from data_adapter.enums.financial_info.payment_frequency import PaymentFrequency
 
 
-def transform_account_type(value: Optional[str]) -> AccountType:
+def transform_account_type(
+    value: Optional[str],
+    *,
+    xml_node: str = "",
+    xml_attribute: str = "tipoCuenta",
+    record_type: str = "",
+    record_context: Optional[dict[str, str]] = None,
+) -> AccountType:
     if not value or value.strip() == "":
+        record_unknown(
+            "transform_account_type",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return AccountType.UNKNOWN
     try:
         return AccountType[value]
     except KeyError:
+        record_unknown(
+            "transform_account_type",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return AccountType.UNKNOWN
 
 

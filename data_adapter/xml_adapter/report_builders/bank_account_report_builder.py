@@ -34,25 +34,39 @@ class BankAccountReportBuilder:
             else None
         )
         state_node = ex.find_node("Estado", parent=node)
+        lender = ex.get_attr_required(node, "entidad")
+        account_number = ex.get_attr_required(node, "numero")
+        record_context: dict[str, str] = {
+            "lender": lender,
+            "account_number": account_number,
+        }
 
         return BankAccount(
-            lender=ex.get_attr_required(node, "entidad"),
-            account_number=ex.get_attr_required(node, "numero"),
+            lender=lender,
+            account_number=account_number,
             account_class=ex.get_attr(characteristics_node, "clase"),
             opened_date=ex.get_attr(node, "fechaApertura"),
             rating=transform_credit_rating(ex.get_attr(node, "calificacion")),
             ownership_situation=transform_ownership_situation(
-                ex.get_attr(node, "situacionTitular")
+                ex.get_attr(node, "situacionTitular"),
+                xml_node="CuentaAhorro",
+                record_type="BankAccount",
+                record_context=record_context,
             ),
             is_blocked=self._parse_blocked(ex, node),
             office=ex.get_attr(node, "oficina"),
             city=ex.get_attr(node, "ciudad"),
             dane_city_code=ex.get_attr(node, "codigoDaneCiudad"),
-            sector=transform_industry_sector(ex.get_attr(node, "sector")),
+            sector=transform_industry_sector(
+                ex.get_attr(node, "sector"),
+                xml_node="CuentaAhorro",
+                record_type="BankAccount",
+                record_context=record_context,
+            ),
             entity_id_type=ex.get_attr(node, "tipoIdentificacion"),
             entity_id=ex.get_attr(node, "identificacion"),
             value=self._parse_value(ex, valor_node),
-            state=self._parse_state(ex, state_node),
+            state=self._parse_state(ex, state_node, record_context=record_context),
         )
 
     def _parse_blocked(self, ex: XmlExtractor, node: ET.Element) -> bool:
@@ -78,10 +92,16 @@ class BankAccountReportBuilder:
         self,
         ex: XmlExtractor,
         node: Optional[ET.Element],
+        record_context: Optional[dict[str, str]] = None,
     ) -> Optional[BankAccountState]:
         if node is None:
             return None
         return BankAccountState(
-            code=transform_savings_account_status(ex.get_attr(node, "codigo")),
+            code=transform_savings_account_status(
+                ex.get_attr(node, "codigo"),
+                xml_node="Estado",
+                record_type="BankAccount",
+                record_context=record_context,
+            ),
             date=ex.get_attr(node, "fecha"),
         )

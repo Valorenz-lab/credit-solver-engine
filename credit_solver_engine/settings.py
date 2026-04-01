@@ -117,4 +117,4 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 # Extraction debug mode — activar solo en desarrollo/staging
-EXTRACTION_DEBUG: bool = False
+EXTRACTION_DEBUG: bool = True

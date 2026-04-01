@@ -106,29 +106,45 @@ class GlobalReportBuilder:
             payment_history=ex.get_attr(node, "comportamiento"),
             credit_rating=transform_credit_rating(ex.get_attr(node, "calificacion")),
             ownership_status=transform_ownership_situation(
-                ex.get_attr(node, "situacionTitular")
+                ex.get_attr(node, "situacionTitular"),
+                xml_node="CuentaCartera",
+                record_type="PortfolioAccount",
+                record_context=record_context,
             ),
             is_blocked=raw_blocked is not None
             and raw_blocked.lower() in ("true", "1", "s", "si"),
             city=ex.get_attr(node, "ciudad"),
             dane_city_code=ex.get_attr(node, "codigoDaneCiudad"),
-            industry_sector=transform_industry_sector(ex.get_attr(node, "sector")),
+            industry_sector=transform_industry_sector(
+                ex.get_attr(node, "sector"),
+                xml_node="CuentaCartera",
+                record_type="PortfolioAccount",
+                record_context=record_context,
+            ),
             default_probability=ex.get_float(node, "probabilidadIncumplimiento"),
             subscriber_code=ex.get_attr(node, "codSuscriptor"),
             entity_id_type=ex.get_attr(node, "tipoIdentificacion"),
             entity_id=ex.get_attr(node, "identificacion"),
             hd_rating=raw_hd is not None and raw_hd.lower() in ("true", "1"),
-            characteristics=self._parse_characteristics(ex, node),
+            characteristics=self._parse_characteristics(ex, node, record_context=record_context),
             values=self._parse_value_portfolio(ex, node),
             states=self._parse_states(ex, node, record_context=record_context),
         )
 
     def _parse_characteristics(
-        self, ex: XmlExtractor, parent: ET.Element
+        self,
+        ex: XmlExtractor,
+        parent: ET.Element,
+        record_context: Optional[dict[str, str]] = None,
     ) -> PortfolioCharacteristics:
         node = ex.find_node("Caracteristicas", parent=parent)
         return PortfolioCharacteristics(
-            account_type=transform_account_type(ex.get_attr(node, "tipoCuenta")),
+            account_type=transform_account_type(
+                ex.get_attr(node, "tipoCuenta"),
+                xml_node="Caracteristicas",
+                record_type="PortfolioAccount",
+                record_context=record_context,
+            ),
             obligation_type=transform_obligation_type(
                 ex.get_attr(node, "tipoObligacion")
             ),
@@ -191,9 +207,17 @@ class GlobalReportBuilder:
                 record_context=record_context,
             ),
             account_statement_date=ex.get_attr(ec, "fecha"),
-            origin_state_code=transform_origin_state(ex.get_attr(eo, "codigo")),
+            origin_state_code=transform_origin_state(
+                ex.get_attr(eo, "codigo"),
+                record_type="PortfolioAccount",
+                record_context=record_context,
+            ),
             origin_statement_date=ex.get_attr(eo, "fecha"),
-            payment_status_code=transform_payment_status(ex.get_attr(ep, "codigo")),
+            payment_status_code=transform_payment_status(
+                ex.get_attr(ep, "codigo"),
+                record_type="PortfolioAccount",
+                record_context=record_context,
+            ),
             payment_status_months=ex.get_attr(ep, "meses"),
             payment_status_date=ex.get_attr(ep, "fecha"),
         )

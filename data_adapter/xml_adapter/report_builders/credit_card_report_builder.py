@@ -39,9 +39,15 @@ class CreditCardReportBuilder:
 
     def _parse_card(self, ex: XmlExtractor, node: ET.Element) -> CreditCard:
         raw_hd = ex.get_attr(node, "calificacionHD")
+        lender = ex.get_attr_required(node, "entidad")
+        account_number = ex.get_attr_required(node, "numero")
+        record_context: dict[str, str] = {
+            "lender": lender,
+            "account_number": account_number,
+        }
         return CreditCard(
-            lender=ex.get_attr_required(node, "entidad"),
-            account_number=ex.get_attr_required(node, "numero"),
+            lender=lender,
+            account_number=account_number,
             opened_date=ex.get_attr(node, "fechaApertura"),
             maturity_date=ex.get_attr(node, "fechaVencimiento"),
             payment_history=ex.get_attr(node, "comportamiento"),
@@ -49,19 +55,27 @@ class CreditCardReportBuilder:
             default_probability=ex.get_float(node, "probabilidadIncumplimiento"),
             credit_rating=transform_credit_rating(ex.get_attr(node, "calificacion")),
             ownership_situation=transform_ownership_situation(
-                ex.get_attr(node, "situacionTitular")
+                ex.get_attr(node, "situacionTitular"),
+                xml_node="TarjetaCredito",
+                record_type="CreditCard",
+                record_context=record_context,
             ),
             is_blocked=self._parse_blocked(ex, node),
             office=ex.get_attr(node, "oficina"),
             city=ex.get_attr(node, "ciudad"),
             dane_city_code=ex.get_attr(node, "codigoDaneCiudad"),
-            sector=transform_industry_sector(ex.get_attr(node, "sector")),
+            sector=transform_industry_sector(
+                ex.get_attr(node, "sector"),
+                xml_node="TarjetaCredito",
+                record_type="CreditCard",
+                record_context=record_context,
+            ),
             entity_id_type=ex.get_attr(node, "tipoIdentificacion"),
             entity_id=ex.get_attr(node, "identificacion"),
             hd_rating=raw_hd is not None and raw_hd.lower() in ("true", "1"),
-            characteristics=self._parse_characteristics(ex, node),
+            characteristics=self._parse_characteristics(ex, node, record_context=record_context),
             values=self._parse_values(ex, node),
-            states=self._parse_states(ex, node),
+            states=self._parse_states(ex, node, record_context=record_context),
         )
 
     def _parse_blocked(self, ex: XmlExtractor, node: ET.Element) -> bool:
@@ -71,7 +85,10 @@ class CreditCardReportBuilder:
         return raw.lower() in ("true", "1", "s", "si")
 
     def _parse_characteristics(
-        self, ex: XmlExtractor, parent: ET.Element
+        self,
+        ex: XmlExtractor,
+        parent: ET.Element,
+        record_context: Optional[dict[str, str]] = None,
     ) -> CreditCardCharacteristics:
         node = ex.find_node("Caracteristicas", parent=parent)
         raw_covered = ex.get_attr(node, "amparada")
@@ -82,8 +99,16 @@ class CreditCardReportBuilder:
             "si",
         )
         return CreditCardCharacteristics(
-            franchise=transform_franchise(ex.get_attr(node, "franquicia")),
-            card_class=transform_credit_card_class(ex.get_attr(node, "clase")),
+            franchise=transform_franchise(
+                ex.get_attr(node, "franquicia"),
+                record_type="CreditCard",
+                record_context=record_context,
+            ),
+            card_class=transform_credit_card_class(
+                ex.get_attr(node, "clase"),
+                record_type="CreditCard",
+                record_context=record_context,
+            ),
             brand=ex.get_attr(node, "marca"),
             is_covered=is_covered,
             covered_code=ex.get_attr(node, "codigoAmparada"),
@@ -114,7 +139,12 @@ class CreditCardReportBuilder:
             total_credit_limit=ex.get_float(valor_node, "cupoTotal"),
         )
 
-    def _parse_states(self, ex: XmlExtractor, parent: ET.Element) -> CreditCardStates:
+    def _parse_states(
+        self,
+        ex: XmlExtractor,
+        parent: ET.Element,
+        record_context: Optional[dict[str, str]] = None,
+    ) -> CreditCardStates:
         states_node = ex.find_node("Estados", parent=parent)
         if states_node is None:
             return CreditCardStates(
@@ -135,13 +165,29 @@ class CreditCardReportBuilder:
         epago = ex.find_node("EstadoPago", parent=states_node)
 
         return CreditCardStates(
-            plastic_state_code=transform_plastic_status(ex.get_attr(ep, "codigo")),
+            plastic_state_code=transform_plastic_status(
+                ex.get_attr(ep, "codigo"),
+                record_type="CreditCard",
+                record_context=record_context,
+            ),
             plastic_state_date=ex.get_attr(ep, "fecha"),
-            account_state_code=transform_account_condition(ex.get_attr(ec, "codigo")),
+            account_state_code=transform_account_condition(
+                ex.get_attr(ec, "codigo"),
+                record_type="CreditCard",
+                record_context=record_context,
+            ),
             account_state_date=ex.get_attr(ec, "fecha"),
-            origin_state_code=transform_origin_state(ex.get_attr(eo, "codigo")),
+            origin_state_code=transform_origin_state(
+                ex.get_attr(eo, "codigo"),
+                record_type="CreditCard",
+                record_context=record_context,
+            ),
             origin_state_date=ex.get_attr(eo, "fecha"),
-            payment_status_code=transform_payment_status(ex.get_attr(epago, "codigo")),
+            payment_status_code=transform_payment_status(
+                ex.get_attr(epago, "codigo"),
+                record_type="CreditCard",
+                record_context=record_context,
+            ),
             payment_status_months=ex.get_attr(epago, "meses"),
             payment_status_date=ex.get_attr(epago, "fecha"),
         )

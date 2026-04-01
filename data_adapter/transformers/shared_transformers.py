@@ -1,5 +1,6 @@
 from typing import Optional
 
+from data_adapter.debug_tracer import record_unknown
 from data_adapter.enums.financial_info.credit_rating import CreditRating
 from data_adapter.enums.financial_info.currency import Currency
 from data_adapter.enums.financial_info.current_debt_status import CurrentDebtStatus
@@ -16,17 +17,43 @@ from data_adapter.enums.financial_info.savings_account_status import (
 )
 
 
-def transform_industry_sector(value: Optional[str]) -> IndustrySector:
+def transform_industry_sector(
+    value: Optional[str],
+    *,
+    xml_node: str = "",
+    xml_attribute: str = "sector",
+    record_type: str = "",
+    record_context: Optional[dict[str, str]] = None,
+) -> IndustrySector:
     if not value or value.strip() == "":
+        record_unknown(
+            "transform_industry_sector",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return IndustrySector.UNKNOWN
-    mapping = {
+    mapping: dict[str, IndustrySector] = {
         "1": IndustrySector.FINANCIAL,
         "2": IndustrySector.COOPERATIVE,
         "3": IndustrySector.REAL,
         "4": IndustrySector.TELECOM,
         "0": IndustrySector.UNKNOWN,
     }
-    return mapping.get(value.strip(), IndustrySector.UNKNOWN)
+    result = mapping.get(value.strip())
+    if result is None:
+        record_unknown(
+            "transform_industry_sector",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
+        return IndustrySector.UNKNOWN
+    return result
 
 
 def transform_credit_rating(value: Optional[str]) -> CreditRating:
@@ -47,10 +74,25 @@ def transform_credit_rating(value: Optional[str]) -> CreditRating:
     return mapping.get(value.strip(), CreditRating.UNKNOWN)
 
 
-def transform_savings_account_status(value: Optional[str]) -> SavingsAccountStatus:
+def transform_savings_account_status(
+    value: Optional[str],
+    *,
+    xml_node: str = "",
+    xml_attribute: str = "codigo",
+    record_type: str = "",
+    record_context: Optional[dict[str, str]] = None,
+) -> SavingsAccountStatus:
     if not value or value.strip() == "":
+        record_unknown(
+            "transform_savings_account_status",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return SavingsAccountStatus.UNKNOWN
-    mapping = {
+    mapping: dict[str, SavingsAccountStatus] = {
         "01": SavingsAccountStatus.ACTIVE,
         "02": SavingsAccountStatus.CANCELLED_BAD_USE,
         "05": SavingsAccountStatus.PAID_OFF,
@@ -59,13 +101,39 @@ def transform_savings_account_status(value: Optional[str]) -> SavingsAccountStat
         "09": SavingsAccountStatus.INACTIVE,
         "00": SavingsAccountStatus.UNKNOWN,
     }
-    return mapping.get(value.strip(), SavingsAccountStatus.UNKNOWN)
+    result = mapping.get(value.strip())
+    if result is None:
+        record_unknown(
+            "transform_savings_account_status",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
+        return SavingsAccountStatus.UNKNOWN
+    return result
 
 
-def transform_ownership_situation(value: Optional[str]) -> OwnershipSituation:
+def transform_ownership_situation(
+    value: Optional[str],
+    *,
+    xml_node: str = "",
+    xml_attribute: str = "situacionTitular",
+    record_type: str = "",
+    record_context: Optional[dict[str, str]] = None,
+) -> OwnershipSituation:
     if not value or value.strip() == "":
+        record_unknown(
+            "transform_ownership_situation",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return OwnershipSituation.UNKNOWN
-    mapping = {
+    mapping: dict[str, OwnershipSituation] = {
         "0": OwnershipSituation.NORMAL,
         "1": OwnershipSituation.CONCORDAT,
         "2": OwnershipSituation.FORCED_LIQUIDATION,
@@ -76,13 +144,39 @@ def transform_ownership_situation(value: Optional[str]) -> OwnershipSituation:
         "7": OwnershipSituation.OTHER,
         "99": OwnershipSituation.UNKNOWN,
     }
-    return mapping.get(value.strip(), OwnershipSituation.UNKNOWN)
+    result = mapping.get(value.strip())
+    if result is None:
+        record_unknown(
+            "transform_ownership_situation",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
+        return OwnershipSituation.UNKNOWN
+    return result
 
 
-def transform_origin_state(value: Optional[str]) -> OriginState:
+def transform_origin_state(
+    value: Optional[str],
+    *,
+    xml_node: str = "EstadoOrigen",
+    xml_attribute: str = "codigo",
+    record_type: str = "",
+    record_context: Optional[dict[str, str]] = None,
+) -> OriginState:
     if not value or value.strip() == "":
+        record_unknown(
+            "transform_origin_state",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return OriginState.UNKNOWN
-    mapping = {
+    mapping: dict[str, OriginState] = {
         "0": OriginState.NORMAL,
         "1": OriginState.RESTRUCTURED,
         "2": OriginState.REFINANCED,
@@ -90,7 +184,18 @@ def transform_origin_state(value: Optional[str]) -> OriginState:
         "4": OriginState.PURCHASED,
         "99": OriginState.UNKNOWN,
     }
-    return mapping.get(value.strip(), OriginState.UNKNOWN)
+    result = mapping.get(value.strip())
+    if result is None:
+        record_unknown(
+            "transform_origin_state",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
+        return OriginState.UNKNOWN
+    return result
 
 
 def transform_payment_method(value: Optional[str]) -> PaymentMethod:
@@ -148,9 +253,24 @@ def transform_guarantee(value: Optional[str]) -> GuaranteeType:
     return mapping.get(value.strip().upper(), GuaranteeType.UNKNOWN)
 
 
-def transform_query_reason(value: Optional[str]) -> QueryReason:
+def transform_query_reason(
+    value: Optional[str],
+    *,
+    xml_node: str = "Consulta",
+    xml_attribute: str = "razon",
+    record_type: str = "",
+    record_context: Optional[dict[str, str]] = None,
+) -> QueryReason:
     """Transform query reason code (Tabla 23) to QueryReason enum."""
     if not value or value.strip() == "":
+        record_unknown(
+            "transform_query_reason",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return QueryReason.UNKNOWN
     mapping: dict[str, QueryReason] = {
         "00": QueryReason.UNKNOWN_REASON,
@@ -163,12 +283,38 @@ def transform_query_reason(value: Optional[str]) -> QueryReason:
         "07": QueryReason.UNDEFINED_07,
         "08": QueryReason.UNDEFINED_08,
     }
-    return mapping.get(value.strip(), QueryReason.UNKNOWN)
+    result = mapping.get(value.strip())
+    if result is None:
+        record_unknown(
+            "transform_query_reason",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
+        return QueryReason.UNKNOWN
+    return result
 
 
-def transform_payment_status(value: Optional[str]) -> PaymentStatus:
+def transform_payment_status(
+    value: Optional[str],
+    *,
+    xml_node: str = "EstadoPago",
+    xml_attribute: str = "codigo",
+    record_type: str = "",
+    record_context: Optional[dict[str, str]] = None,
+) -> PaymentStatus:
     """Transform EstadoPago.codigo (Tabla 4) to PaymentStatus enum."""
     if not value or value.strip() == "":
+        record_unknown(
+            "transform_payment_status",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return PaymentStatus.UNKNOWN
     mapping: dict[str, PaymentStatus] = {
         "01": PaymentStatus.NORMAL,
@@ -182,7 +328,17 @@ def transform_payment_status(value: Optional[str]) -> PaymentStatus:
         "45": PaymentStatus.RESTRUCTURED,
         "47": PaymentStatus.CREDIT_BALANCE,
     }
-    return mapping.get(value.strip(), PaymentStatus.UNKNOWN)
+    result = mapping.get(value.strip(), PaymentStatus.UNKNOWN)
+    if result is PaymentStatus.UNKNOWN:
+        record_unknown(
+            "transform_payment_status",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
+    return result
 
 
 def transform_current_debt_status(value: Optional[str]) -> CurrentDebtStatus:
