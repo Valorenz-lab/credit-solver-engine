@@ -32,4 +32,6 @@ class AccountCondition(StrEnum):
     CANCELLED_DUE_TO_RESTRUCTURING_REFINANCING = (
         "Cancelada por reestructuración/refinanciación"
     )
+    # Código "00" — legacy pre-Tabla 4, aparece en obligaciones cerradas anteriores a 2009
+    LEGACY_CLOSED = "Cerrada (código heredado)"
     UNKNOWN = "Desconocido"

@@ -194,6 +194,8 @@ def transform_account_condition(
         "46": AccountCondition.JUDICIAL_PAYMENT,
         # Vigente — En reclamación
         "60": AccountCondition.CLAIM_IN_PROGRESS,
+        # Legacy — código pre-Tabla 4, presente en obligaciones cerradas anteriores a 2009
+        "00": AccountCondition.LEGACY_CLOSED,
     }
     result = mapping.get(value.strip(), AccountCondition.UNKNOWN)
     if result is AccountCondition.UNKNOWN:

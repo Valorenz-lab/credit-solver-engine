@@ -50,4 +50,5 @@ class AccountType(StrEnum):
     CAS = "Para el elemento consulta, sí tiene tipo de cuenta CAS quiere decir que fue consultado por el Centro de Atención y Servicio."
     SBG = "Cartera de Sobregiro"
     MCR = "Cartera Microcrédito"
+    LBZ = "Libranza"
     UNKNOWN = "Desconocido"
