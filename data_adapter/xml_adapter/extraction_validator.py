@@ -12,6 +12,9 @@ from typing import Optional
 from xml.etree import ElementTree as ET
 
 from data_adapter.xml_adapter.exceptions import XmlParseError
+from data_adapter.xml_adapter.models.bank_account_models import (
+    _OPEN_BANK_ACCOUNT_STATUSES,
+)
 from data_adapter.xml_adapter.models.full_report_models import FullReport
 from data_adapter.xml_adapter.report_builders.full_report_report_builder import (
     FullReportBuilder,
@@ -150,18 +153,28 @@ def _aggregate_cross_checks(report: FullReport) -> list[dict[str, object]]:
     # ── Count checks ─────────────────────────────────────────────────────────
     open_portfolio = sum(1 for a in report.portfolio_accounts if a.is_open)
     closed_portfolio = sum(1 for a in report.portfolio_accounts if not a.is_open)
+    open_credit_cards = sum(1 for c in report.credit_cards if c.is_open)
+    closed_credit_cards = sum(1 for c in report.credit_cards if not c.is_open)
     open_bank = sum(1 for a in report.bank_accounts if a.is_open)
     closed_bank = sum(1 for a in report.bank_accounts if not a.is_open)
+    open_checking = sum(
+        1
+        for a in report.checking_accounts
+        if a.state is not None
+        and a.state.code is not None
+        and a.state.code in _OPEN_BANK_ACCOUNT_STATUSES
+    )
+    closed_checking = len(report.checking_accounts) - open_checking
 
     checks.append(
         _make_check(
             name="aggregate_check:active_credits",
             category="aggregate_check",
             xml_value=float(principals.active_credits),
-            extracted_value=float(open_portfolio),
+            extracted_value=float(open_portfolio + open_credit_cards),
             note=(
-                "AggregatedPrincipals.active_credits vs open PortfolioAccounts. "
-                "May differ if the aggregate counts CreditCards as active credits."
+                "AggregatedPrincipals.active_credits vs "
+                "open PortfolioAccounts + open CreditCards."
             ),
         )
     )
@@ -170,8 +183,11 @@ def _aggregate_cross_checks(report: FullReport) -> list[dict[str, object]]:
             name="aggregate_check:closed_credits",
             category="aggregate_check",
             xml_value=float(principals.closed_credits),
-            extracted_value=float(closed_portfolio),
-            note="AggregatedPrincipals.closed_credits vs closed PortfolioAccounts.",
+            extracted_value=float(closed_portfolio + closed_credit_cards),
+            note=(
+                "AggregatedPrincipals.closed_credits vs "
+                "closed PortfolioAccounts + closed CreditCards."
+            ),
         )
     )
     checks.append(
@@ -179,8 +195,11 @@ def _aggregate_cross_checks(report: FullReport) -> list[dict[str, object]]:
             name="aggregate_check:open_savings_checking",
             category="aggregate_check",
             xml_value=float(principals.open_savings_checking),
-            extracted_value=float(open_bank),
-            note="AggregatedPrincipals.open_savings_checking vs open BankAccounts.",
+            extracted_value=float(open_bank + open_checking),
+            note=(
+                "AggregatedPrincipals.open_savings_checking vs "
+                "open BankAccounts + open CheckingAccounts."
+            ),
         )
     )
     checks.append(
@@ -188,8 +207,11 @@ def _aggregate_cross_checks(report: FullReport) -> list[dict[str, object]]:
             name="aggregate_check:closed_savings_checking",
             category="aggregate_check",
             xml_value=float(principals.closed_savings_checking),
-            extracted_value=float(closed_bank),
-            note="AggregatedPrincipals.closed_savings_checking vs closed BankAccounts.",
+            extracted_value=float(closed_bank + closed_checking),
+            note=(
+                "AggregatedPrincipals.closed_savings_checking vs "
+                "closed BankAccounts + closed CheckingAccounts."
+            ),
         )
     )
 
@@ -199,6 +221,11 @@ def _aggregate_cross_checks(report: FullReport) -> list[dict[str, object]]:
             a.values.outstanding_balance
             for a in report.portfolio_accounts
             if a.values and a.values.outstanding_balance is not None
+        )
+        + sum(
+            c.values.outstanding_balance
+            for c in report.credit_cards
+            if c.values and c.values.outstanding_balance is not None
         ),
         2,
     )
@@ -207,12 +234,17 @@ def _aggregate_cross_checks(report: FullReport) -> list[dict[str, object]]:
             a.values.past_due_amount
             for a in report.portfolio_accounts
             if a.values and a.values.past_due_amount is not None
+        )
+        + sum(
+            c.values.past_due_amount
+            for c in report.credit_cards
+            if c.values and c.values.past_due_amount is not None
         ),
         2,
     )
 
     # InfoAgregada stores monetary values in miles de pesos (thousands).
-    # Individual PortfolioAccount.values fields are in pesos. Multiply by 1000 to align units.
+    # Individual account fields are in pesos. Multiply by 1000 to align units.
     aggregate_balance_pesos = balances.total_balance * 1000
     aggregate_past_due_pesos = balances.total_past_due * 1000
 
@@ -225,8 +257,8 @@ def _aggregate_cross_checks(report: FullReport) -> list[dict[str, object]]:
             tolerance=_BALANCE_TOLERANCE,
             note=(
                 f"AggregatedBalances.total_balance (×1000, miles de pesos) vs "
-                f"sum of PortfolioAccount.outstanding_balance in pesos "
-                f"(tolerance ±{_BALANCE_TOLERANCE}). May differ if aggregate includes CreditCards."
+                f"sum of PortfolioAccount + CreditCard outstanding_balance in pesos "
+                f"(tolerance ±{_BALANCE_TOLERANCE})."
             ),
         )
     )
@@ -239,7 +271,7 @@ def _aggregate_cross_checks(report: FullReport) -> list[dict[str, object]]:
             tolerance=_BALANCE_TOLERANCE,
             note=(
                 f"AggregatedBalances.total_past_due (×1000, miles de pesos) vs "
-                f"sum of PortfolioAccount.past_due_amount in pesos "
+                f"sum of PortfolioAccount + CreditCard past_due_amount in pesos "
                 f"(tolerance ±{_BALANCE_TOLERANCE})."
             ),
         )
