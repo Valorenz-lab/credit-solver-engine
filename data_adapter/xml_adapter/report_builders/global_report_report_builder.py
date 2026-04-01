@@ -4,6 +4,7 @@ Single responsibility: receive XML as string/bytes/Path and return dataclasses.
 """
 
 import os
+from typing import Optional
 
 from data_adapter.transformers.global_report_transformer import (
     transform_account_condition,
@@ -91,9 +92,15 @@ class GlobalReportBuilder:
     ) -> PortfolioAccount:
         raw_hd = ex.get_attr(node, "calificacionHD")
         raw_blocked = ex.get_attr(node, "bloqueada")
+        lender = ex.get_attr_required(node, "entidad")
+        account_number = ex.get_attr_required(node, "numero")
+        record_context: dict[str, str] = {
+            "lender": lender,
+            "account_number": account_number,
+        }
         return PortfolioAccount(
-            lender=ex.get_attr_required(node, "entidad"),
-            account_number=ex.get_attr_required(node, "numero"),
+            lender=lender,
+            account_number=account_number,
             opened_date=ex.get_attr(node, "fechaApertura"),
             maturity_date=ex.get_attr(node, "fechaVencimiento"),
             payment_history=ex.get_attr(node, "comportamiento"),
@@ -113,7 +120,7 @@ class GlobalReportBuilder:
             hd_rating=raw_hd is not None and raw_hd.lower() in ("true", "1"),
             characteristics=self._parse_characteristics(ex, node),
             values=self._parse_value_portfolio(ex, node),
-            states=self._parse_states(ex, node),
+            states=self._parse_states(ex, node, record_context=record_context),
         )
 
     def _parse_characteristics(
@@ -163,7 +170,12 @@ class GlobalReportBuilder:
             days_past_due=ex.get_int(node, "diasMora"),
         )
 
-    def _parse_states(self, ex: XmlExtractor, parent: ET.Element) -> PortfolioStates:
+    def _parse_states(
+        self,
+        ex: XmlExtractor,
+        parent: ET.Element,
+        record_context: Optional[dict[str, str]] = None,
+    ) -> PortfolioStates:
         states_node = ex.find_node("Estados", parent=parent)
         if states_node is None:
             return PortfolioStates(None, None, None, None, None, None, None)
@@ -174,7 +186,9 @@ class GlobalReportBuilder:
 
         return PortfolioStates(
             account_statement_code=transform_account_condition(
-                ex.get_attr(ec, "codigo")
+                ex.get_attr(ec, "codigo"),
+                record_type="PortfolioAccount",
+                record_context=record_context,
             ),
             account_statement_date=ex.get_attr(ec, "fecha"),
             origin_state_code=transform_origin_state(ex.get_attr(eo, "codigo")),

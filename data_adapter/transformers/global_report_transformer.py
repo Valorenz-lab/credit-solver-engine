@@ -1,5 +1,6 @@
 from typing import Optional
 
+from data_adapter.debug_tracer import record_unknown
 from data_adapter.enums.financial_info.account_condition import AccountCondition
 from data_adapter.enums.financial_info.account_type import AccountType
 from data_adapter.enums.financial_info.contract_type import ContractType
@@ -90,13 +91,28 @@ def transform_obligation_type(value: Optional[str]) -> ObligationType:
         return ObligationType.UNKNOWN
 
 
-def transform_account_condition(value: Optional[str]) -> AccountCondition:
+def transform_account_condition(
+    value: Optional[str],
+    *,
+    xml_node: str = "EstadoCuenta",
+    xml_attribute: str = "codigo",
+    record_type: str = "",
+    record_context: Optional[dict[str, str]] = None,
+) -> AccountCondition:
     """Transform EstadoCuenta.codigo (Tabla 4) to AccountCondition.
 
     Vigente codes: 01, 13-41, 45, 47
     Cerrada codes: 02-12, 46, 49
     """
     if not value or value.strip() == "":
+        record_unknown(
+            "transform_account_condition",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return AccountCondition.UNKNOWN
     mapping: dict[str, AccountCondition] = {
         # Vigente — Al día
@@ -156,7 +172,17 @@ def transform_account_condition(value: Optional[str]) -> AccountCondition:
         # Vigente — En reclamación
         "60": AccountCondition.CLAIM_IN_PROGRESS,
     }
-    return mapping.get(value.strip(), AccountCondition.UNKNOWN)
+    result = mapping.get(value.strip(), AccountCondition.UNKNOWN)
+    if result is AccountCondition.UNKNOWN:
+        record_unknown(
+            "transform_account_condition",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
+    return result
 
 
 def transform_contract_type(value: Optional[str]) -> ContractType:
