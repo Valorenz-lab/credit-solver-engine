@@ -183,6 +183,9 @@ def transform_origin_state(
         "3": OriginState.TRANSFERRED,
         "4": OriginState.PURCHASED,
         "99": OriginState.UNKNOWN,
+        # Valores inferidos — pendientes de verificación con Tabla 44 (HDC 1.6.4)
+        "5": OriginState.SPECIAL_REGIME,   # Banco Bogotá CAV vivienda — inferido
+        "6": OriginState.PUBLIC_SERVICE,   # GASCARIBE servicio público — inferido
     }
     result = mapping.get(value.strip())
     if result is None:
@@ -327,6 +330,12 @@ def transform_payment_status(
         "20": PaymentStatus.PAST_DUE_30,
         "45": PaymentStatus.RESTRUCTURED,
         "47": PaymentStatus.CREDIT_BALANCE,
+        # Valores inferidos — pendientes de verificación con Tabla 4 (HDC 1.6.4)
+        "14": PaymentStatus.CURRENT_NO_BALANCE,    # CLARO SERV MOV, EC=01, sin saldo — inferido
+        "17": PaymentStatus.CLOSED_IN_ARREARS,     # CLARO TEC MOV, EC=02, mora $129k — inferido
+        "19": PaymentStatus.EXTERNAL_COLLECTION,   # CREDIEXPRESS, EC=02, 100% mora — inferido
+        "37": PaymentStatus.SEVERE_COLLECTION,     # BBVA tarjeta, EC=02, mora > saldo — inferido
+        "41": PaymentStatus.JUDICIAL_COLLECTION,   # Bancolombia/CRJA/Coobolarqui, EC=02, 100% mora — inferido
     }
     result = mapping.get(value.strip(), PaymentStatus.UNKNOWN)
     if result is PaymentStatus.UNKNOWN:

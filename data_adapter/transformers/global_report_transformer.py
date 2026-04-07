@@ -187,7 +187,11 @@ def transform_account_condition(
         # Cerrada — Pago total (variantes por mora máxima histórica)
         "08": AccountCondition.FULL_PAYMENT,
         "09": AccountCondition.FULL_PAYMENT,
-        "10": AccountCondition.FULL_PAYMENT,
+        # EC=10 → Prescrita: documentado en sección Generalidades del Manual Insumos XML v1.6.4.
+        # "Se declara probada la prescripción sobre una obligación dentro de un proceso judicial."
+        # No es pago voluntario — es extinción judicial por prescripción (≤4 años impaga).
+        # Se usa la Tabla 43 cuando EC=10 (ver sección 7.1.1 del manual).
+        "10": AccountCondition.CANCELLED_DUE_TO_STATUTE_OF_LIMITATIONS,
         "11": AccountCondition.FULL_PAYMENT,
         "12": AccountCondition.FULL_PAYMENT,
         # Cerrada — Recuperación anormal (cobro judicial, embargo, arreglo)
