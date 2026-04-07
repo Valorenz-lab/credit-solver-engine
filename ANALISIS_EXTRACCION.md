@@ -1,254 +1,384 @@
-# ANÁLISIS DE EXTRACCIÓN — Evaluación Masiva
+# ANALISIS_EXTRACCION.md — Estado de la Extracción XML
 
-**Fecha:** 2026-04-01
-**Branch:** Feature/Build-report
-**Universo evaluado:** 25 personas (todos los XMLs disponibles en `data/`)
-**Herramientas:** `python manage.py run_extraction_audit`
-**Criterio de inclusión en este análisis:** personas con al menos 1 check fallido o al menos 1 debug event
+**Fecha de análisis:** 2026-04-07
+**Muestra:** 24 sujetos (XMLs de Datacredito/Experian)
+**Herramientas:** `/validate/<id>/` + `/debug/<id>/` endpoints
 
 ---
 
-## Resumen ejecutivo
+## 1. Resumen ejecutivo
 
-| Resultado | Personas | % |
-|-----------|----------|---|
-| ✅ OK (14/14 checks) | 2 | 8% |
-| ⚠️ Warnings (checks fallidos) | 23 | 92% |
-| Con debug events (gaps de enum) | 6 | 24% |
+| Indicador | Valor |
+|---|---|
+| Sujetos analizados | 24 |
+| Estado **OK** (0 fallos) | 3 (12.5%) |
+| Estado **warnings** | 21 (87.5%) |
+| Fallos críticos (≥4 checks) | 2 |
+| Total `UNKNOWN` events | 674 |
+| Transformers involucrados | 2 (`payment_frequency`, `guarantee`) |
+| Node count accuracy | **100%** — 0 pérdidas estructurales |
 
-De los 23 con warnings:
-- **20** fallan únicamente en `active_credits`/`closed_credits` (delta de conteo)
-- **3** fallan adicionalmente en `total_balance` o `total_past_due`
-- **6** tienen gaps de enum reales en transformers
-
-El pipeline es robusto en extracción de nodos y balances. Los dos problemas sistémicos son: (1) criterio de vigencia distinto al de Datacredito, y (2) códigos faltantes en `transform_payment_status`.
+**Conclusión de alto nivel:** La extracción estructural es perfecta. Todos los nodos XML se extraen sin pérdida. Los warnings no son pérdidas de datos sino dos categorías de problemas bien delimitadas: (1) un bug de clasificación vigente/cerrado que genera el mismatch con InfoAgregada, y (2) códigos no documentados en dos transformers.
 
 ---
 
-## Hallazgo 1 — Delta sistemático `active_credits` / `closed_credits`
+## 2. Extracción estructural: 100% de fidelidad
 
-### Alcance
+El check `node_count` valida que el número de nodos XML extraídos coincide exactamente con los modelos generados. **Todos los sujetos pasan al 100%.**
 
-**Afecta 20 de 25 personas (80%).**
+| Tipo de nodo | Accuracy |
+|---|---|
+| `CuentaCartera` → `PortfolioAccount` | 100% |
+| `TarjetaCredito` → `CreditCard` | 100% |
+| `CuentaAhorro` → `BankAccount` | 100% |
+| `CuentaCorriente` → `CheckingAccount` | 100% |
+| `Consulta` → `QueryRecord` | 100% |
+| `EndeudamientoGlobal` → `GlobalDebtRecord` | 100% |
+| `Score` → `ScoreRecord` | 100% |
+| `Alerta` → `AlertRecord` | 100% |
 
-| Persona | Delta activos | Delta cerrados |
-|---------|--------------|----------------|
-| 14012717 | -8 | +8 |
-| 8737538  | -7 | +7 |
-| 12532647 | -6 | +6 |
-| 80491927 | -6 | +6 |
-| 11794399 | -4 | +4 |
-| 13364177 | -4 | +4 |
-| 22436588 | -4 | +4 |
-| 34554868 | -4 | +4 |
-| 43003890 | -4 | +4 |
-| 43432541 | -4 | +4 |
-| 7423628  | -4 | +4 |
-| 78696456 | -4 | +4 |
-| 12979619 | -3 | +3 |
-| 8526939  | -3 | +3 |
-| 73102905 | -2 | +2 |
-| 18595160 | -1 | +1 |
-| 22389910 | -1 | +1 |
-| 32322427 | -1 | +1 |
-| 39007435 | -1 | +1 |
-| 49551526 | -1 | +1 |
+No hay pérdida de registros. Cada nodo XML tiene su dataclass correspondiente.
 
-**Delta promedio:** 3.6 | **Delta máximo:** 8
+---
 
-El delta es siempre perfectamente simétrico: lo que se pierde en `active_credits` aparece como falso cerrado en `closed_credits`. Nunca se pierden cuentas totales — todos los nodos extraen correctamente.
+## 3. Bug principal: misclasificación vigente / cerrado
 
-### Causa raíz
+### 3.1 Magnitud
 
-Hay una divergencia entre la definición de "vigente" de Datacredito y la nuestra.
+**22 de 24 sujetos** presentan delta entre `active_credits` de `InfoAgregada` y nuestra suma `is_open(PortfolioAccounts) + is_open(CreditCards)`.
 
-**Nuestro criterio (`OPEN_ACCOUNT_CONDITIONS`):**
+| sujeto | xml_vigentes | ext_vigentes | delta | xml_cerrados | ext_cerrados |
+|---|---|---|---|---|---|
+| 10064554 | 1 | 1 | **0** ✅ | 5 | 5 |
+| 1030613409 | 8 | 8 | **0** ✅ | 12 | 12 |
+| 19448324 | 5 | 5 | **0** ✅ | 51 | 51 |
+| 13452289 | 14 | 14 | **0** ✅ | 75 | 75 |
+| 11794399 | 11 | 7 | **4** ❌ | 26 | 30 |
+| 12532647 | 16 | 10 | **6** ❌ | 25 | 31 |
+| 12979619 | 4 | 1 | **3** ❌ | 11 | 14 |
+| 13364177 | 11 | 7 | **4** ❌ | 14 | 18 |
+| 14012717 | 10 | 2 | **8** ❌ | 10 | 18 |
+| 18595160 | 3 | 2 | **1** ❌ | 12 | 13 |
+| 22389910 | 2 | 1 | **1** ❌ | 7 | 8 |
+| 22436588 | 10 | 6 | **4** ❌ | 17 | 21 |
+| 32322427 | 7 | 6 | **1** ❌ | 26 | 27 |
+| 34554868 | 10 | 6 | **4** ❌ | 20 | 24 |
+| 39007435 | 5 | 4 | **1** ❌ | 41 | 42 |
+| 43003890 | 7 | 3 | **4** ❌ | 22 | 26 |
+| 43432541 | 10 | 6 | **4** ❌ | 15 | 19 |
+| 49551526 | 7 | 6 | **1** ❌ | 17 | 18 |
+| 73102905 | 11 | 9 | **2** ❌ | 51 | 53 |
+| 7423628 | 16 | 12 | **4** ❌ | 53 | 57 |
+| 78696456 | 10 | 6 | **4** ❌ | 30 | 34 |
+| 80491927 | 10 | 4 | **6** ❌ | 13 | 19 |
+| 8526939 | 5 | 2 | **3** ❌ | 12 | 15 |
+| 8737538 | 10 | 3 | **7** ❌ | 6 | 13 |
+
+El delta es siempre igual y opuesto entre active y closed: lo que falta en vigentes sobra exactamente en cerrados. No hay registros perdidos, solo clasificados en el grupo equivocado.
+
+### 3.2 Causa raíz identificada
+
+Investigación sobre el sujeto `14012717` (delta=8, caso extremo) revela el patrón con exactitud quirúrgica:
+
+**InfoAgregada `creditoVigentes=10`** desglosado: `sectorFinanciero=1, sectorReal=6, sectorTelcos=3`
+
+Cruzando con los 20 `CuentaCartera` del sujeto y sus saldos reales del XML:
+
+| Entidad | Sector | Código EC | Saldo | Nuestro `is_open` | DC "vigente" |
+|---|---|---|---|---|---|
+| ITAU CORPBANCA LIBRANZAS | Financiero | 06 cerrada | 3,795,000 | ❌ closed | ✅ vigente |
+| ASLEGAL SERVICIOS CRED | Real | 06 cerrada | 1,289,000 | ❌ closed | ✅ vigente |
+| CLARO SERV MOV | Telco | 05 cerrada | 168,000 | ❌ closed | ✅ vigente |
+| CLARO SERV MOV | Telco | 05 cerrada | 53,000 | ❌ closed | ✅ vigente |
+| CREDYTY | Real | 02 cerrada | 1,192,000 | ❌ closed | ✅ vigente |
+| CFG PARTNERS ORI:VIVE_ALPHA | Real | 01 vigente | 16,316,000 | ✅ open | ✅ vigente |
+| COLOMBIA MOVIL | Telco | 01 vigente | 0 | ✅ open | ✅ vigente |
+| GRUPO CONSULTO COLPATRIA | Real | 06 cerrada | 1,027,000 | ❌ closed | ✅ vigente |
+| GRUPO JURIDICO FALABELLA | Real | 06 cerrada | 2,900,000 | ❌ closed | ✅ vigente |
+| RED INSTANTIC ORIG-MOVISTAR | Telco | 02 cerrada | 129,000 | ❌ closed | ✅ vigente |
+| ITAU CORPBANCA CARTERA TOTAL x4 | Financiero | 03 cerrada | None | ❌ closed | ❌ cerrado |
+| RAYCO S.A. DISTRIBUIDORA | Real | 03 cerrada | None | ❌ closed | ❌ cerrado |
+| BAYPORT x2 | Real | 03 cerrada | 0 | ❌ closed | ❌ cerrado |
+| ANTES AVANTEL | Telco | 03 cerrada | -1 | ❌ closed | ❌ cerrado |
+
+Los 10 que Datacredito considera "vigentes" son exactamente las 10 cuentas con `saldoActual > 0` O con código vigente (01). Las que tienen `saldo = None`, `saldo = 0` o `saldo = -1` son cerradas. El patrón es consistente al 100% en este sujeto.
+
+**La regla de Datacredito para "vigente" es:**
 ```
-ON_TIME, OVERDUE_DEBT, WRITTEN_OFF, DOUBTFUL_COLLECTION, CLAIM_IN_PROGRESS
-→ EC codes: 01, 13-41, 45, 47, 60
+vigente = (EstadoCuenta.codigo IN rango_vigente) OR (saldoActual > 0)
 ```
 
-**Datacredito `creditoVigentes`:** incluye adicionalmente cuentas con EC=03, 05, 06 (y posiblemente otros códigos "cancelados") cuando tienen saldo pendiente o deuda activa.
+Una cuenta con código de cancelación (06 = cancelada por la institución) pero saldo pendiente positivo sigue siendo una obligación activa: el deudor aún debe dinero independientemente de cómo el producto fue administrativamente cerrado.
 
-Evidencia concreta en casos extremos:
+### 3.3 Impacto por sector
 
-| Persona | EC dist. de CuentaCartera | Nuestros open | Datacredito vigentes | Delta |
-|---------|--------------------------|---------------|---------------------|-------|
-| 8737538 | 01×3, 03×5, 05×1, 06×5, 00×1 | 3 | 10 | 7 |
-| 14012717 | 01×2, 02×2, 03×10, 05×2, 06×4 | 2 | 10 | 8 |
+| Sector | Frecuencia del bug | Relevancia para motor de decisión |
+|---|---|---|
+| **Real** | Alta (5–6 cuentas por sujeto afectado) | **Crítica** — gestoras de crédito, retailers, libranzas con saldo |
+| **Financiero** | Media (1–2 por sujeto) | **Alta** — libranzas bancarias con saldo pendiente |
+| **Cooperativo** | Baja | Media |
+| **Telecom** | Media (CLARO con saldo) | Baja — servicios, no crédito financiero |
 
-En 8737538 hay 5 cuentas EC=03 (cancelada por mal manejo) y 5 EC=06 (cancelada por la entidad). Datacredito las cuenta como vigentes — probablemente porque tienen saldo pendiente. La cuenta no está pagada, solo la relación comercial fue terminada. En 14012717 hay 10 cuentas EC=03 que Datacredito considera vigentes.
+### 3.4 Fix propuesto
 
-**Conclusión:** EC=03, 05, 06 representan "cancelación administrativa" del producto, no pago de la deuda. El saldo puede persistir (y frecuentemente lo hace). Datacredito incluye estas cuentas en `creditoVigentes` porque la deuda sigue viva.
+En `xml_adapter/models/global_report_models.py`, cambiar `PortfolioAccount.is_open`:
 
-### Riesgo para el engine
+```python
+# Actual — solo considera el código EC:
+@property
+def is_open(self) -> bool:
+    condition = self.states.account_statement_code
+    if condition is None:
+        return False
+    return condition in OPEN_ACCOUNT_CONDITIONS
 
-**RIESGO ALTO.** Esta diferencia tiene consecuencias directas sobre el motor de decisión:
+# Corregido — regla de Datacredito: código vigente OR saldo > 0
+@property
+def is_open(self) -> bool:
+    condition = self.states.account_statement_code
+    has_vigente_code = condition is not None and condition in OPEN_ACCOUNT_CONDITIONS
+    has_balance = (
+        self.values is not None
+        and self.values.outstanding_balance is not None
+        and self.values.outstanding_balance > 0
+    )
+    return has_vigente_code or has_balance
+```
 
-1. **Subestimación de exposición:** Un deudor con 8 créditos EC=03 (cancelados por mal manejo) con saldo pendiente — el engine los cuenta como cerrados y no los incluye en el cálculo de obligaciones activas. Esto puede generar una imagen crediticia significativamente más favorable que la real.
+Aplicar lógica equivalente en `CreditCard.is_open` en `credit_card_models.py`.
 
-2. **Sectores afectados:** No es un problema de telcos. EC=03/05/06 con saldo aparece en bancos (Banco de Bogotá, Bancolombia), microfinanzas (Crediexpress), cooperativas (Coobolarqui) y créditos de consumo general (CRJA S.A).
-
-3. **EC=03 es señal de riesgo:** "Cancelada por mal manejo" indica que la entidad terminó la relación por comportamiento del deudor — es una bandera roja, no un cierre normal. Si el engine trata estas cuentas como cerradas/pagadas, pierde información de riesgo crítica.
-
-**Acción recomendada:** Revisar `OPEN_ACCOUNT_CONDITIONS` para incluir EC=03, 05, 06 cuando el saldo (`outstanding_balance > 0`). Alternativamente, crear una categoría `ADMINISTRATIVELY_CLOSED_WITH_DEBT` distinta de `CLOSED_PAID`.
-
----
-
-## Hallazgo 2 — Gaps en `transform_payment_status`
-
-### Alcance
-
-**Afecta 6 de 25 personas (24%).** Un único transformer responsable de todos los gaps.
-
-| Código EP | Ocurrencias | Entidad(es) | Sector | record_type |
-|-----------|-------------|-------------|--------|-------------|
-| `41` | 4 | ORI BANCOLOMBI PAUTO REINTEGR, CRJA S.A, COOBOLARQUI LIBRANZA | Banca / Cooperativa / Libranza | PortfolioAccount |
-| `19` | 1 | CREDIEXPRESS POPAYAN | Microfinanzas | PortfolioAccount |
-| `37` | 1 | BBVA COLOMBIA | Banca (tarjeta) | CreditCard |
-| `17` | 1 | CLARO TEC MOV | Telecom | PortfolioAccount |
-| `14` | 1 | CLARO SERV MOV | Telecom | PortfolioAccount |
-
-### Análisis por código
-
-**EP=41 (4 ocurrencias — mayor frecuencia, mayor riesgo):**
-Todos los casos tienen EC=02 y saldo 100% en mora (saldo = mora):
-- SFI (sistema financiero): saldo $625k, mora $625k
-- SFI: saldo $236k, mora $236k
-- CON (consumo): saldo $11.26M, mora $9.78M
-- LBZ (libranza): saldo $21k, mora $21k
-
-El patrón saldo=mora en EC=02 sugiere que EP=41 es un estado de deuda en cobro externo o cedida a cartera de difícil cobro. **No es telco.** Aparece en banca, consumo y libranza.
-
-**EP=37 (BBVA, TarjetaCredito):**
-EC=02, saldo=$1.6M, mora=$2.02M (mora > saldo — saldo ya en castigada o con capital vencido). Tarjeta de crédito de banco principal.
-
-**EP=19 (CREDIEXPRESS):**
-EC=02, saldo=$476k, mora=$476k (100% en mora). Microcrédito regional.
-
-**EP=14 y EP=17 (Claro):**
-Sector telecom. EP=14 en cuenta activa (EC=01) sin saldo. EP=17 en cuenta cerrada (EC=02) con mora $129k. Riesgo bajo para el engine crediticio.
-
-### Riesgo para el engine
-
-**EP=41: RIESGO ALTO.** Aparece en Libranza — exactamente el producto que negocio considera crítico. Una libranza con EP=41 tiene toda su deuda en mora y el estado de pago queda como `UNKNOWN`. El engine no puede distinguir si es cobro judicial, cartera cedida, o acuerdo extrajudicial. La decisión crediticia puede estar basada en información incompleta.
-
-**EP=19, EP=37: RIESGO MEDIO.** Banca y microfinanzas, no telco. El estado de pago de cuentas con mora total queda indeterminado.
-
-**EP=14, EP=17 (telco): RIESGO BAJO.** Servicios públicos/telecom tienen peso menor en decisiones de crédito formal. EP=14 además está en cuenta sin saldo.
+> **Nota de diseño:** Esta corrección aumentará el conteo de `active_obligations` en el full-report. Cuentas con código "cancelada" pero deuda pendiente aparecerán como activas. Esto es correcto para el motor crediticio: lo que importa para evaluar riesgo es si hay deuda pendiente, no si el producto fue cancelado administrativamente.
 
 ---
 
-## Hallazgo 3 — Gaps en `transform_origin_state`
+## 4. Transformer: `transform_payment_frequency`
 
-### Alcance
+**385 eventos UNKNOWN** distribuidos en dos causas distintas.
 
-**Afecta 1 de 25 personas (8737538).** 2 códigos desconocidos.
+### 4.1 Causa A: `periodicidad = null` (255 eventos — 66%)
 
-| Código EO | Entidad | EC | EP | Tipo cuenta | Saldo |
-|-----------|---------|----|----|-------------|-------|
-| `5` | BANCO BOGOTA VIVIENDA | 05 (voluntariamente cancelada) | 47 (dudoso recaudo) | CAV (vivienda) | $46.78M, mora $3.57M |
-| `6` | GASCARIBE | 01 (al día) | 01 | Servicio público | N/D |
+El atributo `periodicidad` está **ausente en el XML**. No es un código desconocido — el emisor simplemente no reporta el campo.
 
-### Análisis
+**Top entidades por sector:**
 
-`EstadoOrigen` indica el estado de la obligación al momento de originarse. Los códigos conocidos en el mapping son 0 (no informado), 1 (normal), 2 (reestructurado), 3 (refinanciado), 99 (desconocido).
+| Entidad | Sector | Eventos | Observación |
+|---|---|---|---|
+| RAYCO S.A. DISTRIBUIDORA | **Real** | 36 | Distribuidora consumo masivo |
+| CLARO SERV MOV | Telecom | 17 | Servicio móvil |
+| BCO POPULAR LIBRANZA | **Financiero** | 14 | Libranza bancaria |
+| ITAU CORPBANCA CARTERA TOTAL | **Financiero** | 13 | Cartera total |
+| COOTRAMED | Cooperativo | 11 | Crédito cooperativo |
+| GNB SUDAMERIS | **Financiero** | 10 | Crédito |
+| BCO DAVIVIENDA LIBRE INVERS. | **Financiero** | 7 | Libre inversión |
+| MUEBLES JAMAR | Real | 6 | Consumo muebles |
+| CORPORACION INTERACTUAR | Real | 6 | Microcrédito |
+| COOPANTEX | Cooperativo | 6 | Crédito cooperativo |
+| BAYPORT COLOMBIA LIBRANZA | Real | 5 | Libranza |
 
-- **EO=5:** Cuenta de vivienda (CAV) de Banco de Bogotá, originada en estado 5 (desconocido). Actualmente en dudoso recaudo con mora de $3.57M. El origen podría ser "en proceso de demanda" o una reestructuración más compleja.
-- **EO=6:** GASCARIBE (empresa de gas), cuenta al día. Estado de origen 6 — posiblemente "servicio público" o categoría específica del sector.
+**Análisis:** La ausencia de `periodicidad` es sistemática en **libranzas** (BCO POPULAR, GNB SUDAMERIS, BAYPORT) — productos con descuento automático por nómina sin una periodicidad estándar reportable. También en carteras de crédito total (ITAU) y créditos de distribuidora (RAYCO).
 
-### Riesgo para el engine
+**Impacto:** `PaymentFrequency.UNKNOWN` en el modelo. Para el motor de decisión, la periodicidad es un campo de contexto, no de scoring primario. **Acción: ninguna urgente** — aceptar que este campo no siempre está disponible.
 
-**RIESGO BAJO-MEDIO.** `EstadoOrigen` es un atributo contextual (cómo nació el crédito), no un estado actual. El engine puede tomar decisiones razonables sin este dato. Sin embargo, para créditos de vivienda con saldos altos ($46M), conocer el origen puede ser relevante para políticas de exclusión o condicionamiento.
+### 4.2 Causa B: `periodicidad = "9"` (71 eventos — 18%)
 
----
+Código `"9"` no documentado en Tabla oficial (rango 0–7). **SISTECREDITO domina con 51/71 eventos (72%).**
 
-## Hallazgo 4 — Discrepancias menores de balance
+| Entidad | Sector | Eventos |
+|---|---|---|
+| SISTECREDITO | **Real** | 51 |
+| BCO OCCIDENTE LIBRANZAS | Financiero | 2 |
+| ITAU CORPBANCA LIBRANZAS | Financiero | 2 |
+| RED INSTANTIC ORIG-MOVISTAR | Telecom | 2 |
+| FAMI CREDITO | Real | 2 |
+| FONPROCAPS | Real | 2 |
+| BANCOLOMBIA | **Financiero** | 1 |
+| Otros | Mixto | 9 |
 
-### Alcance
+**SISTECREDITO** es una de las mayores compañías de crédito de consumo de Colombia (electrodomésticos, línea blanca, muebles). Con 51 eventos en una muestra de 24, es un emisor masivo. El código `"9"` probablemente representa **cuota única o crédito de plazo irregular** — patrón frecuente en créditos de almacén/retail que no tienen cuota fija mensual.
 
-| Persona | Check | XML | Extraído | Delta | Dirección |
-|---------|-------|-----|----------|-------|-----------|
-| 13364177 | total_balance | 75,761,000 | 75,760,998 | 2 | extraído < xml |
-| 13452289 | total_balance | 17,339,000 | 17,338,998 | 2 | extraído < xml |
-| 13452289 | total_past_due | 0 | -2 | 2 | extraído < xml (negativo) |
-| 34554868 | total_past_due | 1,900,000 | 1,899,998 | 2 | extraído < xml |
-| 78696456 | total_balance | 184,866,000 | 184,990,999 | 124,999 | **extraído > xml** |
-| 78696456 | total_past_due | 35,786,000 | 35,785,998 | 2 | extraído < xml |
-| 80491927 | total_balance | 152,045,000 | 152,044,995 | 5 | extraído < xml |
-| 80491927 | total_past_due | 6,668,000 | 6,667,995 | 5 | extraído < xml |
-
-### Análisis
-
-**Delta=2 (5 casos):** Ruido de punto flotante. Los XMLs almacenan algunos valores con decimales (p.ej. `saldoActual="625000.0"`) y la suma de múltiples flotantes genera error de representación. El validador tiene tolerancia ±1 — considerar ampliar a ±5. **No hay pérdida de datos.**
-
-**13452289 total_past_due=-2:** El XML reporta `total_past_due=0` pero nuestra suma da -2. Esto indica que alguna cuenta tiene `past_due_amount` negativo en el XML (probablemente un saldo a favor o ajuste contable). No es un error de extracción.
-
-**78696456 total_balance=+$124,999 (extraído > xml):** El único caso donde extraemos más que el agregado. Investigación previa sugiere que Datacredito excluye del agregado la cuenta de CLARO TEC MOV (EP=17, código desconocido) al calcular el total. Delta es <0.07% del total — insignificante para decisión crediticia.
-
-### Riesgo para el engine
-
-**RIESGO BAJO.** Los deltas de ±2 a ±5 son ruido sistemático de punto flotante, no errores de lógica. El engine puede confiar en los balances individuales de cada cuenta — el problema está solo en el cómputo del agregado del validador.
+**Acción recomendada:** Verificar en Manual v1.6.7 si el rango de `periodicidad` fue extendido más allá de 7. Si no está documentado, añadir `PaymentFrequency.ON_DEMAND` o `IRREGULAR` y mapearlo. SISTECREDITO es financieramente significativo.
 
 ---
 
-## Análisis de riesgo para el engine — Resumen
+## 5. Transformer: `transform_guarantee`
 
-| Hallazgo | Frecuencia | Sectores afectados | Riesgo engine | Prioridad |
-|----------|-----------|-------------------|---------------|-----------|
-| Delta active_credits (EC=03/05/06 con saldo) | 20/25 (80%) | Todos (banca, consumo, libranza, microfinanzas) | **ALTO** — subestima deuda activa | 🔴 Crítica |
-| EP=41 desconocido (cuentas 100% en mora) | 4 ocurrencias, 3 personas | Banca, cooperativa, **Libranza** | **ALTO** — pierde estado de pago en mora total | 🔴 Crítica |
-| EP=19, EP=37 desconocidos | 1 ocurrencia c/u | Microfinanzas, Banca (tarjeta) | **MEDIO** — estado de pago en mora total | 🟡 Alta |
-| EO=5, EO=6 desconocidos | 2 ocurrencias, 1 persona | Banca vivienda, Servicios públicos | **BAJO-MEDIO** — contexto de origen | 🟡 Media |
-| EP=14, EP=17 desconocidos (telco) | 2 ocurrencias, 1 persona | Telecom | **BAJO** | 🟢 Baja |
-| Discrepancias de balance (±2/5) | 7 ocurrencias | N/A | **BAJO** — floating point | 🟢 Baja |
+**284 eventos UNKNOWN** concentrados en 3 valores.
 
----
+### 5.1 Causa A: `garantia.tipo = "9"` (334 eventos — 98% de este transformer)
 
-## Acciones recomendadas
+**Todos los 334 eventos provienen exclusivamente de `GlobalDebtRecord`** (nodo `EndeudamientoGlobal > Garantia`). Nunca de `CuentaCartera` ni `TarjetaCredito`. Source siempre `DC`.
 
-### Críticas (bloquean el engine)
+Tabla 11 del manual cubre: `"0"`, `"1"`, `"2"`, `"A"`–`"O"`. El código `"9"` no está en ninguna de estas entradas.
 
-**1. Revisar criterio `OPEN_ACCOUNT_CONDITIONS` para EC=03/05/06 con saldo**
+**Hipótesis:** `EndeudamientoGlobal` es un **resumen agregado de deuda por entidad**, no un registro de obligación individual. La Tabla 11 aplica a obligaciones específicas. Para el nodo de resumen global, Datacredito usa `"9"` posiblemente con el significado de "no aplica para resumen" o "sin garantía específica en el consolidado".
 
-La lógica actual clasifica como "cerrada" cualquier cuenta con EC=03 (cancelada por mal manejo), 05 (cancelada voluntariamente) o 06 (cancelada por la entidad). Esto es correcto desde la perspectiva del *producto* (el crédito fue cancelado), pero incorrecto desde la perspectiva de la *deuda* (el saldo puede persistir).
+**Impacto en motor de decisión:** El campo `guarantee_type` en `GlobalDebtRecord` es informativo pero **no crítico**. Lo importante del EndeudamientoGlobal es el saldo y el tipo de crédito, no la garantía del resumen.
 
-Para el engine, la pregunta relevante es: **¿tiene el solicitante deuda viva?** — no si el producto está activo.
+**Acción:** Añadir `"9"` al mapping con un valor representativo (e.g., `GuaranteeType.NOT_APPLICABLE` si existe o un nuevo `SUMMARY_NOT_SPECIFIED`). Verificar en manual si existe tabla específica para garantías de `EndeudamientoGlobal`.
 
-Opciones:
-- Incluir EC=03/05/06 en `OPEN_ACCOUNT_CONDITIONS` incondicionalmente (más conservador)
-- Tratarlos como open solo si `outstanding_balance > 0` (más preciso, requiere lógica en el modelo)
+### 5.2 Causa B: `garantia.tipo = "Q"` (13 eventos)
 
-**2. Mapear EP=41 en `PaymentStatus`**
+Presente en `CreditCard` (BCO COLPATRIA, BANCOUNION) y algunos `GlobalDebtRecord`. La Tabla 11 va de `"A"` a `"O"` — `"Q"` es una extensión posterior a `"O"`, posiblemente documentada en versión más reciente del manual.
 
-EP=41 aparece en 4 cuentas de sectores financieros (no telco), incluyendo una Libranza. El patrón (EC=02 + 100% mora) sugiere "Cartera cedida a cobro externo" o "Cobro judicial sobre cuenta cerrada". Verificar en el Manual de Insumos XML de Datacredito (disponible en `data/`).
+BCO COLPATRIA y BANCOUNION son entidades **financieras relevantes**. Este código importa para el análisis de garantías en tarjetas de crédito.
 
-### Altas
+**Acción:** Revisar Manual v1.6.7 (`data/HDC+ PN - Manual de Implementacion WS v1.6.7...pdf`) para confirmar si `"Q"` está documentado.
 
-**3. Mapear EP=19 y EP=37**
+### 5.3 Causa C: `garantia.tipo = "P"` (1 evento)
 
-EP=19 en microfinanzas (cuenta cerrada, 100% mora) y EP=37 en tarjeta BBVA (mora > saldo). Probablemente estados de cobro para diferentes niveles de delinquencia en cuentas cerradas.
-
-**4. Mapear EO=5 y EO=6**
-
-Dos códigos en un único XML. EO=5 en crédito de vivienda con mora activa. EO=6 en servicios públicos.
-
-### Bajas
-
-**5. Ampliar tolerancia del validador a ±5**
-
-Los deltas de 2 y 5 son sistemáticos (floating point). La tolerancia ±1 genera falsos positivos que añaden ruido al análisis.
+Evento único. Misma hipótesis que `"Q"` — extensión de tabla. **Prioridad muy baja.**
 
 ---
 
-## Estado del pipeline por categoría
+## 6. Discrepancias de balance
 
-| Categoría | Estado | Notas |
-|-----------|--------|-------|
-| Extracción de nodos (counts) | ✅ Perfecto | 25/25 personas con conteos exactos |
-| AccountType (incl. LBZ) | ✅ Perfecto | Sin gaps en 25 personas |
-| AccountCondition | ✅ Perfecto | Sin gaps de enum — el problema es de criterio, no de mapeo |
-| PaymentStatus | ⚠️ Gaps activos | EP=14,17,19,37,41 sin mapear |
-| OriginState | ⚠️ Gaps activos | EO=5,6 sin mapear (1 persona) |
-| Balances individuales | ✅ Confiable | Floating point solo en agregados |
-| Clasificación open/closed | ⚠️ Divergente | EC=03/05/06 con saldo subestima deuda activa en 80% de casos |
+La gran mayoría de sujetos pasan con delta ≤ 1.0 (diferencias de redondeo admisibles). Dos excepciones:
+
+### 6.1 Sujeto `78696456` — delta 124,999 miles de pesos (~125M COP)
+
+```
+xml_value  = 184,866,000  (InfoAgregada total_balance)
+ext_value  = 184,990,999  (suma de saldoActual en modelos)
+delta      = 124,999 miles COP
+```
+
+La suma de saldos que extraemos supera en ~125M pesos el total declarado por InfoAgregada. Este es el único sujeto con discrepancia de balance significativa (los demás tienen delta ≤ 1.0).
+
+**Hipótesis más probable:** Directamente relacionado con el bug de `is_open`. Cuando cuentas con código cerrado pero saldo > 0 se clasifiquen correctamente (Fix de Prioridad 1), verificar si InfoAgregada excluye esos saldos de su total_balance. Si InfoAgregada solo suma saldos de cuentas con código vigente, la discrepancia desaparecerá con el fix o se entenderá mejor.
+
+### 6.2 Sujeto `13452289` — `total_past_due` con valor extraído = -2.0
+
+```
+xml_value  = 0    (InfoAgregada total_past_due = 0)
+ext_value  = -2   (suma de saldoMora en modelos)
+delta      = 2
+```
+
+Un `saldoMora = -1.0` o similar en alguna cuenta produce una suma negativa. En Datacredito, `-1` en campos numéricos puede significar "sin información" o "no aplica". Si se suma directamente como valor monetario, el total queda en negativo.
+
+**Acción:** En `XmlExtractor.get_float()`, tratar valores negativos de `saldoMora` como `None` antes de retornarlos, o en el serializer excluir valores negativos de la suma de mora.
+
+---
+
+## 7. Transformers sin eventos UNKNOWN en la muestra
+
+Los siguientes transformers **no generaron ningún evento** en los 24 sujetos. Sus mappings cubren completamente el corpus actual:
+
+| | | |
+|---|---|---|
+| `transform_account_condition` | `transform_savings_account_status` | `transform_industry_sector` |
+| `transform_account_type` | `transform_origin_state` | `transform_ownership_situation` |
+| `transform_payment_status` | `transform_franchise` | `transform_credit_card_class` |
+| `transform_plastic_status` | `transform_global_debt_credit_type` | `transform_query_reason` |
+| `transform_debtor_role` | `transform_obligation_type` | `transform_contract_type` |
+
+Esto no garantiza cobertura total ante XMLs futuros, pero muestra solidez para el corpus actual.
+
+---
+
+## 8. Análisis por sector
+
+### Sector financiero (sector=1) — Alta prioridad
+
+| Entidad | Problema | Impacto |
+|---|---|---|
+| BCO POPULAR LIBRANZA | `periodicidad=null` | Bajo — campo secundario |
+| GNB SUDAMERIS | `periodicidad=null` | Bajo |
+| ITAU CORPBANCA CARTERA TOTAL | `periodicidad=null` | Bajo |
+| **ITAU CORPBANCA LIBRANZAS** | **mis-clasificada como cerrada** (saldo 3.7M) | **Alto** |
+| BCO DAVIVIENDA | `periodicidad=null` | Bajo |
+| **BCO COLPATRIA** | `garantia="Q"` en tarjetas | Medio |
+| **BANCOUNION** | `garantia="Q"` en libranzas | Medio |
+| BANCOLOMBIA | `periodicidad="9"` (1 evento) | Bajo |
+
+Entidades bancarias principales están bien extraídas en montos. El bug de vigente/cerrado afecta a ITAU LIBRANZAS con 3.7M en saldo — deuda bancaria que queda invisible como cerrada.
+
+### Sector real (sector=3) — Alta prioridad
+
+| Entidad | Problema | Impacto |
+|---|---|---|
+| RAYCO S.A. DISTRIBUIDORA | `periodicidad=null` (36 eventos) | Bajo |
+| **SISTECREDITO** | `periodicidad="9"` (51 eventos) | **Medio** — emisor masivo |
+| **ASLEGAL, CREDYTY, GRUPO CONSULTO, GRUPO JURIDICO** | **mis-clasificadas como cerradas** (saldo > 0) | **Alto** |
+| MUEBLES JAMAR | `periodicidad=null` | Bajo |
+| BAYPORT COLOMBIA LIBRANZA | `periodicidad=null` | Bajo |
+
+El sector real tiene la **mayor concentración del bug de clasificación**. Empresas gestoras de crédito (ASLEGAL, CREDYTY) y recuperadoras (GRUPO JURIDICO FALABELLA) muestran códigos cerrados con saldo activo — exactamente el patrón más relevante para evaluar riesgo de deuda real.
+
+### Sector cooperativo (sector=2) — Prioridad media
+
+COOTRAMED, COOPANTEX, COOVESTIDO tienen `periodicidad=null` en todos sus créditos. Comportamiento esperado para productos cooperativos. Sin mis-clasificaciones.
+
+### Sector telecom (sector=4) — Baja prioridad
+
+CLARO y COLOMBIA MOVIL generan eventos de `periodicidad=null` y en algunos casos son mis-clasificadas por saldo. Las obligaciones telecom (servicios de línea) no son determinantes para scoring crediticio. **Validar pero no priorizar.**
+
+---
+
+## 9. Plan de acción priorizado
+
+### P1 — Bug crítico: `is_open` no considera saldo pendiente
+
+**Archivos:** `xml_adapter/models/global_report_models.py`, `xml_adapter/models/credit_card_models.py`
+
+Cambiar `PortfolioAccount.is_open` y `CreditCard.is_open` para incluir la condición `outstanding_balance > 0`. Ver sección 3.4 para el código exacto.
+
+**Efecto esperado:** Los 22 sujetos con delta activo/cerrado deberían pasar el check. También resolverá parcialmente la discrepancia de balance de `78696456`.
+
+### P2 — `periodicidad = "9"`: mapear SISTECREDITO
+
+**Archivo:** `transformers/global_report_transformer.py`
+
+Añadir `"9"` al enum `PaymentFrequency` y al mapping de `transform_payment_frequency`. Revisar Manual v1.6.7 primero; si no está documentado, usar `ON_DEMAND` o `IRREGULAR`. Impacta 51 cuentas de un solo emisor masivo del sector real.
+
+### P3 — `garantia.tipo = "9"`: mapear para EndeudamientoGlobal
+
+**Archivo:** `transformers/shared_transformers.py`
+
+Añadir `"9"` al mapping de `transform_guarantee`. Es el evento más frecuente (334) pero de menor impacto en decisión. Verificar en manual si existe código específico para `EndeudamientoGlobal`.
+
+### P4 — `garantia.tipo = "Q"`: verificar manual v1.6.7
+
+**Archivo:** `transformers/shared_transformers.py`
+
+Revisar `data/HDC+ PN - Manual de Implementacion WS v1.6.7...pdf` para confirmar significado de `"Q"`. Afecta tarjetas del sector financiero (BCO COLPATRIA, BANCOUNION). Si está documentado, añadir al enum `GuaranteeType` y al mapping.
+
+### P5 — `saldoMora < 0`: no sumar como valor monetario
+
+**Archivo:** `xml_adapter/xml_extractors/xml_extractor.py` o en builders/serializers
+
+Tratar `saldoMora < 0` como `None`. Resuelve el `total_past_due = -2` del sujeto `13452289`.
+
+### P6 — Balance discrepancy `78696456`
+
+Dependiente de P1. Una vez corregido `is_open`, volver a correr el validate y verificar si la discrepancia desaparece o se mantiene. Si persiste, investigar la cuenta específica con saldo anómalo.
+
+---
+
+## 10. Sujetos 100% limpios
+
+Tres sujetos pasan todos los checks del validate:
+
+| Sujeto | Cartera | Tarjetas | Cuentas Ahorro | Saldo total | Eventos debug |
+|---|---|---|---|---|---|
+| `10064554` | 5 | 1 | 2 | 18.26M | 3 (periodicidad null — sin impacto) |
+| `1030613409` | 11 | 9 | 2 | 22.80M | 3 (garantía Q en Colpatria) |
+| `19448324` | 40 | 16 | 7 | 30.39M | 30 (periodicidad null + garantía Q) |
+
+`19448324` es el sujeto más complejo de la muestra (40 cuentas cartera, 16 tarjetas de crédito) y pasa completamente limpio en validate. Sus 30 eventos debug son todos `periodicidad=null` y `garantía=Q/9` — ninguno afecta la clasificación vigente/cerrado porque todas sus cuentas activas tienen código EC vigente (código 01) con o sin saldo.
+
+---
+
+## 11. Conclusiones
+
+1. **La extracción estructural es perfecta.** 100% de nodos extraídos en todos los tipos. No hay pérdida de datos crudos.
+
+2. **El único bug que afecta la lógica de decisión** es la clasificación vigente/cerrado. Una cuenta con código EC cerrado pero `saldoActual > 0` es una obligación activa desde la perspectiva crediticia. El fix está localizado en dos métodos `is_open`.
+
+3. **Los 674 eventos UNKNOWN** se concentran en solo 2 transformers y 3 valores (`null`, `"9"`, `"Q"`). No hay dispersión — son patrones muy concretos y accionables.
+
+4. **`periodicidad=null` es comportamiento esperado** en libranzas y productos sin cuota fija. No es un error de mapping sino una ausencia de dato en origen.
+
+5. **`garantia="9"` en `EndeudamientoGlobal`** (334 eventos, 49.6% del total) es probablemente un código interno de Datacredito para el nodo de resumen. Es el evento más frecuente pero el de menor impacto en decisión crediticia.
+
+6. **El DebugTracer (Fase 3 completada)** demostró su valor: los dos transformers nuevos instrumentados (`payment_frequency`, `guarantee`) revelaron todos los 674 eventos. Sin ellos, estos valores hubieran seguido siendo fallbacks silenciosos invisibles.

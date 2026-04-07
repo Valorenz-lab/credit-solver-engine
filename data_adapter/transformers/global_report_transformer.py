@@ -41,8 +41,23 @@ def transform_account_type(
         return AccountType.UNKNOWN
 
 
-def transform_debtor_role(value: Optional[str]) -> DebtorRole:
+def transform_debtor_role(
+    value: Optional[str],
+    *,
+    xml_node: str = "Caracteristicas",
+    xml_attribute: str = "calidadDeudor",
+    record_type: str = "",
+    record_context: Optional[dict[str, str]] = None,
+) -> DebtorRole:
     if not value or value.strip() == "":
+        record_unknown(
+            "transform_debtor_role",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return DebtorRole.UNKNOWN
     try:
         number_value = int(value)
@@ -61,16 +76,46 @@ def transform_debtor_role(value: Optional[str]) -> DebtorRole:
             97: DebtorRole.COMMUNAL,
             99: DebtorRole.NOT_APPLICABLE,
         }
-
         if number_value in mapping:
             return mapping[number_value]
+        record_unknown(
+            "transform_debtor_role",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return DebtorRole.UNKNOWN
     except ValueError:
+        record_unknown(
+            "transform_debtor_role",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return DebtorRole.UNKNOWN
 
 
-def transform_payment_frequency(value: Optional[str]) -> PaymentFrequency:
+def transform_payment_frequency(
+    value: Optional[str],
+    *,
+    xml_node: str = "Valor",
+    xml_attribute: str = "periodicidad",
+    record_type: str = "",
+    record_context: Optional[dict[str, str]] = None,
+) -> PaymentFrequency:
     if not value or value.strip() == "":
+        record_unknown(
+            "transform_payment_frequency",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return PaymentFrequency.UNKNOWN
     try:
         number_value = int(value)
@@ -86,13 +131,44 @@ def transform_payment_frequency(value: Optional[str]) -> PaymentFrequency:
         }
         if number_value in mapping:
             return mapping[number_value]
+        record_unknown(
+            "transform_payment_frequency",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return PaymentFrequency.UNKNOWN
     except ValueError:
+        record_unknown(
+            "transform_payment_frequency",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return PaymentFrequency.UNKNOWN
 
 
-def transform_obligation_type(value: Optional[str]) -> ObligationType:
+def transform_obligation_type(
+    value: Optional[str],
+    *,
+    xml_node: str = "Caracteristicas",
+    xml_attribute: str = "tipoObligacion",
+    record_type: str = "",
+    record_context: Optional[dict[str, str]] = None,
+) -> ObligationType:
     if not value or value.strip() == "":
+        record_unknown(
+            "transform_obligation_type",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return ObligationType.UNKNOWN
     try:
         number_value = int(value)
@@ -109,8 +185,24 @@ def transform_obligation_type(value: Optional[str]) -> ObligationType:
         }
         if number_value in mapping:
             return mapping[number_value]
+        record_unknown(
+            "transform_obligation_type",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return ObligationType.UNKNOWN
     except ValueError:
+        record_unknown(
+            "transform_obligation_type",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return ObligationType.UNKNOWN
 
 
@@ -214,16 +306,42 @@ def transform_account_condition(
     return result
 
 
-def transform_contract_type(value: Optional[str]) -> ContractType:
+def transform_contract_type(
+    value: Optional[str],
+    *,
+    xml_node: str = "Caracteristicas",
+    xml_attribute: str = "tipoContrato",
+    record_type: str = "",
+    record_context: Optional[dict[str, str]] = None,
+) -> ContractType:
     """Transform tipoContrato code (Tabla 41) to ContractType.
 
     0 = No reportado, 1 = Definido (término fijo), 2 = Indefinido
     """
     if not value or value.strip() == "":
+        record_unknown(
+            "transform_contract_type",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return ContractType.UNKNOWN
     mapping: dict[str, ContractType] = {
         "0": ContractType.NOT_REPORTED,
         "1": ContractType.FIXED_TERM,
         "2": ContractType.INDEFINITE,
     }
-    return mapping.get(value.strip(), ContractType.UNKNOWN)
+    result = mapping.get(value.strip())
+    if result is None:
+        record_unknown(
+            "transform_contract_type",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
+        return ContractType.UNKNOWN
+    return result

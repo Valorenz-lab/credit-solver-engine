@@ -63,16 +63,22 @@ class GlobalDebtBuilder:
             report_date=self._ex.get_attr(node, "fechaReporte"),
             independent=self._ex.get_attr(node, "independiente"),
             entity=entity,
-            guarantee=self._parse_guarantee(node),
+            guarantee=self._parse_guarantee(node, record_context=record_context),
         )
 
-    def _parse_guarantee(self, node: ET.Element) -> Optional[GlobalDebtGuarantee]:
+    def _parse_guarantee(
+        self,
+        node: ET.Element,
+        record_context: Optional[dict[str, str]] = None,
+    ) -> Optional[GlobalDebtGuarantee]:
         guarantee_node = self._ex.find_node("Garantia", parent=node)
         if guarantee_node is None:
             return None
         return GlobalDebtGuarantee(
             guarantee_type=transform_guarantee(
-                self._ex.get_attr(guarantee_node, "tipo")
+                self._ex.get_attr(guarantee_node, "tipo"),
+                record_type="GlobalDebtRecord",
+                record_context=record_context,
             ),
             value=self._ex.get_float(guarantee_node, "valor"),
             date=self._ex.get_attr(guarantee_node, "fecha"),

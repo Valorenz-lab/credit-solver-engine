@@ -201,8 +201,23 @@ def transform_origin_state(
     return result
 
 
-def transform_payment_method(value: Optional[str]) -> PaymentMethod:
+def transform_payment_method(
+    value: Optional[str],
+    *,
+    xml_node: str = "TarjetaCredito",
+    xml_attribute: str = "formaPago",
+    record_type: str = "",
+    record_context: Optional[dict[str, str]] = None,
+) -> PaymentMethod:
     if not value or value.strip() == "":
+        record_unknown(
+            "transform_payment_method",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return PaymentMethod.UNKNOWN
     mapping = {
         "0": PaymentMethod.CURRENT,
@@ -215,7 +230,18 @@ def transform_payment_method(value: Optional[str]) -> PaymentMethod:
         "7": PaymentMethod.DONATION,
         "99": PaymentMethod.UNKNOWN,
     }
-    return mapping.get(value.strip(), PaymentMethod.UNKNOWN)
+    result = mapping.get(value.strip())
+    if result is None:
+        record_unknown(
+            "transform_payment_method",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
+        return PaymentMethod.UNKNOWN
+    return result
 
 
 def transform_currency(value: Optional[str]) -> Currency:
@@ -229,9 +255,24 @@ def transform_currency(value: Optional[str]) -> Currency:
     return mapping.get(value.strip(), Currency.UNKNOWN)
 
 
-def transform_guarantee(value: Optional[str]) -> GuaranteeType:
+def transform_guarantee(
+    value: Optional[str],
+    *,
+    xml_node: str = "Garantia",
+    xml_attribute: str = "tipo",
+    record_type: str = "",
+    record_context: Optional[dict[str, str]] = None,
+) -> GuaranteeType:
     """Transform guarantee code (Tabla 11) to GuaranteeType enum."""
     if not value or value.strip() == "":
+        record_unknown(
+            "transform_guarantee",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
         return GuaranteeType.UNKNOWN
     mapping: dict[str, GuaranteeType] = {
         "0": GuaranteeType.NO_GUARANTEE,
@@ -253,7 +294,18 @@ def transform_guarantee(value: Optional[str]) -> GuaranteeType:
         "N": GuaranteeType.CASH_DEPOSITS,
         "O": GuaranteeType.CREDIT_INSURANCE,
     }
-    return mapping.get(value.strip().upper(), GuaranteeType.UNKNOWN)
+    result = mapping.get(value.strip().upper())
+    if result is None:
+        record_unknown(
+            "transform_guarantee",
+            value,
+            xml_node,
+            xml_attribute,
+            record_type,
+            record_context or {},
+        )
+        return GuaranteeType.UNKNOWN
+    return result
 
 
 def transform_query_reason(

@@ -51,7 +51,11 @@ class CreditCardReportBuilder:
             opened_date=ex.get_attr(node, "fechaApertura"),
             maturity_date=ex.get_attr(node, "fechaVencimiento"),
             payment_history=ex.get_attr(node, "comportamiento"),
-            payment_method=transform_payment_method(ex.get_attr(node, "formaPago")),
+            payment_method=transform_payment_method(
+                ex.get_attr(node, "formaPago"),
+                record_type="CreditCard",
+                record_context=record_context,
+            ),
             default_probability=ex.get_float(node, "probabilidadIncumplimiento"),
             credit_rating=transform_credit_rating(ex.get_attr(node, "calificacion")),
             ownership_situation=transform_ownership_situation(
@@ -112,7 +116,12 @@ class CreditCardReportBuilder:
             brand=ex.get_attr(node, "marca"),
             is_covered=is_covered,
             covered_code=ex.get_attr(node, "codigoAmparada"),
-            guarantee=transform_guarantee(ex.get_attr(node, "garantia")),
+            guarantee=transform_guarantee(
+                ex.get_attr(node, "garantia"),
+                xml_node="Caracteristicas",
+                record_type="CreditCard",
+                record_context=record_context,
+            ),
         )
 
     def _parse_values(

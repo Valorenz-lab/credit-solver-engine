@@ -127,7 +127,7 @@ class GlobalReportBuilder:
             entity_id=ex.get_attr(node, "identificacion"),
             hd_rating=raw_hd is not None and raw_hd.lower() in ("true", "1"),
             characteristics=self._parse_characteristics(ex, node, record_context=record_context),
-            values=self._parse_value_portfolio(ex, node),
+            values=self._parse_value_portfolio(ex, node, record_context=record_context),
             states=self._parse_states(ex, node, record_context=record_context),
         )
 
@@ -146,17 +146,35 @@ class GlobalReportBuilder:
                 record_context=record_context,
             ),
             obligation_type=transform_obligation_type(
-                ex.get_attr(node, "tipoObligacion")
+                ex.get_attr(node, "tipoObligacion"),
+                record_type="PortfolioAccount",
+                record_context=record_context,
             ),
-            contract_type=transform_contract_type(ex.get_attr(node, "tipoContrato")),
+            contract_type=transform_contract_type(
+                ex.get_attr(node, "tipoContrato"),
+                record_type="PortfolioAccount",
+                record_context=record_context,
+            ),
             contract_execution=ex.get_attr(node, "ejecucionContrato"),
-            debtor_quality=transform_debtor_role(ex.get_attr(node, "calidadDeudor")),
-            guarantee=transform_guarantee(ex.get_attr(node, "garantia")),
+            debtor_quality=transform_debtor_role(
+                ex.get_attr(node, "calidadDeudor"),
+                record_type="PortfolioAccount",
+                record_context=record_context,
+            ),
+            guarantee=transform_guarantee(
+                ex.get_attr(node, "garantia"),
+                xml_node="Caracteristicas",
+                record_type="PortfolioAccount",
+                record_context=record_context,
+            ),
             permanence_months=ex.get_int(node, "mesesPermanencia"),
         )
 
     def _parse_value_portfolio(
-        self, ex: XmlExtractor, parent: ET.Element
+        self,
+        ex: XmlExtractor,
+        parent: ET.Element,
+        record_context: Optional[dict[str, str]] = None,
     ) -> PortfolioValues:
         # Safe browsing: Values ​​-> Value
         values_parent = ex.find_node("Valores", parent=parent)
@@ -180,7 +198,9 @@ class GlobalReportBuilder:
             principal_amount=ex.get_float(node, "valorInicial"),
             due_date=ex.get_attr(node, "fechaLimitePago"),
             payment_frequency=transform_payment_frequency(
-                ex.get_attr(node, "periodicidad")
+                ex.get_attr(node, "periodicidad"),
+                record_type="PortfolioAccount",
+                record_context=record_context,
             ),
             last_payment_date=ex.get_attr(node, "fechaPagoCuota"),
             days_past_due=ex.get_int(node, "diasMora"),
