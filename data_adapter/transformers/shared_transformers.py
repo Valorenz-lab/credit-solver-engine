@@ -293,6 +293,8 @@ def transform_guarantee(
         "M": GuaranteeType.SECURITIES_PLEDGE,
         "N": GuaranteeType.CASH_DEPOSITS,
         "O": GuaranteeType.CREDIT_INSURANCE,
+        "P": GuaranteeType.OTHER_SUITABLE,   # Tabla 11 v1.6.7 — Otras garantías idóneas
+        "Q": GuaranteeType.NOT_SUITABLE,     # Tabla 11 v1.6.7 — Garantías no idóneas
     }
     result = mapping.get(value.strip().upper())
     if result is None:

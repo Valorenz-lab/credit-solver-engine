@@ -118,11 +118,22 @@ class PortfolioAccount:
 
     @property
     def is_open(self) -> bool:
-        """Return True if the account condition indicates an active obligation."""
+        """Return True if this obligation is active.
+
+        Datacredito classifies an account as 'vigente' if:
+          - EstadoCuenta.codigo is in the vigente range (OPEN_ACCOUNT_CONDITIONS), OR
+          - saldoActual > 0 (outstanding balance regardless of closure code)
+
+        A formally cancelled account (e.g. código 06) with a pending balance
+        is still an active obligation from a credit risk perspective.
+        """
         condition = self.states.account_statement_code
-        if condition is None:
-            return False
-        return condition in OPEN_ACCOUNT_CONDITIONS
+        has_vigente_code = condition is not None and condition in OPEN_ACCOUNT_CONDITIONS
+        has_balance = (
+            self.values.outstanding_balance is not None
+            and self.values.outstanding_balance > 0
+        )
+        return has_vigente_code or has_balance
 
 
 @dataclass(frozen=True)

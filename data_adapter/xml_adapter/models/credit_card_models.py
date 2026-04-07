@@ -88,8 +88,17 @@ class CreditCard:
 
     @property
     def is_open(self) -> bool:
-        """Return True if the account state code indicates an active card."""
+        """Return True if this card is active.
+
+        Datacredito classifies a card as 'vigente' if:
+          - EstadoCuenta.codigo is in the vigente range (_OPEN_CARD_CONDITIONS), OR
+          - saldoActual > 0 (outstanding balance regardless of closure code)
+        """
         condition = self.states.account_state_code
-        if condition is None:
-            return False
-        return condition in _OPEN_CARD_CONDITIONS
+        has_vigente_code = condition is not None and condition in _OPEN_CARD_CONDITIONS
+        has_balance = (
+            self.values is not None
+            and self.values.outstanding_balance is not None
+            and self.values.outstanding_balance > 0
+        )
+        return has_vigente_code or has_balance

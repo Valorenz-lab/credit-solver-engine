@@ -128,6 +128,7 @@ def transform_payment_frequency(
             5: PaymentFrequency.ANNUALLY,
             6: PaymentFrequency.AT_EXPIRATION,
             7: PaymentFrequency.OTHER,
+            9: PaymentFrequency.OTHER,  # Tabla oficial: "Otros" — usado por SISTECREDITO y otros emisores
         }
         if number_value in mapping:
             return mapping[number_value]

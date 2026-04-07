@@ -133,12 +133,13 @@ class CreditCardReportBuilder:
         valor_node = ex.find_node("Valor", parent=values_node)
         if valor_node is None:
             return None
+        _mora = ex.get_float(valor_node, "saldoMora")
         return CreditCardValues(
             currency_code=transform_currency(ex.get_attr(valor_node, "moneda")),
             date=ex.get_attr(valor_node, "fecha"),
             rating=transform_credit_rating(ex.get_attr(valor_node, "calificacion")),
             outstanding_balance=ex.get_float(valor_node, "saldoActual"),
-            past_due_amount=ex.get_float(valor_node, "saldoMora"),
+            past_due_amount=None if _mora is not None and _mora < 0 else _mora,
             available_limit=ex.get_float(valor_node, "disponible"),
             installment_value=ex.get_float(valor_node, "cuota"),
             missed_payments=ex.get_int(valor_node, "cuotasMora"),

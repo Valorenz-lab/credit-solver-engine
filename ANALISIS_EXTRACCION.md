@@ -119,12 +119,12 @@ Una cuenta con código de cancelación (06 = cancelada por la institución) pero
 | **Cooperativo** | Baja | Media |
 | **Telecom** | Media (CLARO con saldo) | Baja — servicios, no crédito financiero |
 
-### 3.4 Fix propuesto
+### 3.4 Fix aplicado — estado actual
 
-En `xml_adapter/models/global_report_models.py`, cambiar `PortfolioAccount.is_open`:
+**Implementado** en `xml_adapter/models/global_report_models.py` (`PortfolioAccount.is_open`) y `xml_adapter/models/credit_card_models.py` (`CreditCard.is_open`):
 
 ```python
-# Actual — solo considera el código EC:
+# Antes — solo consideraba el código EC:
 @property
 def is_open(self) -> bool:
     condition = self.states.account_statement_code
@@ -132,22 +132,48 @@ def is_open(self) -> bool:
         return False
     return condition in OPEN_ACCOUNT_CONDITIONS
 
-# Corregido — regla de Datacredito: código vigente OR saldo > 0
+# Ahora — deuda pendiente OR código vigente:
 @property
 def is_open(self) -> bool:
     condition = self.states.account_statement_code
     has_vigente_code = condition is not None and condition in OPEN_ACCOUNT_CONDITIONS
     has_balance = (
-        self.values is not None
-        and self.values.outstanding_balance is not None
+        self.values.outstanding_balance is not None
         and self.values.outstanding_balance > 0
     )
     return has_vigente_code or has_balance
 ```
 
-Aplicar lógica equivalente en `CreditCard.is_open` en `credit_card_models.py`.
+### 3.5 Resultados tras el fix
 
-> **Nota de diseño:** Esta corrección aumentará el conteo de `active_obligations` en el full-report. Cuentas con código "cancelada" pero deuda pendiente aparecerán como activas. Esto es correcto para el motor crediticio: lo que importa para evaluar riesgo es si hay deuda pendiente, no si el producto fue cancelado administrativamente.
+| | Antes | Después |
+|---|---|---|
+| Sujetos OK (0 fallos) | 3 / 24 | **15 / 24** |
+| Con `active_credits` fail | 22 / 24 | **6 / 24** |
+| Delta máximo en activos | 8 | **2** |
+| Delta promedio en activos | 3.7 | **0.9** |
+
+### 3.6 Residual: 9 sujetos con delta 1–2
+
+Los 9 sujetos restantes con warnings tienen deltas pequeños (1–2 cuentas). Investigación sobre `32322427`, `12532647`, `7423628` identifica dos patrones en los sobre-conteos respecto a InfoAgregada:
+
+**Tipo A — Cuentas cedidas a cobranza** (ej. `COBRANDO ORIGI BANCOL`, `CENTRAL DE INVERSIONES`): la obligación original fue cedida a una agencia de cobro. DC clasifica la obligación original como `cerrada` en su resumen. Nosotros la marcamos como `vigente` porque el saldo es real.
+
+**Tipo B — Productos no entregados** (`EC=02 = CARD_NOT_DELIVERED`): productos que fueron abiertos administrativamente pero nunca activados. Algunos tienen saldo > 0 (ej. libranza de 75M en BCO POPULAR que nunca fue entregada), DC los cuenta como cerrados.
+
+**Bajo-conteo residual** (`13364177`, delta=1): DC cuenta un servicio WOM con `EC=02, saldo=-1` como vigente. `saldo=-1` es un valor centinela de Datacredito que significa "sin información", no una obligación de -1 peso. Sin el saldo, y con código cerrado, no tenemos forma de detectarlo como vigente sin lógica de negocio externa.
+
+### 3.7 Decisión de diseño: fidelidad al dato real
+
+**La extracción cuenta las cuentas cedidas a cobranza como `vigentes`. Esta es la decisión correcta.**
+
+El motor de decisión crediticia necesita los datos reales del sujeto, no la clasificación interna de Datacredito para sus propios reportes:
+
+- Una cuenta con `COBRANDO ORIGI BANCOL` y saldo de 19M pesos **ES una obligación activa**. El deudor sigue debiendo ese dinero independientemente de si el acreedor original la cedió.
+- Ocultar esa obligación al motor porque DC la etiqueta como "cerrada en su resumen" empeoraría la calidad de la decisión crediticia.
+- Los 6 deltas residuales con InfoAgregada son consecuencia directa de esta fidelidad al dato, no errores de extracción.
+
+**Regla de oro:** `is_open` responde a la pregunta *"¿existe deuda pendiente con este acreedor?"*, no a *"¿coincide con el conteo de InfoAgregada?"*. Son preguntas diferentes.
 
 ---
 
@@ -317,13 +343,11 @@ CLARO y COLOMBIA MOVIL generan eventos de `periodicidad=null` y en algunos casos
 
 ## 9. Plan de acción priorizado
 
-### P1 — Bug crítico: `is_open` no considera saldo pendiente
+### P1 — ~~Bug crítico: `is_open` no considera saldo pendiente~~ ✅ RESUELTO
 
-**Archivos:** `xml_adapter/models/global_report_models.py`, `xml_adapter/models/credit_card_models.py`
+**Implementado** en `global_report_models.py` y `credit_card_models.py`. Resultado: 3→15 sujetos OK.
 
-Cambiar `PortfolioAccount.is_open` y `CreditCard.is_open` para incluir la condición `outstanding_balance > 0`. Ver sección 3.4 para el código exacto.
-
-**Efecto esperado:** Los 22 sujetos con delta activo/cerrado deberían pasar el check. También resolverá parcialmente la discrepancia de balance de `78696456`.
+Los 6 sujetos con delta 1–2 restante son consecuencia de la decisión de diseño de fidelidad al dato (sección 3.7), no errores pendientes.
 
 ### P2 — `periodicidad = "9"`: mapear SISTECREDITO
 

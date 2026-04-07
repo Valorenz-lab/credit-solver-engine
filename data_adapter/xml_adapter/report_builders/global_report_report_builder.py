@@ -184,12 +184,13 @@ class GlobalReportBuilder:
             else None
         )
 
+        _mora = ex.get_float(node, "saldoMora")
         return PortfolioValues(
             date=ex.get_attr(node, "fecha"),
             currency_code=transform_currency(ex.get_attr(node, "moneda")),
             credit_rating=transform_credit_rating(ex.get_attr(node, "calificacion")),
             outstanding_balance=ex.get_float(node, "saldoActual"),
-            past_due_amount=ex.get_float(node, "saldoMora"),
+            past_due_amount=None if _mora is not None and _mora < 0 else _mora,
             available_limit=ex.get_float(node, "disponible"),
             installment_value=ex.get_float(node, "cuota"),
             missed_payments=ex.get_int(node, "cuotasMora"),
